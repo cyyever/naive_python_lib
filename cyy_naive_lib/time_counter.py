@@ -9,7 +9,7 @@ class TimeCounter:
         self.start_ns = time.monotonic_ns()
 
     def elapsed_milliseconds(self):
-        return (time.monotonic_ns() - self.start_ns) * 1000000
+        return (time.monotonic_ns() - self.start_ns) / 1000000
 
     def __enter__(self):
         self.reset_start_time()
