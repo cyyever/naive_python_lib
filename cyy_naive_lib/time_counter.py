@@ -4,7 +4,8 @@ from log import get_logger
 
 
 class TimeCounter:
-    def __init__(self):
+    def __init__(self, debug_logging=True):
+        self.debug_logging = debug_logging
         self.start_ns = None
         self.reset_start_time()
 
@@ -23,7 +24,12 @@ class TimeCounter:
             return
         used_ms = self.elapsed_milliseconds()
         with_block = traceback.extract_stack(limit=2)[0]
-        get_logger().info(
+
+        if self.debug_logging:
+            logging_func = get_logger().debug
+        else:
+            logging_func = get_logger().info
+        logging_func(
             "block [%s => %d] uses %s ms",
             with_block.filename,
             with_block.lineno,

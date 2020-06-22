@@ -3,7 +3,14 @@ import logging
 import os
 
 __logger_format = "%(asctime)s %(levelname)s {thd:%(thread)d} [%(filename)s => %(lineno)d] : %(message)s"
-logging.basicConfig(format=__logger_format, level=logging.INFO)
+logging.basicConfig(format=__logger_format, level=logging.DEBUG)
+
+
+def set_logger_level(logging_level):
+    logging.basicConfig(
+        format=__logger_format,
+        level=logging_level,
+        force=True)
 
 
 def set_logger_file(filename):
@@ -19,3 +26,10 @@ def set_logger_file(filename):
 def get_logger():
     logger = logging.getLogger()
     return logger
+
+
+if __name__ == "__main__":
+    get_logger().debug("debug msg")
+    set_logger_level(logging.INFO)
+    get_logger().debug("no debug msg")
+    get_logger().info("info msg")
