@@ -1,7 +1,7 @@
 import concurrent.futures
 import threading
 import traceback
-from .log import get_logger
+from log import get_logger
 
 
 class ThreadPool:
