@@ -4,10 +4,17 @@ from log import get_logger
 
 
 class TimeCounter:
-    def __init__(self, debug_logging=True):
+    def __init__(self, debug_logging=True, with_block_logging=True):
         self.debug_logging = debug_logging
+        self.with_block_logging = with_block_logging
         self.start_ns = None
         self.reset_start_time()
+
+    def enable_with_block_logging(self):
+        self.with_block_logging = True
+
+    def disable_with_block_logging(self):
+        self.with_block_logging = True
 
     def reset_start_time(self):
         self.start_ns = time.monotonic_ns()
