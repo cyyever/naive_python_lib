@@ -15,13 +15,25 @@ class ThreadPool:
         concurrent.futures.wait(self.futures)
         self.stopEvent.clear()
 
-    def submit(self, loop_interval, fn, *args, **kwargs):
+    def repeated_exec(self, loop_interval, fn, *args, **kwargs):
         def process():
-            while not self.stopEvent.wait(loop_interval):
+            while True:
                 try:
                     fn(*args, **kwargs)
                 except Exception as e:
                     get_logger().error("catch exception:%s", e)
                     get_logger().error("traceback:%s", traceback.format_exc())
+                if self.stopEvent.wait(loop_interval):
+                    break
+
+        self.futures.append(self.executor.submit(process))
+
+    def exec(self, fn, *args, **kwargs):
+        def process():
+            try:
+                fn(*args, **kwargs)
+            except Exception as e:
+                get_logger().error("catch exception:%s", e)
+                get_logger().error("traceback:%s", traceback.format_exc())
 
         self.futures.append(self.executor.submit(process))
