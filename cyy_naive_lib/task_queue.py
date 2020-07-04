@@ -38,7 +38,7 @@ class TaskQueue(queue.Queue):
         self.join()
         for thd in self.threads:
             thd.join()
-        self.threads = None
+        self.threads = []
 
     def force_stop(self):
         if not self.threads:
@@ -49,7 +49,7 @@ class TaskQueue(queue.Queue):
             self.put(SentinelTask())
         for thd in self.threads:
             thd.join()
-        self.threads = None
+        self.threads = []
         self.stop_event.clear()
 
     def add_task(self, task):
@@ -116,7 +116,7 @@ class ProcessTaskQueue:
         # block until all tasks are done
         for processor in self.processors:
             processor.join()
-        self.processors = None
+        self.processors = []
 
     def force_stop(self):
         if not self.processors:
@@ -127,7 +127,7 @@ class ProcessTaskQueue:
             self.queue.put(SentinelTask())
         for thd in self.processors:
             thd.join()
-        self.processors = None
+        self.processors = []
         self.stop_event.clear()
 
     def add_task(self, task):
