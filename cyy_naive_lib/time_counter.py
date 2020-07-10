@@ -42,8 +42,3 @@ class TimeCounter:
             with_block.lineno,
             used_ms,
         )
-
-
-if __name__ == "__main__":
-    with TimeCounter() as c:
-        print("hello world")
