@@ -1,13 +1,11 @@
 def split_list_to_chunks(my_list: list, chunk_size: int):
-    return [my_list[offs: offs + chunk_size]
-            for offs in range(0, len(my_list), chunk_size)]
+    return (my_list[offs: offs + chunk_size]
+            for offs in range(0, len(my_list), chunk_size))
 
 
-def dict_values_to_list(d: dict):
+def dict_value_by_order(d: dict):
     r"""
-    Construct a list containing the dictionary values by key order.
+    Return a generator giving the dictionary values by key order.
     """
-    res = []
     for k in sorted(d.keys()):
-        res.append(d[k])
-    return res
+        yield d[k]
