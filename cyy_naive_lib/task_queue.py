@@ -60,15 +60,15 @@ class TaskQueue(queue.Queue):
     def add_task(self, task):
         self.put(task)
 
-    def __worker(self, stop_event, extra_argument):
+    def __worker(self, stop_event, extra_arguments: list):
         while not stop_event.is_set():
             task = self.get()
             if isinstance(task, SentinelTask):
                 self.task_done()
                 break
             try:
-                if extra_argument:
-                    self.processor(task, extra_argument)
+                if extra_arguments:
+                    self.processor(task, *extra_arguments)
                 else:
                     self.processor(task)
             except Exception as e:
