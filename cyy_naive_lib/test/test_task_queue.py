@@ -6,3 +6,5 @@ def test_task_queue():
     queue.start()
     queue.add_task(())
     queue.stop()
+    queue.start()
+    queue.force_stop()

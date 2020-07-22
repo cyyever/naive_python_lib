@@ -33,28 +33,22 @@ class TaskQueue(queue.Queue):
             self.threads.append(t)
             t.start()
 
-    def stop(self):
+    def stop(self, wait_task=True):
         if not self.threads:
             return
         # stop workers
         for _ in range(self.worker_num):
             self.put(SentinelTask())
         # block until all tasks are done
-        self.join()
+        if wait_task:
+            self.join()
         for thd in self.threads:
             thd.join()
         self.threads = []
 
     def force_stop(self):
-        if not self.threads:
-            return
         self.stop_event.set()
-        # stop workers
-        for _ in range(self.worker_num):
-            self.put(SentinelTask())
-        for thd in self.threads:
-            thd.join()
-        self.threads = []
+        self.stop(False)
         self.stop_event.clear()
 
     def add_task(self, task):
