@@ -14,12 +14,14 @@ def dict_value_by_order(d: dict):
         yield d[k]
 
 
-def change_dict_key(d: dict, f: Callable):
+def change_dict_key(d: dict, f: Callable, recursive: bool = False):
     r"""
     Return a new dictionary with keys changed
     """
     new_dict = dict()
     for k, v in d.items():
+        if recursive and isinstance(v, dict):
+            v = change_dict_key(v, f)
         new_k = f(k)
         assert new_k not in new_dict
         new_dict[new_k] = v
