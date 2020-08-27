@@ -26,3 +26,16 @@ def change_dict_key(d: dict, f: Callable, recursive: bool = False):
         assert new_k not in new_dict
         new_dict[new_k] = v
     return new_dict
+
+
+def dict_to_list(d: dict):
+    r"""
+    Return a list with values ordered by keys
+    """
+    res = list()
+    for k in sorted(d.keys()):
+        v = d[k]
+        if isinstance(v, dict):
+            v = dict_to_list(v)
+        res.append(v)
+    return res
