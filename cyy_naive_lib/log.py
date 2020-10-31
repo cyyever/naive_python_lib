@@ -26,5 +26,3 @@ def set_logger_file(filename):
 def get_logger():
     logger = logging.getLogger()
     return logger
-
-
