@@ -1,6 +1,7 @@
 import concurrent.futures
 import threading
 import traceback
+from typing import Callable
 from log import get_logger
 
 
@@ -15,7 +16,12 @@ class ThreadPool:
         concurrent.futures.wait(self.futures)
         self.stopEvent.clear()
 
-    def repeated_exec(self, loop_interval, fn, *args, **kwargs):
+    def repeated_exec(
+            self,
+            loop_interval: float,
+            fn: Callable,
+            *args,
+            **kwargs):
         def process():
             while True:
                 try:
@@ -28,7 +34,7 @@ class ThreadPool:
 
         self.futures.append(self.executor.submit(process))
 
-    def exec(self, fn, *args, **kwargs):
+    def exec(self, fn: Callable, *args, **kwargs):
         def process():
             try:
                 fn(*args, **kwargs)

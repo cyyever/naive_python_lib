@@ -2,8 +2,8 @@
 import queue
 import threading
 import traceback
+from typing import Callable
 
-# import torch.multiprocessing
 
 from log import get_logger
 
@@ -13,11 +13,11 @@ class SentinelTask:
 
 
 class TaskQueue(queue.Queue):
-    def __init__(self, processor, worker_num=1):
+    def __init__(self, processor: Callable, worker_num=1):
         queue.Queue.__init__(self)
         self.worker_num = worker_num
         self.processor = processor
-        self.threads = []
+        self.threads: list = []
         self.stop_event = threading.Event()
         self.start()
 
