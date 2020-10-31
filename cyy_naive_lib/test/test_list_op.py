@@ -1,4 +1,4 @@
-from list_op import split_list_to_chunks, dict_value_by_order, change_dict_key
+from list_op import split_list_to_chunks, flatten_sequence
 
 
 def test_split_list_to_chunks():
@@ -8,11 +8,6 @@ def test_split_list_to_chunks():
     assert res[2] == [4]
 
 
-def test_dict_value_by_order():
-    res = list(dict_value_by_order({2: "b", 1: "a"}))
-    assert res == ["a", "b"]
-
-
-def test_change_dict_key():
-    res = change_dict_key({2: "b", 1: "a"}, str)
-    assert res == {"2": "b", "1": "a"}
+def test_flatten_sequence():
+    res = flatten_sequence([[1, 2], 3])
+    assert res == [1, 2, 3]

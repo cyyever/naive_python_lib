@@ -1,41 +1,22 @@
-from typing import Callable
+from collections.abc import Sequence
 
 
 def split_list_to_chunks(my_list: list, chunk_size: int):
+    r"""
+    Return a sequence of chunks
+    """
     return (my_list[offs: offs + chunk_size]
             for offs in range(0, len(my_list), chunk_size))
 
 
-def dict_value_by_order(d: dict):
+def flatten_sequence(seq: Sequence):
     r"""
-    Return a generator giving the dictionary values by key order.
+    Return a list
     """
-    for k in sorted(d.keys()):
-        yield d[k]
-
-
-def change_dict_key(d: dict, f: Callable, recursive: bool = False):
-    r"""
-    Return a new dictionary with keys changed
-    """
-    new_dict = dict()
-    for k, v in d.items():
-        if recursive and isinstance(v, dict):
-            v = change_dict_key(v, f)
-        new_k = f(k)
-        assert new_k not in new_dict
-        new_dict[new_k] = v
-    return new_dict
-
-
-def dict_to_list(d: dict):
-    r"""
-    Return a list with values ordered by keys
-    """
-    res = list()
-    for k in sorted(d.keys()):
-        v = d[k]
-        if isinstance(v, dict):
-            v = dict_to_list(v)
-        res.append(v)
+    res = []
+    for x in seq:
+        if isinstance(x, Sequence):
+            res += flatten_sequence(x)
+        else:
+            res.append(x)
     return res
