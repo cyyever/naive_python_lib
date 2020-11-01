@@ -4,7 +4,7 @@ from system_info import get_operating_system
 from shell.shell import Shell
 from shell.bash import Bash
 from shell.pwsh import PowerShell
-from shell.script import ShellScript
+from shell.script import Script
 from shell.pwsh_script import PowerShellScript
 from shell.bash_script import BashScript
 
@@ -15,7 +15,7 @@ def get_shell() -> Shell:
     return Bash()
 
 
-def get_shell_script() -> ShellScript:
+def get_shell_script() -> Script:
     if get_operating_system() == "Windows":
         return PowerShellScript()
     return BashScript()
@@ -28,6 +28,8 @@ def exec_cmd(cmd: str, throw: bool = True):
     return output, exit_code
 
 
-def exec_script(script_path, throw=True):
-    with open(script_path, "r") as f:
-        return exec_cmd(f.read(), throw)
+def exec_script(script: Script, throw=True):
+    output, exit_code = get_shell().exec_script(script)
+    if throw and exit_code != 0:
+        raise RuntimeError("failed to execute script")
+    return output, exit_code
