@@ -4,12 +4,21 @@ from system_info import get_operating_system
 from shell.shell import Shell
 from shell.bash import Bash
 from shell.pwsh import PowerShell
+from shell.script import ShellScript
+from shell.pwsh_script import PowerShellScript
+from shell.bash_script import BashScript
 
 
 def get_shell() -> Shell:
     if get_operating_system() == "Windows":
         return PowerShell()
     return Bash()
+
+
+def get_shell_script() -> ShellScript:
+    if get_operating_system() == "Windows":
+        return PowerShellScript()
+    return BashScript()
 
 
 def exec_cmd(cmd: str, throw: bool = True):
