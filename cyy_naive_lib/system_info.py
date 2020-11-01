@@ -13,8 +13,8 @@ def get_operating_system():
         sys = platform.system().lower()
         if sys in ("windows", "freebsd"):
             return sys
-        pf = platform.platform().lower()
         if sys == "linux":
+            pf = platform.platform().lower()
             if "ubuntu" in pf:
                 return "ubuntu"
             if which("pacman") is not None:
@@ -32,8 +32,33 @@ def get_operating_system():
                 )
                 if "ubuntu" in output:
                     return "ubuntu"
-        return pf
+        return None
 
     if __operating_system is None:
         __operating_system = __impl()
     return __operating_system
+
+
+__processor_name = None
+
+
+def get_processor_name():
+    global __processor_name
+    if __processor_name is not None:
+        return __processor_name
+    if os.path.isfile("/proc/cpuinfo"):
+        __processor_name = [
+            line
+            for line in open("/proc/cpuinfo", "r").readlines()
+            if "model name" in line
+        ][0]
+    if __processor_name is None:
+        if which("sysctl") is not None:
+            output = os.popen("sysctl hw.model").read().lower()
+            if output:
+                if "intel" in output:
+                    __processor_name = "intel"
+
+    if __processor_name is None:
+        __processor_name = platform.processor().lower()
+    return __processor_name
