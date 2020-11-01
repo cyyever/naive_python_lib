@@ -16,14 +16,12 @@ class Script:
         self.env.append((key, value))
 
     def append_content(self, content):
-        if content is not None:
-            if isinstance(content, list):
-                self.content = content
-            elif isinstance(content, str):
-                self.content = content.splitlines()
-            else:
-                raise RuntimeError("unsupported content type")
-        self.content += content
+        if isinstance(content, list):
+            self.content += content
+        elif isinstance(content, str):
+            self.content += content.splitlines()
+        else:
+            raise RuntimeError("unsupported content type")
 
     def get_complete_content(self):
         content = self.line_seperator.join(
