@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import subprocess
 import sys
-import os
 import tempfile
 from threading import Thread
 from time import sleep
@@ -15,9 +14,7 @@ class Shell:
         return self.exec_script(command)
 
     def exec_script(self, script):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            os.chdir(tmpdir)
-            return self._exec_script(script)
+        return self._exec_script(script)
 
     def _exec_script(self, script):
         raise NotImplementedError()
