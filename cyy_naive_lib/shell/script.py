@@ -2,21 +2,9 @@
 
 
 class Script:
-    def __init__(self, content=None, path: str = None):
-        self.content = None
-        if content is not None:
-            if isinstance(content, list):
-                self.content = content
-            elif isinstance(content, str):
-                self.content = content.splitlines()
-            else:
-                raise RuntimeError("unsupported content type")
-        if path is not None:
-            if self.content is not None:
-                raise RuntimeError("can't specify both content and path")
-            with open(path, "rt") as f:
-                self.content = f.readlines()
-
+    def __init__(self, content=[]):
+        self.content = []
+        self.append_content(content)
         self.env: list = []
         self.strict_mode = True
         self.line_seperator = self._get_line_seperator()
@@ -26,6 +14,16 @@ class Script:
         Add an environment variable to the script
         """
         self.env.append((key, value))
+
+    def append_content(self, content):
+        if content is not None:
+            if isinstance(content, list):
+                self.content = content
+            elif isinstance(content, str):
+                self.content = content.splitlines()
+            else:
+                raise RuntimeError("unsupported content type")
+        self.content += content
 
     def get_complete_content(self):
         content = self.line_seperator.join(
