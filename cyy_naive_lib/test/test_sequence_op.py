@@ -1,4 +1,4 @@
-from sequence_op import split_list_to_chunks, flatten_sequence
+from sequence_op import split_list_to_chunks, flatten_list
 
 
 def test_split_list_to_chunks():
@@ -9,5 +9,7 @@ def test_split_list_to_chunks():
 
 
 def test_flatten_sequence():
-    res = flatten_sequence([[1, 2], 3])
+    res = flatten_list([[1, 2], 3])
     assert res == [1, 2, 3]
+    res = flatten_list(["abc"])
+    assert res == ["abc"]
