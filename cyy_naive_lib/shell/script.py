@@ -2,10 +2,15 @@
 
 
 class Script:
-    def __init__(self, content: str = None, path: str = None):
+    def __init__(self, content=None, path: str = None):
         self.content = None
         if content is not None:
-            self.content = content.splitlines()
+            if isinstance(content, list):
+                self.content = content
+            elif isinstance(content, str):
+                self.content = content.splitlines()
+            else:
+                raise RuntimeError("unsupported content type")
         if path is not None:
             if self.content is not None:
                 raise RuntimeError("can't specify both content and path")
