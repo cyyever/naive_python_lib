@@ -10,4 +10,4 @@ class PowerShell(Shell):
             script = PowerShellScript(content=script)
         with open("script.ps1", "w") as f:
             f.write(script.get_complete_content())
-        return ["pwsh", "-NoProfile", "-File", "script.ps1"]
+        return self._exec(["pwsh", "-NoProfile", "-File", "script.ps1"])
