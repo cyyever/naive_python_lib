@@ -25,7 +25,10 @@ class Script:
 
     def get_complete_content(self):
         content = self.line_seperator.join(
-            [self._export(k, v) for (k, v) in self.env] + self.content
+            [
+                line.rstrip("\r\n")
+                for line in [self._export(k, v) for (k, v) in self.env] + self.content
+            ]
         )
 
         if self.strict_mode:
