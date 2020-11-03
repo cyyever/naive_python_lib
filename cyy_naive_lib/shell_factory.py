@@ -10,7 +10,6 @@ from shell.bash_script import BashScript
 
 
 def get_shell() -> Shell:
-    print(get_operating_system())
     if get_operating_system() == "windows":
         return PowerShell()
     return Bash()
