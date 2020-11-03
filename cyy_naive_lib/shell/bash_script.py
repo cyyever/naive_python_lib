@@ -12,6 +12,9 @@ class BashScript(Script):
         )
 
     def _export(self, key, value):
+        if key == "PATH":
+            return "export PATH=" + \
+                self.__double_quota_escape_str(value) + ":${PATH}"
         return (
             "if [[ -z ${"
             + key
