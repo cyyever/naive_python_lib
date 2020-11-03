@@ -10,13 +10,14 @@ from shell.bash_script import BashScript
 
 
 def get_shell() -> Shell:
-    if get_operating_system() == "Windows":
+    print(get_operating_system())
+    if get_operating_system() == "windows":
         return PowerShell()
     return Bash()
 
 
 def get_shell_script() -> Script:
-    if get_operating_system() == "Windows":
+    if get_operating_system() == "windows":
         return PowerShellScript()
     return BashScript()
 
