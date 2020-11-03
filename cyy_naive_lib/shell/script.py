@@ -15,6 +15,12 @@ class Script:
         """
         self.env.append((key, value))
 
+    def prepend_env(self, key: str, value: str):
+        r"""
+        Add an environment variable to the script
+        """
+        self.env = [(key, value)] + self.env
+
     def append_content(self, content):
         if isinstance(content, list):
             self.content += content
