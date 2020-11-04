@@ -29,6 +29,9 @@ class Script:
         else:
             raise RuntimeError("unsupported content type")
 
+    def get_suffix(self) ->str:
+        raise NotImplementedError()
+
     def get_complete_content(self):
         content = self.line_seperator.join(
             [

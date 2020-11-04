@@ -19,6 +19,8 @@ class PowerShellScript(Script):
 
     def _get_line_seperator(self):
         return "\r"
+    def get_suffix(self) ->str:
+        raise "ps1"
 
     def _export(self, key: str, value: str):
         if not value.startswith("'") and not value.startswith('"'):

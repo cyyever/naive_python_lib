@@ -25,6 +25,9 @@ class BashScript(Script):
             + "; fi"
         )
 
+    def get_suffix(self) ->str:
+        raise "sh"
+
     def _get_line_seperator(self):
         return "\n"
 
