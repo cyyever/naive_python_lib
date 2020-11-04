@@ -2,9 +2,10 @@
 
 
 class Script:
-    def __init__(self, content=[]):
+    def __init__(self, content=None):
         self.content = []
-        self.append_content(content)
+        if content is not None:
+            self.append_content(content)
         self.env: list = []
         self.strict_mode = True
         self.line_seperator = self._get_line_seperator()
@@ -28,23 +29,21 @@ class Script:
             self.content += content.splitlines()
         else:
             raise RuntimeError("unsupported content type")
+        self.__remove_newline()
 
-    def get_suffix(self) ->str:
+    def get_suffix(self) -> str:
         raise NotImplementedError()
 
     def get_complete_content(self):
-        content = self.line_seperator.join(
-            [
-                line.rstrip("\r\n")
-                for line in [self._export(k, v) for (k, v) in self.env] + self.content
-            ]
-        )
+        env_part = self.line_seperator.join(
+            [self._export(k, v) for (k, v) in self.env])
+        content_part = self.line_seperator.join(self.content)
 
         if self.strict_mode:
-            return self._wrap_content_in_strict_mode(content)
-        return content
+            return self._wrap_content_in_strict_mode(env_part, content_part)
+        return env_part + self.line_seperator + content_part
 
-    def _wrap_content_in_strict_mode(self, content: str):
+    def _wrap_content_in_strict_mode(self, env_part: str, content_part: str):
         raise NotImplementedError()
 
     def _export(self, key: str, value: str):
@@ -55,3 +54,6 @@ class Script:
 
     def _get_line_seperator(self) -> str:
         raise NotImplementedError()
+
+    def __remove_newline(self):
+        self.content = [line.rstrip("\r\n") for line in self.content]

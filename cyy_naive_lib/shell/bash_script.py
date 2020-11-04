@@ -4,11 +4,13 @@ from .script import Script
 
 
 class BashScript(Script):
-    def _wrap_content_in_strict_mode(self, content: str):
+    def _wrap_content_in_strict_mode(self, env_part: str, content_part: str):
         return (
             self.line_seperator.join(["set -eu", "set -o pipefail"])
             + self.line_seperator
-            + content
+            + env_part
+            + self.line_seperator
+            + content_part
         )
 
     def _export(self, key, value):
@@ -25,8 +27,8 @@ class BashScript(Script):
             + "; fi"
         )
 
-    def get_suffix(self) ->str:
-        raise "sh"
+    def get_suffix(self) -> str:
+        return "sh"
 
     def _get_line_seperator(self):
         return "\n"
