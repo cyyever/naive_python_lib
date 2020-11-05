@@ -6,7 +6,13 @@ from .shell import Shell
 
 
 class DockerFile(BashScript):
-    def _exec(self, from_image: str, result_image: str, src_dir: str = None):
+    def _exec(
+        self,
+        from_image: str,
+        result_image: str,
+        src_dir: str = None,
+        additional_docker_commands: list = None,
+    ):
         script_name = "docker.sh"
         with open(script_name, "w") as f:
             f.write(self.get_complete_content())
@@ -19,6 +25,9 @@ class DockerFile(BashScript):
             print("COPY ", script_name, " /", file=f)
             print("RUN bash /" + script_name, file=f)
             print("RUN rm /" + script_name, file=f)
+            if additional_docker_commands is not None:
+                for cmd in additional_docker_commands:
+                    print(cmd, file=f)
 
         with open(".dockerignore", "w") as f:
             print(".git", file=f)
