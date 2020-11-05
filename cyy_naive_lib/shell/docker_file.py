@@ -18,6 +18,7 @@ class DockerFile(BashScript):
                 print("COPY . ", src_dir, file=f)
             print("COPY ", script_name, " /", file=f)
             print("RUN bash /" + script_name, file=f)
+            print("RUN rm /" + script_name, file=f)
 
         with open(".dockerignore", "w") as f:
             print(".git", file=f)
@@ -27,12 +28,5 @@ class DockerFile(BashScript):
         cmd = []
         if which("sudo") != "windows":
             cmd.append("sudo")
-        cmd.append("docker")
-        cmd.append("build")
-        cmd.append("-t")
-        cmd.append(result_image)
-        cmd.append("-f")
-        cmd.append("Dockerfile")
-        cmd.append(".")
-        print(cmd)
+        cmd += ["docker", "build", "-t", result_image, "-f", "Dockerfile", "."]
         return Shell.exec(cmd)
