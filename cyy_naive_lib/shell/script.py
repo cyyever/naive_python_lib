@@ -22,6 +22,15 @@ class Script:
         """
         self.env = [(key, value)] + self.env
 
+    def prepend_content(self, content):
+        if isinstance(content, list):
+            self.content = content + self.content
+        elif isinstance(content, str):
+            self.content = content.splitlines() + self.content
+        else:
+            raise RuntimeError("unsupported content type")
+        self.__remove_newline()
+
     def append_content(self, content):
         if isinstance(content, list):
             self.content += content
