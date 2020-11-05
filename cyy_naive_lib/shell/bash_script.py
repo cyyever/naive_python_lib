@@ -1,10 +1,22 @@
 #!/usr/bin/env python3
 
 from .script import Script
+from .shell import Shell
 
 
 class BashScript(Script):
-    def _wrap_content_in_strict_mode(self, env_part: str, content_part: str):
+    def get_suffix(self) -> str:
+        return "sh"
+
+    def exec(self):
+        with open("script.sh", "w") as f:
+            f.write(self.get_complete_content())
+        return Shell._exec(["bash", "script.sh"])
+
+    def _wrap_content_in_strict_mode(
+            self,
+            env_part: str,
+            content_part: str) -> str:
         return (
             self.line_seperator.join(["set -eu", "set -o pipefail"])
             + self.line_seperator
@@ -26,9 +38,6 @@ class BashScript(Script):
             + self.__double_quota_escape_str(value)
             + "; fi"
         )
-
-    def get_suffix(self) -> str:
-        return "sh"
 
     def _get_line_seperator(self):
         return "\n"
