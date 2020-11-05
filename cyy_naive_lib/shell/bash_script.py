@@ -8,10 +8,10 @@ class BashScript(Script):
     def get_suffix(self) -> str:
         return "sh"
 
-    def exec(self):
+    def _exec(self):
         with open("script.sh", "w") as f:
             f.write(self.get_complete_content())
-        return Shell._exec(["bash", "script.sh"])
+        return Shell.exec(["bash", "script.sh"])
 
     def _wrap_content_in_strict_mode(
             self,

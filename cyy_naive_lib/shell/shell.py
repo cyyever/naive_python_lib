@@ -7,20 +7,11 @@ from time import sleep
 
 
 class Shell:
-    def exec(self, command: str):
-        r"""
-        Execute a command
-        """
-        return self.exec_script(command)
-
-    def exec_script(self, script):
-        return self._exec_script(script)
-
-    def _exec_script(self, script):
-        raise NotImplementedError()
-
     @staticmethod
-    def _exec(command_line: list):
+    def exec(command_line: list):
+        r"""
+        Execute a command line
+        """
         with tempfile.NamedTemporaryFile() as output_file:
             proc = subprocess.Popen(
                 command_line,

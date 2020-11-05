@@ -43,7 +43,13 @@ class Script:
             return self._wrap_content_in_strict_mode(env_part, content_part)
         return env_part + self.line_seperator + content_part
 
-    def exec(self):
+    def exec(self, throw=True):
+        output, exit_code = self._exec()
+        if throw and exit_code != 0:
+            raise RuntimeError("failed to execute script")
+        return output, exit_code
+
+    def _exec(self):
         raise NotImplementedError()
 
     def _wrap_content_in_strict_mode(self, env_part: str, content_part: str):
