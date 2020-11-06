@@ -26,9 +26,17 @@ class BashScript(Script):
         )
 
     def _export(self, key, value):
-        if key == "PATH":
-            return "export PATH=" + \
-                self.__double_quota_escape_str(value) + ":${PATH}"
+        for special_key in ("PATH", "LD_LIBRARY_PATH"):
+            if key == special_key:
+                return (
+                    "export "
+                    + key
+                    + "="
+                    + self.__double_quota_escape_str(value)
+                    + ":${"
+                    + key
+                    + "}"
+                )
         return (
             "if [[ -z ${"
             + key
