@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-import logging
 import os
+import logging
+import coloredlogs
 
 __logger_format = "%(asctime)s %(levelname)s {thd:%(thread)d} [%(filename)s => %(lineno)d] : %(message)s"
 logging.basicConfig(format=__logger_format, level=logging.DEBUG)
@@ -25,4 +26,5 @@ def set_logger_file(filename):
 
 def get_logger():
     logger = logging.getLogger()
+    coloredlogs.install(logger=logger)
     return logger
