@@ -29,13 +29,19 @@ class BashScript(Script):
         for special_key in ("PATH", "LD_LIBRARY_PATH"):
             if key == special_key:
                 return (
-                    "export "
+                    "if [[ -z ${"
+                    + key
+                    + "+x}  ]]; then export "
+                    + key
+                    + "="
+                    + self.__double_quota_escape_str(value)
+                    + "; else export "
                     + key
                     + "="
                     + self.__double_quota_escape_str(value)
                     + ":${"
                     + key
-                    + "}"
+                    + "} ; fi"
                 )
         return (
             "if [[ -z ${"
