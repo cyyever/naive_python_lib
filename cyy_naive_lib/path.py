@@ -11,6 +11,7 @@ def list_files(
     Return files meeting the specified conditions from the given directory.
     """
     result = []
+    dir_to_search = os.path.abspath(dir_to_search)
     for p in os.listdir(dir_to_search):
         full_path = os.path.abspath(os.path.join(dir_to_search, p))
         if os.path.isfile(full_path):
