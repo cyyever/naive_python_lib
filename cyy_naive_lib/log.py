@@ -1,30 +1,37 @@
 #!/usr/bin/env python3
 import os
 import logging
-import coloredlogs
-
-__logger_format = "%(asctime)s %(levelname)s {thd:%(thread)d} [%(filename)s => %(lineno)d] : %(message)s"
-logging.basicConfig(format=__logger_format, level=logging.DEBUG)
+from colorlog import ColoredFormatter
 
 
-def set_logger_level(logging_level):
-    logging.basicConfig(
-        format=__logger_format,
-        level=logging_level,
-        force=True)
+default_logger = logging.root
 
 
-def set_logger_file(filename):
+def __set_formatter(handler):
+    handler.setFormatter(
+        ColoredFormatter(
+            "%(log_color)s%(asctime)s %(levelname)s {thd:%(thread)d} [%(filename)s => %(lineno)d] : %(message)s",
+            style="%",
+        ))
+
+
+handler = logging.StreamHandler()
+
+__set_formatter(handler)
+default_logger.addHandler(handler)
+default_logger.setLevel(logging.DEBUG)
+
+
+def set_file_handle(filename):
+    global default_logger
     log_dir = os.path.dirname(filename)
     if log_dir:
         os.makedirs(log_dir, exist_ok=True)
-    logger = logging.getLogger()
     handler = logging.FileHandler(filename)
-    handler.setFormatter(logging.Formatter(__logger_format))
-    logger.addHandler(handler)
+    __set_formatter(handler)
+    default_logger.addHandler(handler)
 
 
 def get_logger():
-    logger = logging.getLogger()
-    coloredlogs.install(logger=logger)
-    return logger
+    global default_logger
+    return default_logger

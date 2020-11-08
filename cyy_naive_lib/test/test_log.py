@@ -1,9 +1,10 @@
 import logging
-from log import get_logger, set_logger_level
+from log import default_logger
 
 
 def test_log():
-    get_logger().debug("debug msg")
-    set_logger_level(logging.INFO)
-    get_logger().debug("no debug msg")
-    get_logger().info("info msg")
+    default_logger.debug("debug msg")
+    default_logger.setLevel(logging.INFO)
+    default_logger.debug("no debug msg")
+    default_logger.info("info msg")
+    default_logger.error("info msg")
