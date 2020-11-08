@@ -48,9 +48,9 @@ def get_processor_name():
         return __processor_name
     if os.path.isfile("/proc/cpuinfo"):
         __processor_name = [
-            line
+            line.lower()
             for line in open("/proc/cpuinfo", "r").readlines()
-            if "model name" in line
+            if "model name" in line.lower()
         ][0]
     if __processor_name is None:
         if which("sysctl") is not None:
