@@ -36,6 +36,3 @@ class PowerShellScript(Script):
             value = '"' + value + '"'
         value = value.replace("\\", "/")
         return "$env:" + key + "=" + value
-
-    def _mkdir(self, path):
-        return "mkdir -Force -Path " + path + " | Out-Null"

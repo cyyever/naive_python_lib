@@ -65,6 +65,3 @@ class BashScript(Script):
             escaped_str += a
         escaped_str += '"'
         return escaped_str
-
-    def _mkdir(self, path):
-        return "mkdir -p " + path
