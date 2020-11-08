@@ -19,6 +19,7 @@ def test_docker():
     with tempfile.TemporaryDirectory() as tmpdirname:
         os.chdir(tmpdirname)
         bash_script = BashScript(content="ls")
+        bash_script.append_env("PATH", "/root")
         docker_file = DockerFile(
             from_image="ubuntu:latest",
             script=bash_script)
