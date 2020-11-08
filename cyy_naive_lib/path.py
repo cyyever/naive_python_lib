@@ -12,7 +12,7 @@ def list_files(
     """
     result = []
     for p in os.listdir(dir_to_search):
-        full_path = os.path.join(dir_to_search, p)
+        full_path = os.path.abspath(os.path.join(dir_to_search, p))
         if os.path.isfile(full_path):
             if filter_fun is not None and not filter_fun(p):
                 continue
