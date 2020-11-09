@@ -11,6 +11,13 @@ def __set_formatter(handler):
     handler.setFormatter(
         ColoredFormatter(
             "%(log_color)s%(asctime)s %(levelname)s {thd:%(thread)d} [%(filename)s => %(lineno)d] : %(message)s",
+            log_colors={
+                "DEBUG": "green",
+                "INFO": "white",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "bold_red",
+            },
             style="%",
         ))
 
