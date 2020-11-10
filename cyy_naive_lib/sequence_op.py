@@ -1,7 +1,7 @@
-# from collections.abc import Sequence
+from typing import Generator
 
 
-def split_list_to_chunks(my_list: list, chunk_size: int):
+def split_list_to_chunks(my_list: list, chunk_size: int) -> Generator:
     r"""
     Return a sequence of chunks
     """
@@ -9,7 +9,7 @@ def split_list_to_chunks(my_list: list, chunk_size: int):
             for offs in range(0, len(my_list), chunk_size))
 
 
-def flatten_list(seq: list):
+def flatten_list(seq: list) -> list:
     r"""
     Return a list
     """
