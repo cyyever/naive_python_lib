@@ -13,7 +13,7 @@ class SentinelTask:
 
 
 class TaskQueue(queue.Queue):
-    def __init__(self, processor: Callable, worker_num=1):
+    def __init__(self, processor: Callable, worker_num: int = 1):
         queue.Queue.__init__(self)
         self.worker_num = worker_num
         self.processor = processor
@@ -70,5 +70,5 @@ class TaskQueue(queue.Queue):
                 get_logger().error("traceback:%s", traceback.format_exc())
             self.task_done()
 
-    def _get_extra_task_arguments(self, worker_id):
+    def _get_extra_task_arguments(self, _):
         return []

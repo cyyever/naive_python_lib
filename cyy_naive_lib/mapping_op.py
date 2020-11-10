@@ -1,8 +1,8 @@
-from typing import Callable
+from typing import Callable, Generator
 from collections.abc import Mapping, MutableMapping
 
 
-def get_mapping_values_by_order(d: Mapping):
+def get_mapping_values_by_order(d: Mapping) -> Generator:
     r"""
     Return a generator giving the values by key order.
     """
@@ -11,9 +11,8 @@ def get_mapping_values_by_order(d: Mapping):
 
 
 def change_mapping_keys(
-        d: MutableMapping,
-        f: Callable,
-        recursive: bool = False):
+    d: MutableMapping, f: Callable, recursive: bool = False
+) -> MutableMapping:
     r"""
     Return a new mapping with keys changed
     """
@@ -27,7 +26,7 @@ def change_mapping_keys(
     return new_d
 
 
-def flatten_mapping(d: Mapping):
+def flatten_mapping(d: Mapping) -> list:
     r"""
     Return a list with values ordered by keys and flatten it
     """

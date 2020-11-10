@@ -23,6 +23,6 @@ class Profile:
         ps.print_stats()
         ps.print_callers()
 
-    def save(self, path):
+    def save(self, path: str):
         assert self.profile
         self.profile.dump_stats(path)

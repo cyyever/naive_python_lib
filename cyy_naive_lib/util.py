@@ -1,9 +1,15 @@
 import time
 import traceback
+from typing import Callable, Tuple
 from log import get_logger
 
 
-def retry_operation(operation, retry_times, retry_sleep_time, *args, **kwargs):
+def retry_operation(operation: Callable,
+                    retry_times: int,
+                    retry_sleep_time: float,
+                    *args,
+                    **kwargs) -> Tuple[bool,
+                                       None]:
     for _ in range(retry_times):
         try:
             res = operation(*args, **kwargs)

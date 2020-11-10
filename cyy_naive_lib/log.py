@@ -4,7 +4,7 @@ import logging
 from colorlog import ColoredFormatter
 
 
-default_logger = logging.root
+default_logger: logging.RootLogger = logging.root
 
 
 def __set_formatter(handler):
@@ -29,7 +29,7 @@ default_logger.addHandler(handler)
 default_logger.setLevel(logging.DEBUG)
 
 
-def set_file_handle(filename):
+def set_file_handle(filename: str):
     global default_logger
     log_dir = os.path.dirname(filename)
     if log_dir:

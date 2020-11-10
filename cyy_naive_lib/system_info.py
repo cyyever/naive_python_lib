@@ -6,7 +6,7 @@ from shutil import which
 __operating_system = None
 
 
-def get_operating_system():
+def get_operating_system() -> str:
     global __operating_system
 
     def __impl():
@@ -42,7 +42,7 @@ def get_operating_system():
 __processor_name = None
 
 
-def get_processor_name():
+def get_processor_name() -> str:
     global __processor_name
     if __processor_name is not None:
         return __processor_name

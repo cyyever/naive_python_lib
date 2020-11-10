@@ -1,12 +1,11 @@
 import os
-from typing import Callable
+from typing import Callable, List
 from collections.abc import Sequence
 
 
 def list_files(
-        dir_to_search: str,
-        recursive: bool = True,
-        filter_fun: Callable = None):
+    dir_to_search: str, recursive: bool = True, filter_fun: Callable = None
+) -> List[str]:
     """
     Return files meeting the specified conditions from the given directory.
     """
@@ -25,7 +24,7 @@ def list_files(
 
 def list_files_by_suffixes(
     dir_to_search: str, suffixes: Sequence, recursive: bool = True
-):
+) -> List[str]:
     if isinstance(suffixes, str):
         suffixes = [suffixes]
     else:
