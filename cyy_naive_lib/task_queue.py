@@ -8,7 +8,7 @@ from typing import Callable
 from log import get_logger
 
 
-class SentinelTask:
+class _SentinelTask:
     pass
 
 
@@ -38,7 +38,7 @@ class TaskQueue(queue.Queue):
             return
         # stop workers
         for _ in range(self.worker_num):
-            self.put(SentinelTask())
+            self.put(_SentinelTask())
         # block until all tasks are done
         if wait_task:
             self.join()
@@ -57,7 +57,7 @@ class TaskQueue(queue.Queue):
     def __worker(self, stop_event, extra_arguments: list):
         while not stop_event.is_set():
             task = self.get()
-            if isinstance(task, SentinelTask):
+            if isinstance(task, _SentinelTask):
                 self.task_done()
                 break
             try:

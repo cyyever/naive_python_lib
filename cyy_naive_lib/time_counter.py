@@ -14,7 +14,7 @@ class TimeCounter:
         self.with_block_logging = True
 
     def disable_with_block_logging(self):
-        self.with_block_logging = True
+        self.with_block_logging = False
 
     def reset_start_time(self):
         self.start_ns = time.monotonic_ns()
