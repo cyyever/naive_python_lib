@@ -18,6 +18,7 @@ def test_docker():
     cwd = os.getcwd()
     with tempfile.TemporaryDirectory() as tmpdirname:
         os.chdir(tmpdirname)
+        _, res = exec_cmd("sudo systemctl start docker", throw=False)
         bash_script = BashScript(content="ls")
         bash_script.append_env("PATH", "/root")
         docker_file = DockerFile(
