@@ -3,14 +3,12 @@ import os
 from shell_factory import exec_cmd
 from shell.docker_file import DockerFile
 from shell.bash_script import BashScript
+from tempdir import TempDir
 
 
 def test_exec_cmd():
-    cwd = os.getcwd()
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        os.chdir(tmpdirname)
+    with TempDir():
         _, res = exec_cmd("ls", throw=False)
-        os.chdir(cwd)
         assert res == 0
 
 
