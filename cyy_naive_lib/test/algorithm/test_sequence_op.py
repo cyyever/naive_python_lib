@@ -1,4 +1,4 @@
-from sequence_op import split_list_to_chunks, flatten_list
+from algorithm.sequence_op import split_list_to_chunks, flatten_list
 
 
 def test_split_list_to_chunks():

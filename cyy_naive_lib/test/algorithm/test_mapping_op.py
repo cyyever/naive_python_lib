@@ -1,4 +1,8 @@
-from mapping_op import get_mapping_values_by_order, change_mapping_keys, flatten_mapping
+from algorithm.mapping_op import (
+    get_mapping_values_by_order,
+    change_mapping_keys,
+    flatten_mapping,
+)
 
 
 def test_get_mapping_values_by_order():
