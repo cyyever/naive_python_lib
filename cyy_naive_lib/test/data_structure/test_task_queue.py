@@ -1,4 +1,4 @@
-from task_queue import TaskQueue
+from data_structure.task_queue import TaskQueue
 
 
 def test_task_queue():

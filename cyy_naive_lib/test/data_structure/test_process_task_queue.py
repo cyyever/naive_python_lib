@@ -1,4 +1,4 @@
-from process_task_queue import ProcessTaskQueue
+from data_structure.process_task_queue import ProcessTaskQueue
 
 
 def hello(task, args):
