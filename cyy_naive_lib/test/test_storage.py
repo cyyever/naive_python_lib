@@ -2,6 +2,9 @@ from storage import DataStorage
 
 
 def test_storage():
-    data = DataStorage("abc")
+    data = DataStorage(b"abc")
     assert data.data_path is not None
-    assert data.data == "abc"
+    assert data.data == b"abc"
+    assert data.save()
+    assert data.data == b"abc"
+    assert data.data_hash is not None

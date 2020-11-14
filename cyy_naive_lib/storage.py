@@ -13,6 +13,7 @@ class DataStorage:
         self.__data = data
         self.__data_path = data_path
         self.__data_hash = None
+        self.__fd = None
 
     def __del__(self):
         self.clear()
@@ -20,7 +21,7 @@ class DataStorage:
     @property
     def data_path(self):
         if self.__data_path is None:
-            self.__data_path = tempfile.mkstemp()[1]
+            self.__fd, self.__data_path = tempfile.mkstemp()
         return self.__data_path
 
     @property
@@ -50,8 +51,15 @@ class DataStorage:
 
     def save(self):
         try:
-            with open(self.data_path, "xb") as f:
-                f.write(self.data)
+            data_path = self.data_path
+            if self.__fd is not None:
+                os.lseek(self.__fd, 0, 0)
+                os.write(self.__fd, self.__data)
+                self.__data = None
+                return True
+            with open(data_path, "xb") as f:
+                f.write(self.__data)
+                self.__data = None
                 return True
         except Exception as e:
             get_logger().error("catch exception:%s", e)
