@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import sys
 import logging
 from colorlog import ColoredFormatter
 
@@ -30,11 +31,19 @@ def __set_formatter(handler, with_color=True):
     handler.setFormatter(formatter)
 
 
-handler = logging.StreamHandler()
+__initialized = False
 
-__set_formatter(handler)
-default_logger.addHandler(handler)
-default_logger.setLevel(logging.DEBUG)
+for handler in default_logger.handlers:
+    if isinstance(handler, logging.StreamHandler):
+        if handler.stream == sys.stderr:
+            __initialized = True
+
+if not __initialized:
+    handler = logging.StreamHandler()
+    __set_formatter(handler)
+    default_logger.addHandler(handler)
+    default_logger.setLevel(logging.DEBUG)
+    __initialized = True
 
 
 def set_file_handler(filename: str):
