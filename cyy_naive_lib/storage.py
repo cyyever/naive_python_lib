@@ -10,6 +10,7 @@ class DataStorage:
     """ 封装数据存储操作 """
 
     def __init__(self, data, data_path=None):
+        assert isinstance(data, bytes)
         self.__data = data
         self.__data_path = data_path
         self.__data_hash = None
