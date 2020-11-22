@@ -32,6 +32,8 @@ def get_operating_system() -> str:
                 )
                 if "ubuntu" in output:
                     return "ubuntu"
+        if sys == "darwin":
+            return "macos"
         return None
 
     if __operating_system is None:
