@@ -8,7 +8,7 @@ from colorlog import ColoredFormatter
 default_logger: logging.RootLogger = logging.root
 
 
-def __set_formatter(handler, with_color=True):
+def __set_formatter(_handler, with_color=True):
     __format_str: str = "%(asctime)s %(levelname)s {thd:%(thread)d} [%(filename)s => %(lineno)d] : %(message)s"
     if with_color:
         formatter = ColoredFormatter(
@@ -28,20 +28,20 @@ def __set_formatter(handler, with_color=True):
             style="%",
         )
 
-    handler.setFormatter(formatter)
+    _handler.setFormatter(formatter)
 
 
 __initialized = False
 
-for handler in default_logger.handlers:
-    if isinstance(handler, logging.StreamHandler):
-        if handler.stream == sys.stderr:
+for _handler in default_logger.handlers:
+    if isinstance(_handler, logging.StreamHandler):
+        if _handler.stream == sys.stderr:
             __initialized = True
 
 if not __initialized:
-    handler = logging.StreamHandler()
-    __set_formatter(handler)
-    default_logger.addHandler(handler)
+    _handler = logging.StreamHandler()
+    __set_formatter(_handler)
+    default_logger.addHandler(_handler)
     default_logger.setLevel(logging.DEBUG)
     __initialized = True
 
@@ -51,9 +51,9 @@ def set_file_handler(filename: str):
     log_dir = os.path.dirname(filename)
     if log_dir:
         os.makedirs(log_dir, exist_ok=True)
-    handler = logging.FileHandler(filename)
-    __set_formatter(handler, with_color=False)
-    default_logger.addHandler(handler)
+    _handler = logging.FileHandler(filename)
+    __set_formatter(_handler, with_color=False)
+    default_logger.addHandler(_handler)
 
 
 def get_logger():
