@@ -45,7 +45,7 @@ class DataStorage:
 
     def clear(self):
         if self.__data_path is not None:
-            os.remove(self.data_path)
+            os.remove(self.__data_path)
         self.__data = None
         self.__data_path = None
         self.__data_hash = None
