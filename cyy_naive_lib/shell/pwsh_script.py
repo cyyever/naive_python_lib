@@ -32,7 +32,9 @@ class PowerShellScript(Script):
         return Shell.exec(["pwsh", "-NoProfile", "-File", "script.ps1"])
 
     def _export(self, key: str, value: str):
-        if not value.startswith("'") and not value.startswith('"'):
+        if value.startswith("(") and value.endswith(')'):
+            value=value
+        elif not value.startswith("'") and not value.startswith('"'):
             value = '"' + value + '"'
         value = value.replace("\\", "/")
         return "$env:" + key + "=" + value
