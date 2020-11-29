@@ -1,5 +1,3 @@
-import tempfile
-import os
 from shell_factory import exec_cmd
 from shell.docker_file import DockerFile
 from shell.bash_script import BashScript
@@ -14,7 +12,7 @@ def test_exec_cmd():
 
 
 def test_unix_docker():
-    if get_operating_system()!="windows":
+    if get_operating_system() not in ("windows", "freebsd"):
         with TempDir():
             _, res = exec_cmd("sudo systemctl start docker", throw=False)
             bash_script = BashScript(content="ls")
