@@ -1,7 +1,7 @@
+from shutil import which
 from shell_factory import exec_cmd
 from shell.docker_file import DockerFile
 from shell.bash_script import BashScript
-from system_info import get_operating_system
 from tempdir import TempDir
 
 
@@ -12,7 +12,7 @@ def test_exec_cmd():
 
 
 def test_unix_docker():
-    if get_operating_system() not in ("windows", "freebsd"):
+    if which("systemctl") and which("docker"):
         with TempDir():
             _, res = exec_cmd("sudo systemctl start docker", throw=False)
             bash_script = BashScript(content="ls")
