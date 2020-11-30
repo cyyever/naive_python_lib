@@ -6,6 +6,10 @@ from .shell import Shell
 
 
 class PowerShellScript(Script):
+    def __init__(self, content=None):
+        super().__init__(content=content)
+        self.use_bash_stype_env_var = True
+
     def _wrap_content_in_strict_mode(self, env_part: str, content_part: str):
         return (
             self.line_seperator.join(
@@ -32,17 +36,13 @@ class PowerShellScript(Script):
             f.write(self.get_complete_content())
         return Shell.exec(["pwsh", "-NoProfile", "-File", "script.ps1"])
 
-    def _export(
-            self,
-            key: str,
-            value: str,
-            check_unix_style_value: bool = False):
+    def _export(self, key: str, value: str):
         if value.startswith("(") and value.endswith(")"):
             pass
         elif not value.startswith("'") and not value.startswith('"'):
             value = '"' + value + '"'
         value = value.replace("\\", "/")
-        if check_unix_style_value:
+        if self.use_bash_stype_env_var:
             p = re.compile(r"\$\{([^}])*\}")
             value = p.sub(r"$env:\1", value)
         return "$env:" + key + "=" + value
