@@ -43,15 +43,8 @@ class BashScript(Script):
                     + key
                     + "} ; fi"
                 )
-        return (
-            "if [[ -z ${"
-            + key
-            + "+x}  ]]; then export "
-            + key
-            + "="
-            + self.__double_quota_escape_str(value)
-            + "; fi"
-        )
+        return "export " + key + "=" + \
+            self.__double_quota_escape_str(value) + "; fi"
 
     def _get_line_seperator(self):
         return "\n"
