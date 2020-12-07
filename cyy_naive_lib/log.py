@@ -40,7 +40,10 @@ for _handler in default_logger.handlers:
 
 if not __initialized:
     _handler = logging.StreamHandler()
-    __set_formatter(_handler)
+    with_color = True
+    if os.getenv("eink_screen") == "1":
+        with_color = False
+    __set_formatter(_handler, with_color=with_color)
     default_logger.addHandler(_handler)
     default_logger.setLevel(logging.DEBUG)
     __initialized = True
