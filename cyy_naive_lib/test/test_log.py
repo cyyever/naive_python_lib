@@ -1,8 +1,6 @@
-import tempfile
-import os
 import logging
 from log import default_logger, set_file_handler
-from tempdir import TempDir
+from fs.tempdir import TempDir
 
 
 def test_log():

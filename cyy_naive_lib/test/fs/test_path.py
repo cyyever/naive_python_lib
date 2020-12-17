@@ -1,8 +1,7 @@
-import tempfile
 import os
 import shutil
-from path import list_files_by_suffixes
-from tempdir import TempDir
+from fs.path import list_files_by_suffixes
+from fs.tempdir import TempDir
 
 
 def test_list_files_by_suffixes():

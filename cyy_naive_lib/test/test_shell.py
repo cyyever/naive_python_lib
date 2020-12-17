@@ -2,7 +2,7 @@ from shutil import which
 from shell_factory import exec_cmd
 from shell.docker_file import DockerFile
 from shell.bash_script import BashScript
-from tempdir import TempDir
+from fs.tempdir import TempDir
 
 
 def test_exec_cmd():
