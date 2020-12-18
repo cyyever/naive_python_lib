@@ -2,6 +2,7 @@ import os
 import subprocess
 import platform
 from shutil import which
+from util import readlines
 
 __operating_system = None
 
@@ -51,7 +52,7 @@ def get_processor_name() -> str:
     if os.path.isfile("/proc/cpuinfo"):
         __processor_name = [
             line.lower()
-            for line in open("/proc/cpuinfo", "r").readlines()
+            for line in readlines("/proc/cpuinfo")
             if "model name" in line.lower()
         ][0]
     if __processor_name is None:

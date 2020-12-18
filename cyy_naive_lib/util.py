@@ -1,6 +1,7 @@
 import time
 import traceback
 from typing import Callable, Tuple
+from typing import List
 from log import get_logger
 
 
@@ -21,3 +22,14 @@ def retry_operation(operation: Callable,
         get_logger().error("operation failed,retry after %s seconds", retry_sleep_time)
         time.sleep(retry_sleep_time)
     return False, None
+
+
+def readlines(file_path: str) -> List[str]:
+    lines = []
+    try:
+        with open(file_path, "r") as f:
+            lines += f.readlines()
+    except Exception:
+        with open(file_path, "r", encoding="utf-8-sig") as f:
+            lines += f.readlines()
+    return lines
