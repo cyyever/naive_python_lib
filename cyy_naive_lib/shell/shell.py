@@ -41,6 +41,8 @@ class Shell:
                     break
 
             exit_code = proc.wait()
+            for thd in threads:
+                thd.join()
             output_file.seek(0, 0)
             return [Shell.__decode_output(output_file.read()), exit_code]
 

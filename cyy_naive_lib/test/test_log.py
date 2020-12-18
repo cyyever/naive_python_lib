@@ -1,6 +1,7 @@
 import logging
 from log import default_logger, set_file_handler
 from fs.tempdir import TempDir
+from util import readlines
 
 
 def test_log():
@@ -11,4 +12,4 @@ def test_log():
         default_logger.debug("no debug msg")
         default_logger.info("info msg")
         default_logger.error("error msg")
-        default_logger.info("file content %s", open("./log", "rt").readlines())
+        default_logger.info("file content %s", readlines("./log"))
