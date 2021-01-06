@@ -3,7 +3,6 @@ from data_structure.process_task_queue import ProcessTaskQueue
 
 def hello(task, args):
     assert task == ()
-    assert not args
     return "abc"
 
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import traceback
 import multiprocessing
+import traceback
 from typing import Callable
 
 from log import default_logger
@@ -11,11 +11,8 @@ class _SentinelTask:
 
 
 def worker(
-        task_queue,
-        result_queue,
-        processor_fun: Callable,
-        stop_event,
-        extra_arguments: list):
+    task_queue, result_queue, processor_fun: Callable, stop_event, extra_arguments: list
+):
     while not stop_event.is_set():
         task = task_queue.get()
         if isinstance(task, _SentinelTask):
@@ -82,5 +79,5 @@ class ProcessTaskQueue:
     def get_result(self):
         return self.result_queue.get()
 
-    def _get_extra_task_arguments(self, __):
-        return []
+    def _get_extra_task_arguments(self, worker_id):
+        return [worker_id]
