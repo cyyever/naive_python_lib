@@ -10,6 +10,12 @@ class _SentinelTask:
     pass
 
 
+class RepeatedResult:
+    def __init__(self, data, num):
+        self.data = data
+        self.num = num
+
+
 def worker(
     task_queue, result_queue, processor_fun: Callable, stop_event, extra_arguments: list
 ):
@@ -20,7 +26,11 @@ def worker(
         try:
             res = processor_fun(task, extra_arguments)
             if res is not None:
-                result_queue.put(res)
+                if isinstance(res, RepeatedResult):
+                    for _ in range(res.num):
+                        result_queue.put(res.data)
+                else:
+                    result_queue.put(res)
         except Exception as e:
             default_logger.error("catch exception:%s", e)
             default_logger.error("traceback:%s", traceback.format_exc())
