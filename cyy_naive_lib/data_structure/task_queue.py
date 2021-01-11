@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import multiprocessing
+import queue
+import threading
 import traceback
 from typing import Callable
 
@@ -36,13 +37,20 @@ def worker(
             default_logger.error("traceback:%s", traceback.format_exc())
 
 
-class ProcessTaskQueue:
+class TaskQueue:
     def __init__(
-        self, worker_fun: Callable, ctx=multiprocessing, worker_num: int = 1
+        self,
+        worker_fun: Callable,
+        ctx,
+        worker_num: int = 1,
     ):
         self.ctx = ctx
-        self.task_queue = self.ctx.Queue()
-        self.result_queue = self.ctx.Queue()
+        if ctx is threading:
+            self.task_queue = queue.Queue()
+            self.result_queue = queue.Queue()
+        else:
+            self.task_queue = self.ctx.Queue()
+            self.result_queue = self.ctx.Queue()
         self.stop_event = self.ctx.Event()
         self.worker_num = worker_num
         self.worker_fun = worker_fun
@@ -51,7 +59,15 @@ class ProcessTaskQueue:
 
     def start(self):
         for worker_id in range(len(self.workers), self.worker_num):
-            t = self.ctx.Process(
+            creator_fun = None
+            if hasattr(self.ctx, "Process"):
+                creator_fun = self.ctx.Process
+            elif hasattr(self.ctx, "Thread"):
+                creator_fun = self.ctx.Thread
+            else:
+                raise RuntimeError("Unsupported context:" + str(self.ctx))
+
+            self.workers[worker_id] = creator_fun(
                 target=worker,
                 args=(
                     self.task_queue,
@@ -61,8 +77,7 @@ class ProcessTaskQueue:
                     self._get_extra_task_arguments(worker_id),
                 ),
             )
-            self.workers[worker_id] = t
-            t.start()
+            self.workers[worker_id].start()
 
     def join(self):
         for worker in self.workers.values():
