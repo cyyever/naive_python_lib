@@ -1,74 +1,96 @@
-#!/usr/bin/env python
-import queue
-import threading
+#!/usr/bin/env python3
+import multiprocessing
 import traceback
 from typing import Callable
 
-
-from log import get_logger
+from log import default_logger
 
 
 class _SentinelTask:
     pass
 
 
-class TaskQueue(queue.Queue):
-    def __init__(self, processor: Callable, worker_num: int = 1):
-        queue.Queue.__init__(self)
+class RepeatedResult:
+    def __init__(self, data, num):
+        self.data = data
+        self.num = num
+
+
+def worker(
+    task_queue, result_queue, worker_fun: Callable, stop_event, extra_arguments: list
+):
+    while not stop_event.is_set():
+        task = task_queue.get()
+        if isinstance(task, _SentinelTask):
+            break
+        try:
+            res = worker_fun(task, extra_arguments)
+            if res is not None:
+                if isinstance(res, RepeatedResult):
+                    for _ in range(res.num):
+                        result_queue.put(res.data)
+                else:
+                    result_queue.put(res)
+        except Exception as e:
+            default_logger.error("catch exception:%s", e)
+            default_logger.error("traceback:%s", traceback.format_exc())
+
+
+class ProcessTaskQueue:
+    def __init__(
+        self, worker_fun: Callable, ctx=multiprocessing, worker_num: int = 1
+    ):
+        self.ctx = ctx
+        self.task_queue = self.ctx.Queue()
+        self.result_queue = self.ctx.Queue()
+        self.stop_event = self.ctx.Event()
         self.worker_num = worker_num
-        self.processor = processor
-        self.threads: list = []
-        self.stop_event = threading.Event()
+        self.worker_fun = worker_fun
+        self.workers: dict = dict()
         self.start()
 
     def start(self):
-        self.stop()
-        for worker_id in range(self.worker_num):
-            t = threading.Thread(
-                target=self.__worker,
+        for worker_id in range(len(self.workers), self.worker_num):
+            t = self.ctx.Process(
+                target=worker,
                 args=(
+                    self.task_queue,
+                    self.result_queue,
+                    self.worker_fun,
                     self.stop_event,
-                    self._get_extra_task_arguments(worker_id)),
+                    self._get_extra_task_arguments(worker_id),
+                ),
             )
-            self.threads.append(t)
+            self.workers[worker_id] = t
             t.start()
 
+    def join(self):
+        for worker in self.workers.values():
+            worker.join()
+
     def stop(self, wait_task=True):
-        if not self.threads:
+        if not self.workers:
             return
         # stop workers
         for _ in range(self.worker_num):
-            self.put(_SentinelTask())
+            self.add_task(_SentinelTask())
         # block until all tasks are done
         if wait_task:
             self.join()
-        for thd in self.threads:
-            thd.join()
-        self.threads = []
+        for worker in self.workers.values():
+            worker.join()
+        self.workers = dict()
 
     def force_stop(self):
         self.stop_event.set()
-        self.stop(False)
+        self.stop()
         self.stop_event.clear()
 
     def add_task(self, task):
-        self.put(task)
+        self.task_queue.put(task)
 
-    def __worker(self, stop_event, extra_arguments: list):
-        while not stop_event.is_set():
-            task = self.get()
-            if isinstance(task, _SentinelTask):
-                self.task_done()
-                break
-            try:
-                if extra_arguments:
-                    self.processor(task, *extra_arguments)
-                else:
-                    self.processor(task)
-            except Exception as e:
-                get_logger().error("catch exception:%s", e)
-                get_logger().error("traceback:%s", traceback.format_exc())
-            self.task_done()
+    def get_result(self):
+        return self.result_queue.get()
 
-    def _get_extra_task_arguments(self, _):
-        return []
+    def _get_extra_task_arguments(self, worker_id):
+        return [worker_id]
