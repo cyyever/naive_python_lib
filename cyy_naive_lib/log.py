@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
+import atexit
+import logging
+import logging.handlers
 import os
 import sys
-import logging
-from colorlog import ColoredFormatter
+import threading
+from multiprocessing import Queue
 
+from colorlog import ColoredFormatter
 
 default_logger: logging.RootLogger = logging.root
 
@@ -31,6 +35,14 @@ def __set_formatter(_handler, with_color=True):
     _handler.setFormatter(formatter)
 
 
+def __logger_thread(q):
+    while True:
+        record = q.get()
+        if record is None:
+            break
+        default_logger.handle(record)
+
+
 __initialized = False
 
 for _handler in default_logger.handlers:
@@ -38,6 +50,7 @@ for _handler in default_logger.handlers:
         if _handler.stream == sys.stderr:
             __initialized = True
 
+__q: Queue = Queue()
 if not __initialized:
     _handler = logging.StreamHandler()
     with_color = True
@@ -45,7 +58,15 @@ if not __initialized:
         with_color = False
     __set_formatter(_handler, with_color=with_color)
     default_logger.addHandler(_handler)
-    default_logger.setLevel(logging.DEBUG)
+    __lp = threading.Thread(target=__logger_thread, args=(__q,), daemon=True)
+    __lp.start()
+
+    def __exit_handler():
+        global __q
+        global __lp
+        __q.put(None)
+
+    atexit.register(__exit_handler)
     __initialized = True
 
 
@@ -60,5 +81,10 @@ def set_file_handler(filename: str):
 
 
 def get_logger():
-    global default_logger
-    return default_logger
+    logger = logging.getLogger("colored_multiprocess_logger")
+    print(logging.handlers)
+    if not logger.handlers:
+        qh = logging.handlers.QueueHandler(__q)
+        logger.addHandler(qh)
+        logger.setLevel(logging.DEBUG)
+    return logger

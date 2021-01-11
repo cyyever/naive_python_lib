@@ -1,8 +1,11 @@
 from data_structure.process_task_queue import ProcessTaskQueue
+from log import get_logger
 
 
 def hello(task, args):
     assert task == ()
+    get_logger().info("call from other process")
+
     return "abc"
 
 
