@@ -9,7 +9,7 @@ from multiprocessing import Queue
 
 from colorlog import ColoredFormatter
 
-default_logger: logging.RootLogger = logging.root
+__root_logger: logging.RootLogger = logging.root
 
 
 def __set_formatter(_handler, with_color=True):
@@ -40,12 +40,12 @@ def __logger_thread(q):
         record = q.get()
         if record is None:
             break
-        default_logger.handle(record)
+        __root_logger.handle(record)
 
 
 __initialized = False
 
-for _handler in default_logger.handlers:
+for _handler in __root_logger.handlers:
     if isinstance(_handler, logging.StreamHandler):
         if _handler.stream == sys.stderr:
             __initialized = True
@@ -57,7 +57,7 @@ if not __initialized:
     if os.getenv("eink_screen") == "1":
         with_color = False
     __set_formatter(_handler, with_color=with_color)
-    default_logger.addHandler(_handler)
+    __root_logger.addHandler(_handler)
     __lp = threading.Thread(target=__logger_thread, args=(__q,), daemon=True)
     __lp.start()
 
@@ -71,13 +71,13 @@ if not __initialized:
 
 
 def set_file_handler(filename: str):
-    global default_logger
+    global __root_logger
     log_dir = os.path.dirname(filename)
     if log_dir:
         os.makedirs(log_dir, exist_ok=True)
     _handler = logging.FileHandler(filename)
     __set_formatter(_handler, with_color=False)
-    default_logger.addHandler(_handler)
+    __root_logger.addHandler(_handler)
 
 
 def get_logger():

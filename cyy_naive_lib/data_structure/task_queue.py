@@ -7,7 +7,7 @@ from typing import Callable
 
 import psutil
 
-from log import default_logger
+from log import get_logger
 
 
 class _SentinelTask:
@@ -42,12 +42,12 @@ def worker(
                     result_queue.put(res)
         except queue.Empty:
             if not psutil.pid_exists(pid):
-                default_logger.error("exit because parent process %s has died", pid)
+                get_logger().error("exit because parent process %s has died", pid)
                 break
             continue
         except Exception as e:
-            default_logger.error("catch exception:%s", e)
-            default_logger.error("traceback:%s", traceback.format_exc())
+            get_logger().error("catch exception:%s", e)
+            get_logger().error("traceback:%s", traceback.format_exc())
 
 
 class TaskQueue:
