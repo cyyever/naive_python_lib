@@ -21,10 +21,10 @@ def worker(
     task_queue, result_queue, worker_fun: Callable, stop_event, extra_arguments: list
 ):
     while not stop_event.is_set():
-        task = task_queue.get()
-        if isinstance(task, _SentinelTask):
-            break
         try:
+            task = task_queue.get(3600)
+            if isinstance(task, _SentinelTask):
+                break
             res = worker_fun(task, extra_arguments)
             if res is not None:
                 if isinstance(res, RepeatedResult):
@@ -32,6 +32,8 @@ def worker(
                         result_queue.put(res.data)
                 else:
                     result_queue.put(res)
+        except queue.Empty:
+            break
         except Exception as e:
             default_logger.error("catch exception:%s", e)
             default_logger.error("traceback:%s", traceback.format_exc())
@@ -58,26 +60,31 @@ class TaskQueue:
         self.start()
 
     def start(self):
-        for worker_id in range(len(self.workers), self.worker_num):
-            creator_fun = None
-            if hasattr(self.ctx, "Process"):
-                creator_fun = self.ctx.Process
-            elif hasattr(self.ctx, "Thread"):
-                creator_fun = self.ctx.Thread
-            else:
-                raise RuntimeError("Unsupported context:" + str(self.ctx))
+        for _ in range(len(self.workers), self.worker_num):
+            worker_id = max(self.workers.keys(), default=0) + 1
+            self.__start_worker(worker_id)
 
-            self.workers[worker_id] = creator_fun(
-                target=worker,
-                args=(
-                    self.task_queue,
-                    self.result_queue,
-                    self.worker_fun,
-                    self.stop_event,
-                    self._get_extra_task_arguments(worker_id),
-                ),
-            )
-            self.workers[worker_id].start()
+    def __start_worker(self, worker_id):
+        assert worker_id not in self.workers
+        creator_fun = None
+        if hasattr(self.ctx, "Process"):
+            creator_fun = self.ctx.Process
+        elif hasattr(self.ctx, "Thread"):
+            creator_fun = self.ctx.Thread
+        else:
+            raise RuntimeError("Unsupported context:" + str(self.ctx))
+
+        self.workers[worker_id] = creator_fun(
+            target=worker,
+            args=(
+                self.task_queue,
+                self.result_queue,
+                self.worker_fun,
+                self.stop_event,
+                self._get_extra_task_arguments(worker_id),
+            ),
+        )
+        self.workers[worker_id].start()
 
     def join(self):
         for worker in self.workers.values():
