@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
+import os
 import queue
 import threading
 import traceback
 from typing import Callable
+
+import psutil
 
 from log import default_logger
 
@@ -18,7 +21,12 @@ class RepeatedResult:
 
 
 def worker(
-    task_queue, result_queue, worker_fun: Callable, stop_event, extra_arguments: list
+    task_queue,
+    result_queue,
+    worker_fun: Callable,
+    stop_event,
+    pid,
+    extra_arguments: list,
 ):
     while not stop_event.is_set():
         try:
@@ -33,7 +41,10 @@ def worker(
                 else:
                     result_queue.put(res)
         except queue.Empty:
-            break
+            if not psutil.pid_exists(pid):
+                default_logger.error("exit because parent process %s has died", pid)
+                break
+            continue
         except Exception as e:
             default_logger.error("catch exception:%s", e)
             default_logger.error("traceback:%s", traceback.format_exc())
@@ -81,6 +92,7 @@ class TaskQueue:
                 self.result_queue,
                 self.worker_fun,
                 self.stop_event,
+                os.getpid(),
                 self._get_extra_task_arguments(worker_id),
             ),
         )
