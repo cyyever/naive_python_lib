@@ -3,7 +3,8 @@ import atexit
 import logging
 import logging.handlers
 import os
-from multiprocessing import Process, Queue
+import threading
+from multiprocessing import Queue
 
 from colorlog import ColoredFormatter
 
@@ -49,14 +50,13 @@ if not __colored_logger.handlers:
         with_color = False
     __set_formatter(_handler, with_color=with_color)
     __colored_logger.addHandler(_handler)
-    __lp = Process(target=__worker, args=(__q, __colored_logger))
+    __lp = threading.Thread(target=__worker, args=(__q, __colored_logger), daemon=True)
     __lp.start()
 
     def __exit_handler():
         global __q
         global __lp
         __q.put(None)
-        __lp.join()
 
     atexit.register(__exit_handler)
 
