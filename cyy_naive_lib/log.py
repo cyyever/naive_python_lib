@@ -82,7 +82,6 @@ def set_file_handler(filename: str):
 
 def get_logger():
     logger = logging.getLogger("colored_multiprocess_logger")
-    print(logging.handlers)
     if not logger.handlers:
         qh = logging.handlers.QueueHandler(__q)
         logger.addHandler(qh)
