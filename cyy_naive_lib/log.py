@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import atexit
+# import atexit
 import logging
 import logging.handlers
 import os
@@ -34,10 +34,11 @@ def __set_formatter(_handler, with_color=True):
 
 def __worker(q, logger):
     while True:
-        record = q.get()
-        if record is None:
+        try:
+            record = q.get()
+            logger.handle(record)
+        except EOFError:
             break
-        logger.handle(record)
 
 
 __q: Queue = Queue()
@@ -53,12 +54,12 @@ if not __colored_logger.handlers:
     __lp = threading.Thread(target=__worker, args=(__q, __colored_logger), daemon=True)
     __lp.start()
 
-    def __exit_handler():
-        global __q
-        global __lp
-        __q.put(None)
+    # def __exit_handler():
+    #     global __q
+    #     global __lp
+    #     __q.put(None)
 
-    atexit.register(__exit_handler)
+    # atexit.register(__exit_handler)
 
 __stub_colored_logger = logging.getLogger("colored_multiprocess_logger")
 if not __stub_colored_logger.handlers:
