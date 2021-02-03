@@ -1,6 +1,6 @@
 import concurrent.futures
 import traceback
-from typing import Callable
+from typing import Callable, List
 
 from log import get_logger
 
@@ -8,12 +8,15 @@ from log import get_logger
 class ExecutorPool:
     def __init__(self, executor):
         self.executor = executor
-        self.futures = []
+        self.futures: List[concurrent.futures.Future] = []
 
     def stop(self):
         concurrent.futures.wait(self.futures)
         for f in self.futures:
-            get_logger().info("future result is %s", f.result())
+            # DO NOT REMOVE THIS LINE
+            # check the result of future, may raise a exception here
+            result = f.result()
+            get_logger().info("future result is %s", result)
 
     @staticmethod
     def process_once(fn, *args, **kwargs):
