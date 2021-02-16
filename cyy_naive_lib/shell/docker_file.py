@@ -2,6 +2,7 @@
 import os
 from shutil import which
 
+from ..fs.tempdir import TempDir
 from .bash_script import BashScript
 from .shell import Shell
 
@@ -19,9 +20,13 @@ class DockerFile(BashScript):
         additional_docker_commands: list = None,
     ):
         from_src_dir, docker_src_dir = None, None
+        temp_dir = TempDir()
         if src_dir_pair is not None:
             from_src_dir, docker_src_dir = src_dir_pair
             os.chdir(from_src_dir)
+        else:
+            temp_dir.__enter__()
+
         script_name = "docker.sh"
         with open(script_name, "wt") as f:
             f.write(self.script.get_complete_content())
