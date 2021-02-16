@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-
+import os
 from shutil import which
+
 from .bash_script import BashScript
 from .shell import Shell
 
@@ -14,9 +15,13 @@ class DockerFile(BashScript):
     def build(
         self,
         result_image: str,
-        src_dir: str = None,
+        src_dir_pair: tuple = None,
         additional_docker_commands: list = None,
     ):
+        from_src_dir, docker_src_dir = None, None
+        if src_dir_pair is not None:
+            from_src_dir, docker_src_dir = src_dir_pair
+            os.chdir(from_src_dir)
         script_name = "docker.sh"
         with open(script_name, "wt") as f:
             f.write(self.script.get_complete_content())
@@ -25,9 +30,9 @@ class DockerFile(BashScript):
             for line in self.content:
                 print(line, file=f)
 
-            if src_dir is not None:
-                print("RUN mkdir -p ", src_dir, file=f)
-                print("COPY . ", src_dir, file=f)
+            if src_dir_pair is not None:
+                print("RUN mkdir -p ", docker_src_dir, file=f)
+                print("COPY . ", docker_src_dir, file=f)
             print("COPY ", script_name, " /", file=f)
             print("RUN bash /" + script_name, file=f)
             print("RUN rm /" + script_name, file=f)
