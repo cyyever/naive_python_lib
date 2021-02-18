@@ -2,7 +2,7 @@
 import os
 from shutil import which
 
-from ..fs.tempdir import TempDir
+from fs.tempdir import TempDir
 from .bash_script import BashScript
 from .shell import Shell
 
