@@ -20,25 +20,24 @@ class DockerFile(BashScript):
         additional_docker_commands: list = None,
     ):
         with TempDir():
-            from_src_dir, docker_src_dir = None, None
+            host_src_dir, docker_src_dir = None, None
             if src_dir_pair is not None:
-                from_src_dir, docker_src_dir = src_dir_pair
-                os.chdir(from_src_dir)
+                host_src_dir, docker_src_dir = src_dir_pair
+                os.chdir(host_src_dir)
+            if docker_src_dir is None:
+                docker_src_dir = "/"
 
             script_name = "docker.sh"
             with open(script_name, "wt") as f:
                 f.write(self.script.get_complete_content())
+            script_path = os.path.join(docker_src_dir, script_name)
 
             with open("Dockerfile", "wt") as f:
                 for line in self.content:
                     print(line, file=f)
 
-                if src_dir_pair is not None:
-                    print("COPY . ", docker_src_dir, file=f)
-                else:
-                    print("COPY ", script_name, " /", file=f)
-                print("RUN bash /" + script_name + " && rm " + script_name, file=f)
-                # print("RUN rm /" + script_name, file=f)
+                print("COPY . ", docker_src_dir, file=f)
+                print("RUN bash " + script_path, file=f)
                 if additional_docker_commands is not None:
                     for cmd in additional_docker_commands:
                         print(cmd, file=f)
@@ -53,7 +52,6 @@ class DockerFile(BashScript):
             cmd += [
                 "docker",
                 "build",
-                "--squash",
                 "-t",
                 result_image,
                 "-f",
