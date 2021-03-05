@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import os
+import sys
+sys.path.insert(0, os.path.join(sys.path[0], ".."))
 from shutil import which
 
 from fs.tempdir import TempDir
+
 from .bash_script import BashScript
 from .shell import Shell
-
 
 class DockerFile(BashScript):
     def __init__(self, from_image: str, script: BashScript):
