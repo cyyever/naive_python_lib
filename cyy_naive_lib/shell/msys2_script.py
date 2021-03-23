@@ -22,7 +22,8 @@ class MSYS2Script(BashScript):
                     "-no-start",
                     "-full-path",
                     "-where",
-                    "." "-c",
+                    ".",
+                    "-c",
                     "bash script.sh",
                 ]
             )
