@@ -1,8 +1,16 @@
-from typing import Callable, Generator
 from collections.abc import Mapping, MutableMapping
+from typing import Callable, Generator
 
 
 def get_mapping_values_by_order(d: Mapping) -> Generator:
+    r"""
+    Return a generator giving the values by key order.
+    """
+    for k in sorted(d.keys()):
+        yield d[k]
+
+
+def get_mapping_values_by_key_order(d: Mapping) -> Generator:
     r"""
     Return a generator giving the values by key order.
     """
