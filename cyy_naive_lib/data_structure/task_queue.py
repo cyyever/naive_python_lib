@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import copy
 import os
 import queue
 import threading
@@ -6,7 +7,6 @@ import traceback
 from typing import Callable
 
 import psutil
-
 from log import get_logger
 
 
@@ -15,9 +15,16 @@ class _SentinelTask:
 
 
 class RepeatedResult:
-    def __init__(self, data, num):
-        self.data = data
+    def __init__(self, data, num, copy_data=True):
+        self.__data = data
         self.num = num
+        self.__copy_data = copy_data
+
+    @property
+    def data(self):
+        if self.__copy_data:
+            return copy.deepcopy(self.__data)
+        return self.__data
 
 
 def worker(
