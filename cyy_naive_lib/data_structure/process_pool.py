@@ -1,5 +1,4 @@
 import concurrent.futures
-import multiprocessing
 
 from .executor_pool import ExecutorPool
 
