@@ -40,7 +40,6 @@ def __worker(q, logger):
             break
 
 
-__q: Queue = Queue()
 __colored_logger: logging.Logger = logging.getLogger("colored_logger")
 if not __colored_logger.handlers:
     __colored_logger.setLevel(logging.DEBUG)
@@ -50,15 +49,18 @@ if not __colored_logger.handlers:
         with_color = False
     __set_formatter(_handler, with_color=with_color)
     __colored_logger.addHandler(_handler)
-    __lp = threading.Thread(target=__worker, args=(__q, __colored_logger), daemon=True)
-    __lp.start()
 
 
 __stub_colored_logger = logging.getLogger("colored_multiprocess_logger")
 if not __stub_colored_logger.handlers:
     __stub_colored_logger.setLevel(logging.INFO)
-    qh = logging.handlers.QueueHandler(__q)
+    queue: Queue = Queue()
+    qh = logging.handlers.QueueHandler(queue)
     __stub_colored_logger.addHandler(qh)
+    __lp = threading.Thread(
+        target=__worker, args=(queue, __colored_logger), daemon=True
+    )
+    __lp.start()
 
 
 def set_file_handler(filename: str):
