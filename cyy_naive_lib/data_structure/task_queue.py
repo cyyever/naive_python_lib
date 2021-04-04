@@ -26,6 +26,27 @@ class RepeatedResult:
             return copy.deepcopy(self.__data)
         return self.__data
 
+def work(
+    q,
+    pid,
+    extra_arguments: list,
+):
+    while not q.stop_event.is_set():
+        try:
+            task = q.task_queue.get(3600)
+            if isinstance(task, _SentinelTask):
+                break
+            res = q.worker_fun(task, extra_arguments)
+            if res is not None:
+                q.put_result(res)
+        except queue.Empty:
+            if not psutil.pid_exists(pid):
+                get_logger().error("exit because parent process %s has died", pid)
+                break
+            continue
+        except Exception as e:
+            get_logger().error("catch exception:%s", e)
+            get_logger().error("traceback:%s", traceback.format_exc())
 
 class TaskQueue:
     def __init__(
@@ -40,9 +61,9 @@ class TaskQueue:
             self.result_queue = queue.Queue()
             self.stop_event = self.ctx.Event()
         else:
-            self.task_queue = self.ctx.Manager().Queue()
-            self.result_queue = self.ctx.Manager().Queue()
-            self.stop_event = self.ctx.Manager().Event()
+            self.task_queue = self.ctx.Queue()
+            self.result_queue = self.ctx.Queue()
+            self.stop_event = self.ctx.Event()
         self.worker_num = worker_num
         self.worker_fun = worker_fun
         self.workers: dict = dict()
@@ -60,28 +81,6 @@ class TaskQueue:
         else:
             self.result_queue.put(result)
 
-    @staticmethod
-    def __work(
-        q,
-        pid,
-        extra_arguments: list,
-    ):
-        while not q.stop_event.is_set():
-            try:
-                task = q.task_queue.get(3600)
-                if isinstance(task, _SentinelTask):
-                    break
-                res = q.worker_fun(task, extra_arguments)
-                if res is not None:
-                    q.put_result(res)
-            except queue.Empty:
-                if not psutil.pid_exists(pid):
-                    get_logger().error("exit because parent process %s has died", pid)
-                    break
-                continue
-            except Exception as e:
-                get_logger().error("catch exception:%s", e)
-                get_logger().error("traceback:%s", traceback.format_exc())
 
     def __start_worker(self, worker_id):
         assert worker_id not in self.workers
@@ -94,7 +93,7 @@ class TaskQueue:
             raise RuntimeError("Unsupported context:" + str(self.ctx))
 
         self.workers[worker_id] = worker_creator_fun(
-            target=TaskQueue.__work,
+            target=work,
             args=(
                 self,
                 os.getpid(),
