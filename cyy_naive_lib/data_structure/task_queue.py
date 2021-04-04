@@ -42,11 +42,7 @@ def worker(
                 break
             res = worker_fun(task, extra_arguments)
             if res is not None:
-                if isinstance(res, RepeatedResult):
-                    for _ in range(res.num):
-                        result_queue.put(res.data)
-                else:
-                    result_queue.put(res)
+                TaskQueue.put_result(result_queue, res)
         except queue.Empty:
             if not psutil.pid_exists(pid):
                 get_logger().error("exit because parent process %s has died", pid)
@@ -68,10 +64,11 @@ class TaskQueue:
         if ctx is threading:
             self.task_queue = queue.Queue()
             self.result_queue = queue.Queue()
+            self.stop_event = self.ctx.Event()
         else:
-            self.task_queue = self.ctx.Queue()
-            self.result_queue = self.ctx.Queue()
-        self.stop_event = self.ctx.Event()
+            self.task_queue = self.ctx.Manager().Queue()
+            self.result_queue = self.ctx.Manager().Queue()
+            self.stop_event = self.ctx.Manager().Event()
         self.worker_num = worker_num
         self.worker_fun = worker_fun
         self.workers: dict = dict()
@@ -81,6 +78,14 @@ class TaskQueue:
         for _ in range(len(self.workers), self.worker_num):
             worker_id = max(self.workers.keys(), default=0) + 1
             self.__start_worker(worker_id)
+
+    @staticmethod
+    def put_result(result_queue, result):
+        if isinstance(result, RepeatedResult):
+            for _ in range(result.num):
+                result_queue.put(result.data)
+        else:
+            result_queue.put(result)
 
     def __start_worker(self, worker_id):
         assert worker_id not in self.workers
