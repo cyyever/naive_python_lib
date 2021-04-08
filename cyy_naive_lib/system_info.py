@@ -24,6 +24,8 @@ def get_operating_system() -> str:
                 return "ubuntu"
             if os.path.isfile("/etc/centos-release"):
                 return "centos"
+            if os.path.isfile("/etc/fedora-release"):
+                return "fedora"
             if which("lsb_release") is not None:
                 output = (
                     subprocess.check_output("lsb_release -s -i", shell=True)
