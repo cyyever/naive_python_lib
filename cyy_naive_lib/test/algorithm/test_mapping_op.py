@@ -1,12 +1,9 @@
-from algorithm.mapping_op import (
-    get_mapping_values_by_order,
-    change_mapping_keys,
-    flatten_mapping,
-)
+from algorithm.mapping_op import (change_mapping_keys, flatten_mapping,
+                                  get_mapping_values_by_key_order)
 
 
-def test_get_mapping_values_by_order():
-    res = list(get_mapping_values_by_order({2: "b", 1: "a"}))
+def test_get_mapping_values_by_key_order():
+    res = list(get_mapping_values_by_key_order({2: "b", 1: "a"}))
     assert res == ["a", "b"]
 
 

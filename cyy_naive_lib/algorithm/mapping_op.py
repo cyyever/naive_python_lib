@@ -2,14 +2,6 @@ from collections.abc import Mapping, MutableMapping
 from typing import Callable, Generator
 
 
-def get_mapping_values_by_order(d: Mapping) -> Generator:
-    r"""
-    Return a generator giving the values by key order.
-    """
-    for k in sorted(d.keys()):
-        yield d[k]
-
-
 def get_mapping_values_by_key_order(d: Mapping) -> Generator:
     r"""
     Return a generator giving the values by key order.
@@ -40,7 +32,7 @@ def flatten_mapping(d: Mapping) -> list:
     """
 
     res = list()
-    for v in get_mapping_values_by_order(d):
+    for v in get_mapping_values_by_key_order(d):
         if isinstance(v, Mapping):
             res += flatten_mapping(v)
         else:
