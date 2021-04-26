@@ -8,8 +8,17 @@ from multiprocessing import Queue
 from colorlog import ColoredFormatter
 
 
-def __set_formatter(_handler, with_color=True):
-    __format_str: str = "%(asctime)s %(levelname)s {thd:%(thread)d} [%(filename)s => %(lineno)d] : %(message)s"
+def __set_formatter(_handler, with_color=True, thread_name=None):
+    if with_color:
+        if os.getenv("eink_screen") == "1":
+            with_color = False
+    if thread_name is None:
+        thread_name = "{thd:%(thread)d}"
+    __format_str: str = (
+        "%(asctime)s %(levelname)s "
+        + thread_name
+        + " [%(filename)s => %(lineno)d] : %(message)s"
+    )
     if with_color:
         formatter = ColoredFormatter(
             "%(log_color)s" + __format_str,
@@ -44,10 +53,7 @@ __colored_logger: logging.Logger = logging.getLogger("colored_logger")
 if not __colored_logger.handlers:
     __colored_logger.setLevel(logging.DEBUG)
     _handler = logging.StreamHandler()
-    with_color = True
-    if os.getenv("eink_screen") == "1":
-        with_color = False
-    __set_formatter(_handler, with_color=with_color)
+    __set_formatter(_handler, with_color=True)
     __colored_logger.addHandler(_handler)
 
 
@@ -62,14 +68,28 @@ if not __stub_colored_logger.handlers:
     )
     __lp.start()
 
+__thread_name = None
+
+
+def set_thread_name(thread_name: str):
+    global __thread_name
+    global __colored_logger
+    __thread_name = thread_name
+    for _handler in __colored_logger.handlers:
+        with_color = True
+        if isinstance(_handler, logging.FileHandler):
+            with_color = False
+        __set_formatter(_handler, with_color=with_color, thread_name=__thread_name)
+
 
 def set_file_handler(filename: str):
+    global __thread_name
     global __colored_logger
     log_dir = os.path.dirname(filename)
     if log_dir:
         os.makedirs(log_dir, exist_ok=True)
     handler = logging.FileHandler(filename)
-    __set_formatter(handler, with_color=False)
+    __set_formatter(handler, with_color=False, thread_name=__thread_name)
     __colored_logger.addHandler(handler)
 
 
