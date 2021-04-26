@@ -14,6 +14,8 @@ def __set_formatter(_handler, with_color=True, thread_name=None):
             with_color = False
     if thread_name is None:
         thread_name = "{thd:%(thread)d}"
+    else:
+        thread_name = "{" + thread_name + "}"
     __format_str: str = (
         "%(asctime)s %(levelname)s "
         + thread_name
