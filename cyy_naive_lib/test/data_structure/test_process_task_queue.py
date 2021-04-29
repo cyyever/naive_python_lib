@@ -5,12 +5,11 @@ from log import get_logger
 def hello(task, args):
     assert task == ()
     get_logger().info("call from other process")
-
     return "abc"
 
 
 def test_process_task_queue():
-    queue = ProcessTaskQueue(hello)
+    queue = ProcessTaskQueue(hello, worker_num=8)
     queue.start()
     queue.add_task(())
     assert queue.get_result() == "abc"
