@@ -12,15 +12,7 @@ def __set_formatter(_handler, with_color=True, thread_name=None):
     if with_color:
         if os.getenv("eink_screen") == "1":
             with_color = False
-    if thread_name is None:
-        thread_name = "{thd:%(thread)d}"
-    else:
-        thread_name = "{" + thread_name + "}"
-    __format_str: str = (
-        "%(asctime)s %(levelname)s "
-        + thread_name
-        + " [%(filename)s => %(lineno)d] : %(message)s"
-    )
+    __format_str: str = "%(asctime)s %(levelname)s {thd:%(thread)d %(threadName)s} [%(filename)s => %(lineno)d] : %(message)s"
     if with_color:
         formatter = ColoredFormatter(
             "%(log_color)s" + __format_str,
@@ -73,15 +65,15 @@ if not __stub_colored_logger.handlers:
 __thread_name = None
 
 
-def set_thread_name(thread_name: str):
-    global __thread_name
-    global __colored_logger
-    __thread_name = thread_name
-    for _handler in __colored_logger.handlers:
-        with_color = True
-        if isinstance(_handler, logging.FileHandler):
-            with_color = False
-        __set_formatter(_handler, with_color=with_color, thread_name=__thread_name)
+# def set_thread_name(thread_name: str):
+#     global __thread_name
+#     global __colored_logger
+#     __thread_name = thread_name
+#     for _handler in __colored_logger.handlers:
+#         with_color = True
+#         if isinstance(_handler, logging.FileHandler):
+#             with_color = False
+#         __set_formatter(_handler, with_color=with_color, thread_name=__thread_name)
 
 
 def set_file_handler(filename: str):

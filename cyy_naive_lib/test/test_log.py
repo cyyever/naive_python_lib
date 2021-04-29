@@ -1,12 +1,13 @@
 import logging
+import threading
 
 from fs.tempdir import TempDir
-from log import get_logger, set_file_handler, set_thread_name
+from log import get_logger, set_file_handler
 
 
 def test_log():
     with TempDir():
-        set_thread_name("my thd")
+        threading.current_thread().name = "my thd"
         get_logger().debug("debug msg")
         get_logger().setLevel(logging.INFO)
         get_logger().debug("no debug msg")

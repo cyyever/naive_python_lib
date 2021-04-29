@@ -7,6 +7,7 @@ import traceback
 from typing import Callable
 
 import psutil
+
 from log import get_logger
 
 
@@ -25,6 +26,7 @@ class RepeatedResult:
         if self.__copy_data:
             return copy.deepcopy(self.__data)
         return self.__data
+
 
 def work(
     q,
@@ -48,6 +50,7 @@ def work(
             get_logger().error("catch exception:%s", e)
             get_logger().error("traceback:%s", traceback.format_exc())
 
+
 class TaskQueue:
     def __init__(
         self,
@@ -69,6 +72,12 @@ class TaskQueue:
         self.workers: dict = dict()
         self.start()
 
+    def __getstate__(self):
+        # capture what is normally pickled
+        state = self.__dict__.copy()
+        state["workers"] = None
+        return state
+
     def start(self):
         for _ in range(len(self.workers), self.worker_num):
             worker_id = max(self.workers.keys(), default=0) + 1
@@ -80,7 +89,6 @@ class TaskQueue:
                 self.result_queue.put(result.data)
         else:
             self.result_queue.put(result)
-
 
     def __start_worker(self, worker_id):
         assert worker_id not in self.workers
