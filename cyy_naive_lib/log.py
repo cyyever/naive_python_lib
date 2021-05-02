@@ -18,7 +18,6 @@ def __set_formatter(_handler, with_color=True, thread_name=None):
             "%(log_color)s" + __format_str,
             log_colors={
                 "DEBUG": "green",
-                "INFO": "white",
                 "WARNING": "yellow",
                 "ERROR": "red",
                 "CRITICAL": "bold_red",
