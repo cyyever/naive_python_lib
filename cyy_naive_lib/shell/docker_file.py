@@ -12,6 +12,7 @@ from .bash_script import BashScript
 from .shell import Shell
 
 
+
 class DockerFile(BashScript):
     def __init__(self, from_image: str, script: BashScript):
         self.content = ["FROM " + from_image]
@@ -23,6 +24,7 @@ class DockerFile(BashScript):
         result_image: str,
         src_dir_pair: tuple = None,
         additional_docker_commands: list = None,
+        use_experimental=False,
     ):
         with TempDir():
             host_src_dir, docker_src_dir = None, None
@@ -57,7 +59,7 @@ class DockerFile(BashScript):
             cmd += [
                 "docker",
                 "build",
-                "--squash",
+                "--squash" if use_experimental else "",
                 "-t",
                 result_image,
                 "-f",
