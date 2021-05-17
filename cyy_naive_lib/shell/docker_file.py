@@ -56,17 +56,17 @@ class DockerFile(BashScript):
             cmd = []
             if which("sudo") != "windows":
                 cmd.append("sudo")
-            cmd += [
-                "docker",
-                "build",
-                "--squash" if use_experimental else "",
+            docker_cmd = ["docker", "build"]
+            if use_experimental:
+                docker_cmd.append("--squash")
+            docker_cmd += [
                 "-t",
                 result_image,
                 "-f",
                 "Dockerfile",
                 ".",
             ]
-            output, exit_code = Shell.exec(cmd)
+            output, exit_code = Shell.exec(docker_cmd)
             if self.throw_on_failure and exit_code != 0:
                 raise RuntimeError("failed to build " + result_image)
             return output, exit_code
