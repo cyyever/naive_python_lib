@@ -16,7 +16,7 @@ class ExecutorPool:
             # DO NOT REMOVE THIS LINE
             # check the result of future, may raise a exception here
             result = f.result()
-            get_logger().info("future result is %s", result)
+            get_logger().debug("future result is %s", result)
 
     @staticmethod
     def process_once(fn, *args, **kwargs):
