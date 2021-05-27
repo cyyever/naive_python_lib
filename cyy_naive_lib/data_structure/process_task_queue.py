@@ -14,6 +14,7 @@ class ProcessTaskQueue(TaskQueue):
     ):
         super().__init__(
             worker_fun=worker_fun,
-            ctx=multiprocessing if not use_manager else multiprocessing.Manager(),
+            ctx=multiprocessing,
             worker_num=worker_num,
+            manager=None if not use_manager else multiprocessing.Manager(),
         )
