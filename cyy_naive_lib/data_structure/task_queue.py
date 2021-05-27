@@ -20,6 +20,12 @@ class RepeatedResult:
         self.num = num
         self.__copy_data = copy_data
 
+    def get_data(self):
+        return self.__data
+
+    def set_data(self, data):
+        self.__data = data
+
     @property
     def data(self):
         if self.__copy_data:
