@@ -68,12 +68,11 @@ class TaskQueue:
         if ctx is threading:
             self.task_queue = queue.Queue()
             self.result_queue = queue.Queue()
-            self.stop_event = self.ctx.Event()
         else:
-            # self.manager = self.ctx.Manager()
             self.task_queue = self.ctx.Queue()
             self.result_queue = self.ctx.Queue()
-            self.stop_event = self.ctx.Event()
+        self.stop_event = self.ctx.Event()
+        self.use_manager = isinstance(self.ctx, multiprocessing.managers.SyncManager)
         self.worker_num = worker_num
         self.worker_fun = worker_fun
         self.workers: dict = dict()
@@ -84,8 +83,8 @@ class TaskQueue:
         # capture what is normally pickled
         state = self.__dict__.copy()
         state["workers"] = None
-        state["ctx"] = None
-        state["manager"] = None
+        if self.use_manager:
+            state["ctx"] = None
         return state
 
     def set_worker_fun(self, worker_fun):
@@ -112,7 +111,7 @@ class TaskQueue:
             worker_creator_fun = self.ctx.Process
         elif hasattr(self.ctx, "Thread"):
             worker_creator_fun = self.ctx.Thread
-        elif isinstance(self.ctx, multiprocessing.managers.SyncManager):
+        elif self.use_manager:
             worker_creator_fun = multiprocessing.Process
         else:
             raise RuntimeError("Unsupported context:" + str(self.ctx))
