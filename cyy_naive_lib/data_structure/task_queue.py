@@ -77,7 +77,6 @@ class TaskQueue:
         # capture what is normally pickled
         state = self.__dict__.copy()
         state["workers"] = None
-        state["worker_fun"] = None
         state["ctx"] = None
         state["manager"] = None
         return state
