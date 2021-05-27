@@ -65,14 +65,16 @@ class TaskQueue:
         if ctx is threading:
             self.task_queue = queue.Queue()
             self.result_queue = queue.Queue()
+            self.stop_event = self.ctx.Event()
         else:
             if manager is not None:
                 self.task_queue = self.manager.Queue()
                 self.result_queue = self.manager.Queue()
+                self.stop_event = self.manager.Event()
             else:
                 self.task_queue = self.ctx.Queue()
                 self.result_queue = self.ctx.Queue()
-        self.stop_event = self.ctx.Event()
+                self.stop_event = self.ctx.Event()
         self.worker_num = worker_num
         self.worker_fun = worker_fun
         self.workers: dict = dict()
