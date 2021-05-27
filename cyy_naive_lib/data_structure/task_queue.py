@@ -53,9 +53,9 @@ def work(
 class TaskQueue:
     def __init__(
         self,
-        worker_fun: Callable,
         ctx,
         worker_num: int = 1,
+        worker_fun: Callable = None,
     ):
         self.ctx = ctx
         if ctx is threading:
@@ -69,7 +69,8 @@ class TaskQueue:
         self.worker_num = worker_num
         self.worker_fun = worker_fun
         self.workers: dict = dict()
-        self.start()
+        if self.worker_fun is not None:
+            self.start()
 
     def __getstate__(self):
         # capture what is normally pickled
@@ -77,6 +78,11 @@ class TaskQueue:
         state["workers"] = None
         state["worker_fun"] = None
         return state
+
+    def set_worker_fun(self, worker_fun):
+        self.worker_fun = worker_fun
+        self.stop()
+        self.start()
 
     def start(self):
         for _ in range(len(self.workers), self.worker_num):
