@@ -140,8 +140,6 @@ class TaskQueue:
         # block until all tasks are done
         if wait_task:
             self.join()
-        for worker in self.workers.values():
-            worker.join()
         self.workers = dict()
 
     def force_stop(self):
