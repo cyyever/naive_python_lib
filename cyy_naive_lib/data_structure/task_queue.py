@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import copy
+import multiprocessing
 import os
 import queue
 import threading
@@ -69,10 +70,10 @@ class TaskQueue:
             self.result_queue = queue.Queue()
             self.stop_event = self.ctx.Event()
         else:
-            self.manager = self.ctx.Manager()
-            self.task_queue = self.manager.Queue()
-            self.result_queue = self.manager.Queue()
-            self.stop_event = self.manager.Event()
+            # self.manager = self.ctx.Manager()
+            self.task_queue = self.ctx.Queue()
+            self.result_queue = self.ctx.Queue()
+            self.stop_event = self.ctx.Event()
         self.worker_num = worker_num
         self.worker_fun = worker_fun
         self.workers: dict = dict()
@@ -111,6 +112,8 @@ class TaskQueue:
             worker_creator_fun = self.ctx.Process
         elif hasattr(self.ctx, "Thread"):
             worker_creator_fun = self.ctx.Thread
+        elif isinstance(self.ctx, multiprocessing.managers.SyncManager):
+            worker_creator_fun = multiprocessing.Process
         else:
             raise RuntimeError("Unsupported context:" + str(self.ctx))
 
