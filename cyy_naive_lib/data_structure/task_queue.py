@@ -63,9 +63,10 @@ class TaskQueue:
             self.result_queue = queue.Queue()
             self.stop_event = self.ctx.Event()
         else:
-            self.task_queue = self.ctx.Queue()
-            self.result_queue = self.ctx.Queue()
-            self.stop_event = self.ctx.Event()
+            self.manager = self.ctx.Manager()
+            self.task_queue = self.manager.Queue()
+            self.result_queue = self.manager.Queue()
+            self.stop_event = self.manager.Event()
         self.worker_num = worker_num
         self.worker_fun = worker_fun
         self.workers: dict = dict()
@@ -77,6 +78,8 @@ class TaskQueue:
         state = self.__dict__.copy()
         state["workers"] = None
         state["worker_fun"] = None
+        state["ctx"] = None
+        state["manager"] = None
         return state
 
     def set_worker_fun(self, worker_fun):
