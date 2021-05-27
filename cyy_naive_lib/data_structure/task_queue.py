@@ -7,7 +7,6 @@ import traceback
 from typing import Callable
 
 import psutil
-
 from log import get_logger
 
 
@@ -76,6 +75,7 @@ class TaskQueue:
         # capture what is normally pickled
         state = self.__dict__.copy()
         state["workers"] = None
+        state["worker_fun"] = None
         return state
 
     def start(self):
