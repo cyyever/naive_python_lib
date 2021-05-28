@@ -61,31 +61,39 @@ class TaskQueue:
         self, ctx, worker_num: int = 1, worker_fun: Callable = None, manager=None
     ):
         self.ctx = ctx
-        self.manager = manager
+        self.__manager = manager
         if ctx is threading:
             self.task_queue = queue.Queue()
             self.result_queue = queue.Queue()
             self.stop_event = self.ctx.Event()
         else:
             if manager is not None:
-                self.task_queue = self.manager.Queue()
-                self.result_queue = self.manager.Queue()
-                self.stop_event = self.manager.Event()
+                self.task_queue = self.__manager.Queue()
+                self.result_queue = self.__manager.Queue()
+                self.stop_event = self.__manager.Event()
             else:
                 self.task_queue = self.ctx.Queue()
                 self.result_queue = self.ctx.Queue()
                 self.stop_event = self.ctx.Event()
         self.worker_num = worker_num
         self.worker_fun = worker_fun
-        self.workers: dict = dict()
+        self.__workers: dict = dict()
         if self.worker_fun is not None:
             self.start()
+
+    @property
+    def manager(self):
+        return self.__manager
 
     def __getstate__(self):
         # capture what is normally pickled
         state = self.__dict__.copy()
-        state["workers"] = None
-        state["manager"] = None
+        state["__workers"] = None
+        for k in state:
+            if "workers" in k:
+                state[k] = None
+            if "manager" in k:
+                state[k] = None
         return state
 
     def set_worker_fun(self, worker_fun):
@@ -94,8 +102,8 @@ class TaskQueue:
         self.start()
 
     def start(self):
-        for _ in range(len(self.workers), self.worker_num):
-            worker_id = max(self.workers.keys(), default=0) + 1
+        for _ in range(len(self.__workers), self.worker_num):
+            worker_id = max(self.__workers.keys(), default=0) + 1
             self.__start_worker(worker_id)
 
     def put_result(self, result):
@@ -106,7 +114,7 @@ class TaskQueue:
             self.result_queue.put(result)
 
     def __start_worker(self, worker_id):
-        assert worker_id not in self.workers
+        assert worker_id not in self.__workers
         worker_creator_fun = None
         if hasattr(self.ctx, "Process"):
             worker_creator_fun = self.ctx.Process
@@ -115,7 +123,7 @@ class TaskQueue:
         else:
             raise RuntimeError("Unsupported context:" + str(self.ctx))
 
-        self.workers[worker_id] = worker_creator_fun(
+        self.__workers[worker_id] = worker_creator_fun(
             target=work,
             args=(
                 self,
@@ -123,22 +131,22 @@ class TaskQueue:
                 self._get_extra_task_arguments(worker_id),
             ),
         )
-        self.workers[worker_id].start()
+        self.__workers[worker_id].start()
 
     def join(self):
-        for worker in self.workers.values():
+        for worker in self.__workers.values():
             worker.join()
 
     def stop(self, wait_task=True):
-        if not self.workers:
+        if not self.__workers:
             return
-        # stop workers
+        # stop __workers
         for _ in range(self.worker_num):
             self.add_task(_SentinelTask())
         # block until all tasks are done
         if wait_task:
             self.join()
-        self.workers = dict()
+        self.__workers = dict()
 
     def force_stop(self):
         self.stop_event.set()
