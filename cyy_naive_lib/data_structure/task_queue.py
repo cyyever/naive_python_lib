@@ -88,12 +88,8 @@ class TaskQueue:
     def __getstate__(self):
         # capture what is normally pickled
         state = self.__dict__.copy()
-        state["__workers"] = None
-        for k in state:
-            if "workers" in k:
-                state[k] = None
-            if "manager" in k:
-                state[k] = None
+        state["_TaskQueue__workers"] = None
+        state["_TaskQueue__manager"] = None
         return state
 
     def set_worker_fun(self, worker_fun):
