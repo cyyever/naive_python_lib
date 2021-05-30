@@ -97,7 +97,7 @@ class TaskQueue:
         return self.__worker_fun
 
     def set_worker_fun(self, worker_fun):
-        self.worker_fun = worker_fun
+        self.__worker_fun = worker_fun
         self.stop()
         self.start()
 

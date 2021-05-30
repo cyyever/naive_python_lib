@@ -1,4 +1,6 @@
+import asyncio
 import concurrent.futures
+import inspect
 import traceback
 from typing import Callable, List
 
@@ -21,7 +23,10 @@ class ExecutorPool:
     @staticmethod
     def process_once(fn, *args, **kwargs):
         try:
-            fn(*args, **kwargs)
+            if inspect.iscoroutinefunction(fn):
+                asyncio.run(fn(*args, **kwargs))
+            else:
+                fn(*args, **kwargs)
         except Exception as e:
             get_logger().error("catch exception:%s", e)
             get_logger().error("traceback:%s", traceback.format_exc())
