@@ -60,25 +60,25 @@ class TaskQueue:
     def __init__(
         self, ctx, worker_num: int = 1, worker_fun: Callable = None, manager=None
     ):
-        self.ctx = ctx
+        self.__ctx = ctx
         self.__manager = manager
-        if ctx is threading:
+        if self.__ctx is threading:
             self.task_queue = queue.Queue()
             self.result_queue = queue.Queue()
-            self.stop_event = self.ctx.Event()
+            self.stop_event = self.__ctx.Event()
         else:
             if manager is not None:
                 self.task_queue = self.__manager.Queue()
                 self.result_queue = self.__manager.Queue()
                 self.stop_event = self.__manager.Event()
             else:
-                self.task_queue = self.ctx.Queue()
-                self.result_queue = self.ctx.Queue()
-                self.stop_event = self.ctx.Event()
+                self.task_queue = self.__ctx.Queue()
+                self.result_queue = self.__ctx.Queue()
+                self.stop_event = self.__ctx.Event()
         self.worker_num = worker_num
-        self.worker_fun = worker_fun
+        self.__worker_fun = worker_fun
         self.__workers: dict = dict()
-        if self.worker_fun is not None:
+        if self.__worker_fun is not None:
             self.start()
 
     @property
@@ -91,6 +91,10 @@ class TaskQueue:
         state["_TaskQueue__workers"] = None
         state["_TaskQueue__manager"] = None
         return state
+
+    @property
+    def worker_fun(self):
+        return self.__worker_fun
 
     def set_worker_fun(self, worker_fun):
         self.worker_fun = worker_fun
@@ -112,12 +116,12 @@ class TaskQueue:
     def __start_worker(self, worker_id):
         assert worker_id not in self.__workers
         worker_creator_fun = None
-        if hasattr(self.ctx, "Process"):
-            worker_creator_fun = self.ctx.Process
-        elif hasattr(self.ctx, "Thread"):
-            worker_creator_fun = self.ctx.Thread
+        if hasattr(self.__ctx, "Process"):
+            worker_creator_fun = self.__ctx.Process
+        elif hasattr(self.__ctx, "Thread"):
+            worker_creator_fun = self.__ctx.Thread
         else:
-            raise RuntimeError("Unsupported context:" + str(self.ctx))
+            raise RuntimeError("Unsupported context:" + str(self.__ctx))
 
         self.__workers[worker_id] = worker_creator_fun(
             target=work,
