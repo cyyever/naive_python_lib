@@ -62,24 +62,24 @@ class TaskQueue:
     ):
         self.__ctx = ctx
         self.__manager = manager
-        if self.__ctx is threading:
-            self.task_queue = queue.Queue()
-            self.result_queue = queue.Queue()
-            self.stop_event = self.__ctx.Event()
+        if self.__manager is not None:
+            self.stop_event = self.__manager.Event()
         else:
-            if manager is not None:
-                self.task_queue = self.__manager.Queue()
-                self.result_queue = self.__manager.Queue()
-                self.stop_event = self.__manager.Event()
-            else:
-                self.task_queue = self.__ctx.Queue()
-                self.result_queue = self.__ctx.Queue()
-                self.stop_event = self.__ctx.Event()
+            self.stop_event = self.__ctx.Event()
+        self.task_queue = self.__create_queue()
+        self.__result_queues: dict = {"default": self.__create_queue()}
         self.worker_num = worker_num
         self.__worker_fun = worker_fun
         self.__workers: dict = dict()
         if self.__worker_fun is not None:
             self.start()
+
+    def __create_queue(self):
+        if self.__ctx is threading:
+            return queue.Queue()
+        if self.__manager is not None:
+            return self.__manager.Queue()
+        return self.__ctx.Queue()
 
     @property
     def manager(self):
@@ -101,17 +101,25 @@ class TaskQueue:
         self.stop()
         self.start()
 
+    def add_result_queue(self, name: str):
+        assert name not in self.__result_queues
+        self.__result_queues[name] = self.__create_queue()
+
+    def get_result_queue(self, name):
+        return self.__result_queues[name]
+
     def start(self):
         for _ in range(len(self.__workers), self.worker_num):
             worker_id = max(self.__workers.keys(), default=0) + 1
             self.__start_worker(worker_id)
 
-    def put_result(self, result):
+    def put_result(self, result, queue_name: str = "default"):
+        result_queue = self.get_result_queue(queue_name)
         if isinstance(result, RepeatedResult):
             for _ in range(result.num):
-                self.result_queue.put(result.data)
+                result_queue.put(result.data)
         else:
-            self.result_queue.put(result)
+            result_queue.put(result)
 
     def __start_worker(self, worker_id):
         assert worker_id not in self.__workers
@@ -156,8 +164,9 @@ class TaskQueue:
     def add_task(self, task):
         self.task_queue.put(task)
 
-    def get_result(self):
-        return self.result_queue.get()
+    def get_result(self, queue_name: str = "default"):
+        result_queue = self.get_result_queue(queue_name)
+        return result_queue.get()
 
     def _get_extra_task_arguments(self, worker_id):
         return [worker_id]
