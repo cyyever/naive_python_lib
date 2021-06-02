@@ -12,7 +12,6 @@ def __set_formatter(_handler, with_color=True):
     if with_color:
         if os.getenv("eink_screen") == "1":
             with_color = False
-    # __format_str: str = "%(asctime)s %(levelname)s {thd:%(thread)d %(threadName)s} [%(filename)s => %(lineno)d] : %(message)s"
     __format_str: str = "%(asctime)s %(levelname)s {thd:%(threadName)s} [%(filename)s => %(lineno)d] : %(message)s"
     if with_color:
         formatter = ColoredFormatter(
@@ -61,16 +60,23 @@ if not __stub_colored_logger.handlers:
         target=__worker, args=(queue, __colored_logger), daemon=True
     )
     __lp.start()
+__log_files = []
 
 
 def set_file_handler(filename: str):
     global __colored_logger
+    global __log_files
     log_dir = os.path.dirname(filename)
     if log_dir:
         os.makedirs(log_dir, exist_ok=True)
     handler = logging.FileHandler(filename)
     __set_formatter(handler, with_color=False)
     __colored_logger.addHandler(handler)
+    __log_files.append(filename)
+
+
+def get_log_files():
+    return __log_files
 
 
 def get_logger():
