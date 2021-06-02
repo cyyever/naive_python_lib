@@ -43,7 +43,7 @@ def work(
         set_file_handler(log_file)
     while not q.stop_event.is_set():
         try:
-            task = q.task_queue.get(3600)
+            task = q.task_queue.get()
             if isinstance(task, _SentinelTask):
                 break
             res = q.worker_fun(task, extra_arguments)
