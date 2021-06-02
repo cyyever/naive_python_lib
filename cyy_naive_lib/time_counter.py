@@ -1,6 +1,6 @@
 import time
 import traceback
-from log import get_logger
+from cyy_naive_lib.log import get_logger
 
 
 class TimeCounter:

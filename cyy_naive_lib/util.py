@@ -2,7 +2,7 @@ import time
 import traceback
 from typing import Callable, Tuple
 from typing import List
-from log import get_logger
+from cyy_naive_lib.log import get_logger
 
 
 def retry_operation(operation: Callable,
