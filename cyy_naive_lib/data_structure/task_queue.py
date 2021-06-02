@@ -7,7 +7,7 @@ import traceback
 from typing import Callable
 
 import psutil
-from log import get_logger
+from cyy_naive_lib.log import get_log_files, get_logger, set_file_handler
 
 
 class _SentinelTask:
@@ -36,8 +36,11 @@ class RepeatedResult:
 def work(
     q,
     pid,
+    log_files,
     extra_arguments: list,
 ):
+    for log_file in log_files:
+        set_file_handler(log_file)
     while not q.stop_event.is_set():
         try:
             task = q.task_queue.get(3600)
@@ -124,8 +127,10 @@ class TaskQueue:
     def __start_worker(self, worker_id):
         assert worker_id not in self.__workers
         worker_creator_fun = None
+        use_process = False
         if hasattr(self.__ctx, "Process"):
             worker_creator_fun = self.__ctx.Process
+            use_process = True
         elif hasattr(self.__ctx, "Thread"):
             worker_creator_fun = self.__ctx.Thread
         else:
@@ -136,6 +141,7 @@ class TaskQueue:
             args=(
                 self,
                 os.getpid(),
+                get_log_files() if use_process else set(),
                 self._get_extra_task_arguments(worker_id),
             ),
         )

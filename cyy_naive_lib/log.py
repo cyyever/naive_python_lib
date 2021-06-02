@@ -60,22 +60,26 @@ if not __stub_colored_logger.handlers:
         target=__worker, args=(queue, __colored_logger), daemon=True
     )
     __lp.start()
-__log_files = []
+
+__log_files = set()
 
 
 def set_file_handler(filename: str):
     global __colored_logger
     global __log_files
+    if filename in __log_files:
+        return
     log_dir = os.path.dirname(filename)
     if log_dir:
         os.makedirs(log_dir, exist_ok=True)
     handler = logging.FileHandler(filename)
     __set_formatter(handler, with_color=False)
     __colored_logger.addHandler(handler)
-    __log_files.append(filename)
+    __log_files.add(filename)
 
 
 def get_log_files():
+    global __log_files
     return __log_files
 
 

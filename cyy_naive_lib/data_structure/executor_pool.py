@@ -4,7 +4,7 @@ import inspect
 import traceback
 from typing import Callable, List
 
-from log import get_logger
+from cyy_naive_lib.log import get_log_files, get_logger, set_file_handler
 
 
 class ExecutorPool:
@@ -22,6 +22,8 @@ class ExecutorPool:
 
     @staticmethod
     def process_once(fn, *args, **kwargs):
+        for log_file in kwargs.pop("log_files", []):
+            set_file_handler(log_file)
         try:
             if inspect.iscoroutinefunction(fn):
                 asyncio.run(fn(*args, **kwargs))
@@ -32,6 +34,7 @@ class ExecutorPool:
             get_logger().error("traceback:%s", traceback.format_exc())
 
     def exec(self, fn: Callable, *args, **kwargs):
+        kwargs = self.__add_kwargs(kwargs)
         self.__futures.append(
             self.__executor.submit(ExecutorPool.process_once, fn, *args, **kwargs)
         )
@@ -39,6 +42,8 @@ class ExecutorPool:
     def _repeated_exec(
         self, stop_event, wait_time: float, fn: Callable, *args, **kwargs
     ):
+        kwargs = self.__add_kwargs(kwargs)
+
         def worker():
             while True:
                 ExecutorPool.process_once(fn, *args, **kwargs)
@@ -46,3 +51,8 @@ class ExecutorPool:
                     break
 
         self.__futures.append(self.__executor.submit(worker))
+
+    def __add_kwargs(self, kwargs: dict):
+        if "log_files" not in kwargs:
+            kwargs["log_files"] = get_log_files()
+        return kwargs
