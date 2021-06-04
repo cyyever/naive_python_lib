@@ -26,9 +26,9 @@ class ExecutorPool:
             set_file_handler(log_file)
         try:
             if inspect.iscoroutinefunction(fn):
-                asyncio.run(fn(*args, **kwargs))
+                return asyncio.run(fn(*args, **kwargs))
             else:
-                fn(*args, **kwargs)
+                return fn(*args, **kwargs)
         except Exception as e:
             get_logger().error("catch exception:%s", e)
             get_logger().error("traceback:%s", traceback.format_exc())
