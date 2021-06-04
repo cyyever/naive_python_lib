@@ -73,7 +73,7 @@ class TaskQueue:
         self.__result_queues: dict = {"default": self.__create_queue()}
         self.worker_num = worker_num
         self.__worker_fun = worker_fun
-        self.__workers: dict = dict()
+        self.__workers = None
         if self.__worker_fun is not None:
             self.start()
 
@@ -112,6 +112,9 @@ class TaskQueue:
         return self.__result_queues[name]
 
     def start(self):
+        if self.__workers is None:
+            self.__workers = dict()
+
         for _ in range(len(self.__workers), self.worker_num):
             worker_id = max(self.__workers.keys(), default=0) + 1
             self.__start_worker(worker_id)
@@ -148,15 +151,20 @@ class TaskQueue:
         self.__workers[worker_id].start()
 
     def join(self):
+        if not self.__workers:
+            return
         for worker in self.__workers.values():
             worker.join()
+
+    def send_sentinel_task(self, number):
+        for _ in range(number):
+            self.add_task(_SentinelTask())
 
     def stop(self, wait_task=True):
         if not self.__workers:
             return
         # stop __workers
-        for _ in range(self.worker_num):
-            self.add_task(_SentinelTask())
+        self.send_sentinel_task(self.worker_num)
         # block until all tasks are done
         if wait_task:
             self.join()
