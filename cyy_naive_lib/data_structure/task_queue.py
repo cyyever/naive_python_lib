@@ -43,7 +43,7 @@ def work(
         set_file_handler(log_file)
     while not q.stop_event.is_set():
         try:
-            task = q.task_queue.get()
+            task = q.task_queue.get(3600)
             if isinstance(task, _SentinelTask):
                 break
             res = q.worker_fun(task, extra_arguments)
@@ -57,6 +57,8 @@ def work(
         except Exception as e:
             get_logger().error("catch exception:%s", e)
             get_logger().error("traceback:%s", traceback.format_exc())
+            get_logger().error("end worker on exception")
+            return
 
 
 class TaskQueue:
