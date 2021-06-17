@@ -18,12 +18,16 @@ class DockerFile(BashScript):
         self.script = script
         self.throw_on_failure = True
 
+    def _get_exec_command_line(self):
+        raise RuntimeError("Unsupported")
+
     def build(
         self,
         result_image: str,
         src_dir_pair: tuple = None,
-        additional_docker_commands: list = None,
         use_experimental=False,
+        additional_docker_commands: list = None,
+        extra_output_files=None,
     ):
         with TempDir():
             host_src_dir, docker_src_dir = None, None
@@ -65,7 +69,9 @@ class DockerFile(BashScript):
                 "Dockerfile",
                 ".",
             ]
-            output, exit_code = Shell.exec(docker_cmd)
+            output, exit_code = Shell.exec(
+                docker_cmd, extra_output_files=extra_output_files
+            )
             if self.throw_on_failure and exit_code != 0:
                 raise RuntimeError("failed to build " + result_image)
             return output, exit_code
