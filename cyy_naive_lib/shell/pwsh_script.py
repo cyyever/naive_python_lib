@@ -2,7 +2,6 @@
 import re
 
 from .script import Script
-from .shell import Shell
 
 
 class PowerShellScript(Script):
@@ -31,10 +30,10 @@ class PowerShellScript(Script):
     def get_suffix(self) -> str:
         return "ps1"
 
-    def _exec(self):
+    def _exec_command_line(self):
         with open("script.ps1", "w") as f:
             f.write(self.get_complete_content())
-        return Shell.exec(["pwsh", "-NoProfile", "-File", "script.ps1"])
+            return ["pwsh", "-NoProfile", "-File", "script.ps1"]
 
     def _export(self, key: str, value: str):
         if value.startswith("(") and value.endswith(")"):

@@ -1,22 +1,18 @@
 #!/usr/bin/env python3
 
 from .script import Script
-from .shell import Shell
 
 
 class BashScript(Script):
     def get_suffix(self) -> str:
         return "sh"
 
-    def _exec(self):
+    def _exec_command_line(self):
         with open("script.sh", "w") as f:
             f.write(self.get_complete_content())
-        return Shell.exec(["bash", "script.sh"])
+            return ["bash", "script.sh"]
 
-    def _wrap_content_in_strict_mode(
-            self,
-            env_part: str,
-            content_part: str) -> str:
+    def _wrap_content_in_strict_mode(self, env_part: str, content_part: str) -> str:
         return (
             self.line_seperator.join(["set -eu", "set -o pipefail"])
             + self.line_seperator

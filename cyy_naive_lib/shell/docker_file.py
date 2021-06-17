@@ -12,7 +12,6 @@ from .bash_script import BashScript
 from .shell import Shell
 
 
-
 class DockerFile(BashScript):
     def __init__(self, from_image: str, script: BashScript):
         self.content = ["FROM " + from_image]

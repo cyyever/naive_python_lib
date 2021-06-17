@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from .shell import Shell
+
 
 class Script:
     def __init__(self, content: str = None):
@@ -51,13 +53,13 @@ class Script:
             return self._wrap_content_in_strict_mode(env_part, content_part)
         return env_part + self.line_seperator + content_part
 
-    def exec(self, throw=True):
-        output, exit_code = self._exec()
+    def exec(self, throw=True, extra_output_files=None):
+        output, exit_code = Shell.exec(self._exec_command_line())
         if throw and exit_code != 0:
             raise RuntimeError("failed to execute script")
         return output, exit_code
 
-    def _exec(self):
+    def _exec_command_line(self):
         raise NotImplementedError()
 
     def _wrap_content_in_strict_mode(self, env_part: str, content_part: str):
