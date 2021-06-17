@@ -8,11 +8,15 @@ from time import sleep
 
 class Shell:
     @staticmethod
-    def exec(command_line: list):
+    def exec(command_line: list, extra_output_files=None):
         r"""
         Execute a command line
         """
         with tempfile.NamedTemporaryFile() as output_file:
+            output_files = []
+            if extra_output_files is not None:
+                output_files = extra_output_files
+            output_files.append(output_file)
             with subprocess.Popen(
                 command_line,
                 stdout=subprocess.PIPE,
@@ -20,10 +24,12 @@ class Shell:
             ) as proc:
                 threads = [
                     Thread(
-                        target=Shell.__process_stdout, args=(proc.stdout, output_file)
+                        target=Shell.__output_text_line,
+                        args=(proc.stdout, [sys.stdout] + output_files),
                     ),
                     Thread(
-                        target=Shell.__process_stderr, args=(proc.stderr, output_file)
+                        target=Shell.__output_text_line,
+                        args=(proc.stderr, [sys.stderr] + output_files),
                     ),
                 ]
                 for thd in threads:
@@ -55,15 +61,9 @@ class Shell:
             return line.decode("utf-8", errors="ignore")
 
     @staticmethod
-    def __process_stdout(proc_out, store_file):
-        for line in iter(proc_out.readline, b""):
-            sys.stdout.write(Shell.__decode_output(line))
-            store_file.write(line)
-            store_file.flush()
-
-    @staticmethod
-    def __process_stderr(proc_err, store_file):
-        for line in iter(proc_err.readline, b""):
-            sys.stderr.write(Shell.__decode_output(line))
-            store_file.write(line)
-            store_file.flush()
+    def __output_text_line(input_file, output_files):
+        for line in iter(input_file.readline, b""):
+            decoded_line = Shell.__decode_output(line)
+            for f in output_files:
+                f.write(decoded_line)
+                f.flush()

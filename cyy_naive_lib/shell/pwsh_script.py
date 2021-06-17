@@ -30,7 +30,7 @@ class PowerShellScript(Script):
     def get_suffix(self) -> str:
         return "ps1"
 
-    def _exec_command_line(self):
+    def _get_exec_command_line(self):
         with open("script.ps1", "w") as f:
             f.write(self.get_complete_content())
             return ["pwsh", "-NoProfile", "-File", "script.ps1"]

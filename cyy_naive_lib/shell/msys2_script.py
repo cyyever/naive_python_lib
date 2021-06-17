@@ -10,7 +10,7 @@ from .bash_script import BashScript
 
 
 class MSYS2Script(BashScript):
-    def _exec_command_line(self):
+    def _get_exec_command_line(self):
         with TempDir():
             with open("script.sh", "w") as f:
                 f.write(self.get_complete_content())

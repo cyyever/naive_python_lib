@@ -54,12 +54,15 @@ class Script:
         return env_part + self.line_seperator + content_part
 
     def exec(self, throw=True, extra_output_files=None):
-        output, exit_code = Shell.exec(self._exec_command_line())
+        output, exit_code = Shell.exec(
+            command_line=self._get_exec_command_line(),
+            extra_output_files=extra_output_files,
+        )
         if throw and exit_code != 0:
             raise RuntimeError("failed to execute script")
         return output, exit_code
 
-    def _exec_command_line(self):
+    def _get_exec_command_line(self):
         raise NotImplementedError()
 
     def _wrap_content_in_strict_mode(self, env_part: str, content_part: str):

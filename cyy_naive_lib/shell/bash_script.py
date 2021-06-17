@@ -7,7 +7,7 @@ class BashScript(Script):
     def get_suffix(self) -> str:
         return "sh"
 
-    def _exec_command_line(self):
+    def _get_exec_command_line(self):
         with open("script.sh", "w") as f:
             f.write(self.get_complete_content())
             return ["bash", "script.sh"]
