@@ -13,38 +13,39 @@ class Shell:
         Execute a command line
         """
         with tempfile.NamedTemporaryFile() as output_file:
-            proc = subprocess.Popen(
+            with subprocess.Popen(
                 command_line,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-            )
-
-            threads = [
-                Thread(
-                    target=Shell.__process_stdout, args=(
-                        proc.stdout, output_file)), Thread(
-                    target=Shell.__process_stderr, args=(
-                        proc.stderr, output_file)), ]
-            for thd in threads:
-                thd.setDaemon(True)
-                thd.start()
-
-            while True:
-                alive = False
+            ) as proc:
+                threads = [
+                    Thread(
+                        target=Shell.__process_stdout, args=(proc.stdout, output_file)
+                    ),
+                    Thread(
+                        target=Shell.__process_stderr, args=(proc.stderr, output_file)
+                    ),
+                ]
                 for thd in threads:
-                    if thd.is_alive():
-                        alive = True
-                        break
-                if alive:
-                    sleep(0.1)
-                else:
-                    break
+                    thd.setDaemon(True)
+                    thd.start()
 
-            exit_code = proc.wait()
-            for thd in threads:
-                thd.join()
-            output_file.seek(0, 0)
-            return [Shell.__decode_output(output_file.read()), exit_code]
+                while True:
+                    alive = False
+                    for thd in threads:
+                        if thd.is_alive():
+                            alive = True
+                            break
+                    if alive:
+                        sleep(0.1)
+                    else:
+                        break
+
+                exit_code = proc.wait()
+                for thd in threads:
+                    thd.join()
+                output_file.seek(0, 0)
+                return [Shell.__decode_output(output_file.read()), exit_code]
 
     @staticmethod
     def __decode_output(line):

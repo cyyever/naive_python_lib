@@ -10,7 +10,7 @@ from fs.tempdir import TempDir
 
 def test_exec_cmd():
     with TempDir():
-        _, res = get_shell_script("ls").exec(throw=False)
+        _, res = get_shell_script("echo 'exec cmd' && ls").exec(throw=False)
         assert res == 0
 
 
