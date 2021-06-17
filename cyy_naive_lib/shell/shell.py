@@ -12,7 +12,7 @@ class Shell:
         r"""
         Execute a command line
         """
-        with tempfile.NamedTemporaryFile() as output_file:
+        with tempfile.NamedTemporaryFile(mode="w+t") as output_file:
             output_files = []
             if extra_output_files is not None:
                 output_files = extra_output_files
@@ -51,7 +51,7 @@ class Shell:
                 for thd in threads:
                     thd.join()
                 output_file.seek(0, 0)
-                return [Shell.__decode_output(output_file.read()), exit_code]
+                return [output_file.read(), exit_code]
 
     @staticmethod
     def __decode_output(line):
