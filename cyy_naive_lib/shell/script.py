@@ -2,8 +2,8 @@
 
 
 class Script:
-    def __init__(self, content=None):
-        self.content = []
+    def __init__(self, content: str = None):
+        self.content: list = []
         if content is not None:
             self.append_content(content)
         self.env: list = []
@@ -44,8 +44,7 @@ class Script:
         raise NotImplementedError()
 
     def get_complete_content(self):
-        env_part = self.line_seperator.join(
-            [self._export(k, v) for (k, v) in self.env])
+        env_part = self.line_seperator.join([self._export(k, v) for (k, v) in self.env])
         content_part = self.line_seperator.join(self.content)
 
         if self.strict_mode:

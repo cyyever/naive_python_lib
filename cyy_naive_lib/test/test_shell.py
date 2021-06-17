@@ -1,15 +1,16 @@
 from shutil import which
 
-from fs.tempdir import TempDir
-from shell.bash_script import BashScript
-from shell.docker_file import DockerFile
+# from shell.bash_script import BashScript
+# from shell.docker_file import DockerFile
 from shell.msys2_script import MSYS2Script
-from shell_factory import exec_cmd
+from shell_factory import get_shell_script
+
+from fs.tempdir import TempDir
 
 
 def test_exec_cmd():
     with TempDir():
-        _, res = exec_cmd("ls", throw=False)
+        _, res = get_shell_script("ls").exec(throw=False)
         assert res == 0
 
 

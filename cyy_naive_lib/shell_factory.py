@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-import os
-import tempfile
 
 from shell.bash_script import BashScript
 from shell.pwsh_script import PowerShellScript
@@ -17,22 +15,13 @@ def get_shell_script_type(os_hint: str = None) -> Script:
     return BashScript
 
 
-def get_shell_script(os_hint: str = None) -> Script:
-    return get_shell_script_type(os_hint)()
+def get_shell_script(content: str = None, os_hint: str = None) -> Script:
+    return get_shell_script_type(os_hint)(content)
 
 
-def exec_cmd(
-    cmd: str, throw: bool = True, use_temp_dir: bool = False, shell_script=None
-):
-    pre_dir = os.getcwd()
-    with tempfile.TemporaryDirectory() as dir_name:
-        if use_temp_dir:
-            os.chdir(dir_name)
-
-        if shell_script is None:
-            shell_script = get_shell_script_type()
-        output, exit_code = shell_script(cmd).exec(throw=False)
-        os.chdir(pre_dir)
+def exec_cmd(cmd: str, throw: bool = True):
+    shell_script = get_shell_script_type()
+    output, exit_code = shell_script(cmd).exec(throw=False)
     if throw and exit_code != 0:
         raise RuntimeError("failed to execute commands:" + str(cmd))
     return output, exit_code

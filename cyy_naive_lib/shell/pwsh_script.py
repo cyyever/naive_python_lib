@@ -6,7 +6,7 @@ from .shell import Shell
 
 
 class PowerShellScript(Script):
-    def __init__(self, content=None):
+    def __init__(self, content: str = None):
         super().__init__(content=content)
         self.use_bash_stype_env_var = True
 
