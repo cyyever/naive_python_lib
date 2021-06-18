@@ -46,8 +46,7 @@ class DockerFile(BashScript):
                 for line in self.content:
                     print(line, file=f)
 
-                if host_src_dir is not None:
-                    print("COPY . ", docker_src_dir, file=f)
+                print("COPY . ", docker_src_dir, file=f)
                 print("RUN bash " + script_path, file=f)
                 if additional_docker_commands is not None:
                     for cmd in additional_docker_commands:
