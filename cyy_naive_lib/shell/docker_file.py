@@ -4,7 +4,6 @@ import sys
 
 sys.path.insert(0, os.path.join(sys.path[0], ".."))
 
-from shutil import which
 
 from fs.tempdir import TempDir
 
@@ -56,9 +55,6 @@ class DockerFile(BashScript):
                 print(".git", file=f)
                 print("Dockerfile", file=f)
 
-            cmd = []
-            if which("sudo") != "windows":
-                cmd.append("sudo")
             docker_cmd = ["docker", "build"]
             if use_experimental:
                 docker_cmd.append("--squash")
