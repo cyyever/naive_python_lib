@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.join(sys.path[0], ".."))
 
 
 from fs.tempdir import TempDir
+from system_info import get_operating_system
 
 from .bash_script import BashScript
 from .shell import Shell
@@ -56,6 +57,8 @@ class DockerFile(BashScript):
                 print("Dockerfile", file=f)
 
             docker_cmd = ["docker", "build"]
+            if get_operating_system() != "windows":
+                docker_cmd.insert(0, "sudo")
             if use_experimental:
                 docker_cmd.append("--squash")
             docker_cmd += [
