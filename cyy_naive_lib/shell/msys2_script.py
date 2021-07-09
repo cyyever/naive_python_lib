@@ -18,3 +18,10 @@ class MSYS2Script(BashScript):
                 "-c",
                 "bash script.sh",
             ]
+
+    def _convert_path(self, path: str):
+        path = path.replace("\\", "/")
+        for driver in ["C", "D", "E", "F", "G", "H"]:
+            if path.startswith(driver + ":"):
+                return "/" + driver.lower() + path[2:]
+        return path
