@@ -25,10 +25,10 @@ class Script:
         self.env = [(key, value)] + self.env
 
     def append_env_path(self, key: str, value: str):
-        self.append_env(key, value)
+        self.append_env(key, self._convert_path(value))
 
     def prepend_env_path(self, key: str, value: str):
-        self.prepend_env(key, value)
+        self.prepend_env(key, self._convert_path(value))
 
     def _convert_path(self, path: str):
         return path
