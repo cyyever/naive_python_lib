@@ -33,15 +33,17 @@ def __set_formatter(_handler, with_color=True):
     _handler.setFormatter(formatter)
 
 
-def __worker(q, logger):
+def __worker(q, logger, logger_lock):
     while True:
         try:
             record = q.get()
-            logger.handle(record)
+            with logger_lock:
+                logger.handle(record)
         except EOFError:
             break
 
 
+__logger_lock = threading.RLock()
 __colored_logger: logging.Logger = logging.getLogger("colored_logger")
 if not __colored_logger.handlers:
     __colored_logger.setLevel(logging.DEBUG)
@@ -57,7 +59,7 @@ if not __stub_colored_logger.handlers:
     qh = logging.handlers.QueueHandler(queue)
     __stub_colored_logger.addHandler(qh)
     __lp = threading.Thread(
-        target=__worker, args=(queue, __colored_logger), daemon=True
+        target=__worker, args=(queue, __colored_logger, __logger_lock), daemon=True
     )
     __lp.start()
 
@@ -74,8 +76,9 @@ def set_file_handler(filename: str):
         os.makedirs(log_dir, exist_ok=True)
     handler = logging.FileHandler(filename)
     __set_formatter(handler, with_color=False)
-    __colored_logger.addHandler(handler)
     __log_files.add(filename)
+    with __logger_lock:
+        __colored_logger.addHandler(handler)
 
 
 def get_log_files():
