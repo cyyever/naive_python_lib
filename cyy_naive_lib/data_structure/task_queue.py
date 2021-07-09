@@ -95,6 +95,7 @@ class TaskQueue:
         state = self.__dict__.copy()
         state["_TaskQueue__workers"] = None
         state["_TaskQueue__manager"] = None
+        state["_TaskQueue__ctx"] = None
         return state
 
     @property
