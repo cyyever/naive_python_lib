@@ -24,6 +24,12 @@ class Script:
         """
         self.env = [(key, value)] + self.env
 
+    def append_env_path(self, key: str, value: str):
+        self.append_env(key, value)
+
+    def prepend_env_path(self, key: str, value: str):
+        self.prepend_env(key, value)
+
     def prepend_content(self, content):
         if isinstance(content, list):
             self.content = content + self.content
