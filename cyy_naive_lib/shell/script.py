@@ -30,6 +30,9 @@ class Script:
     def prepend_env_path(self, key: str, value: str):
         self.prepend_env(key, value)
 
+    def _convert_path(self, path: str):
+        return path
+
     def prepend_content(self, content):
         if isinstance(content, list):
             self.content = content + self.content
