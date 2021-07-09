@@ -1,5 +1,6 @@
 import os
 import tempfile
+import time
 
 
 class TempDir:
@@ -9,7 +10,7 @@ class TempDir:
 
     def __enter__(self):
         self.prev_dir = os.getcwd()
-        self.temp_dir = tempfile.TemporaryDirectory()
+        self.temp_dir = tempfile.TemporaryDirectory(suffix=str(time.time_ns()))
         path = self.temp_dir.__enter__()
         os.chdir(path)
         return path
