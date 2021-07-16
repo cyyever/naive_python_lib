@@ -95,14 +95,19 @@ class TaskQueue:
         state = self.__dict__.copy()
         state["_TaskQueue__workers"] = None
         state["_TaskQueue__manager"] = None
-        # state["_TaskQueue__ctx"] = None
+        state["_TaskQueue__ctx"] = None
         return state
 
     @property
     def worker_fun(self):
         return self.__worker_fun
 
-    def set_worker_fun(self, worker_fun):
+    def set_worker_fun(self, worker_fun, ctx=None):
+        if ctx is not None:
+            if self.__ctx is not None:
+                assert self.__ctx is ctx
+            else:
+                self.__ctx = ctx
         self.__worker_fun = worker_fun
         self.stop()
         self.start()
