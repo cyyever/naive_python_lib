@@ -18,3 +18,8 @@ class ProcessTaskQueue(TaskQueue):
             worker_num=worker_num,
             manager=None if not use_manager else multiprocessing.Manager(),
         )
+
+    def set_worker_fun(self, worker_fun, ctx=None):
+        if ctx is None:
+            ctx = multiprocessing
+        super().set_worker_fun(worker_fun, ctx=ctx)
