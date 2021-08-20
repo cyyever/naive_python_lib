@@ -12,7 +12,6 @@ class MSYS2Script(BashScript):
                 "-msys",
                 "-defterm",
                 "-no-start",
-                "-full-path",
                 "-where",
                 ".",
                 "-c",
