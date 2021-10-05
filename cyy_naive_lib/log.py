@@ -69,15 +69,15 @@ __log_files = set()
 def set_file_handler(filename: str):
     global __colored_logger
     global __log_files
-    if filename in __log_files:
-        return
-    log_dir = os.path.dirname(filename)
-    if log_dir:
-        os.makedirs(log_dir, exist_ok=True)
-    handler = logging.FileHandler(filename)
-    __set_formatter(handler, with_color=False)
-    __log_files.add(filename)
     with __logger_lock:
+        if filename in __log_files:
+            return
+        log_dir = os.path.dirname(filename)
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
+        handler = logging.FileHandler(filename)
+        __set_formatter(handler, with_color=False)
+        __log_files.add(filename)
         __colored_logger.addHandler(handler)
 
 
