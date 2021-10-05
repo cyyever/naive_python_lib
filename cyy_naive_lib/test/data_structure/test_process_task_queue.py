@@ -1,3 +1,5 @@
+import asyncio
+
 from log import get_logger
 
 from data_structure.process_task_queue import ProcessTaskQueue
@@ -19,4 +21,9 @@ def test_process_task_queue():
     queue.start()
     queue.add_task(())
     assert queue.get_result() == "abc"
+    queue.stop()
+    queue = ProcessTaskQueue(hello, worker_num=8, use_manager=True)
+    queue.start()
+    queue.add_task(())
+    assert asyncio.run(queue.get_result_async()) == "abc"
     queue.stop()
