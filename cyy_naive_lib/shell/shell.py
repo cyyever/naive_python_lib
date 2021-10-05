@@ -33,7 +33,7 @@ class Shell:
                     ),
                 ]
                 for thd in threads:
-                    thd.setDaemon(True)
+                    thd.daemon = True
                     thd.start()
 
                 while True:
