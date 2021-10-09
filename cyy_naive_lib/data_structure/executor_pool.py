@@ -27,11 +27,11 @@ class ExecutorPool:
         try:
             if inspect.iscoroutinefunction(fn):
                 return asyncio.run(fn(*args, **kwargs))
-            else:
-                return fn(*args, **kwargs)
+            return fn(*args, **kwargs)
         except Exception as e:
             get_logger().error("catch exception:%s", e)
             get_logger().error("traceback:%s", traceback.format_exc())
+            return None
 
     def exec(self, fn: Callable, *args, **kwargs):
         kwargs = self.__add_kwargs(kwargs)
