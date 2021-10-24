@@ -44,4 +44,4 @@ class PowerShellScript(Script):
         if self.use_bash_stype_env_var:
             p = re.compile(r"\$\{([^}]*)\}")
             value = p.sub(r"$env:\1", value)
-        return "$env:" + key + "=" + value
+        return "${env:" + key + "=" + value+"}"
