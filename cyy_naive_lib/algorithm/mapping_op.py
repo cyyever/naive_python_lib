@@ -31,7 +31,7 @@ def flatten_mapping(d: Mapping) -> list:
     Return a list with values ordered by keys and flatten it
     """
 
-    res = list()
+    res = []
     for v in get_mapping_values_by_key_order(d):
         if isinstance(v, Mapping):
             res += flatten_mapping(v)
