@@ -50,6 +50,7 @@ if not __colored_logger.handlers:
     _handler = logging.StreamHandler()
     __set_formatter(_handler, with_color=True)
     __colored_logger.addHandler(_handler)
+    __colored_logger.propagate = False
 
 
 __stub_colored_logger = logging.getLogger("colored_multiprocess_logger")
@@ -58,6 +59,7 @@ if not __stub_colored_logger.handlers:
     queue: Queue = Queue()
     qh = logging.handlers.QueueHandler(queue)
     __stub_colored_logger.addHandler(qh)
+    __stub_colored_logger.propagate = False
     __lp = threading.Thread(
         target=__worker, args=(queue, __colored_logger, __logger_lock), daemon=True
     )
