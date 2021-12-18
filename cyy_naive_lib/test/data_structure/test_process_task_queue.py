@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 from log import get_logger
 
@@ -15,6 +16,8 @@ def test_process_task_queue():
     queue = ProcessTaskQueue(hello, worker_num=8)
     queue.start()
     queue.add_task(())
+    time.sleep(1)
+    assert queue.has_result()
     assert queue.get_result() == "abc"
     queue.stop()
     queue = ProcessTaskQueue(hello, worker_num=8, use_manager=True)

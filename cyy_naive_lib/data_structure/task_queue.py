@@ -68,14 +68,8 @@ class TaskQueue:
         self, ctx, worker_num: int = 1, worker_fun: Callable = None, manager=None
     ):
         self.__ctx = ctx
+        self.stop_event = None
         self.__manager = manager
-        if self.__manager is not None:
-            self.stop_event = self.__manager.Event()
-        else:
-            if hasattr(self.__ctx, "Event"):
-                self.stop_event = self.__ctx.Event()
-            else:
-                self.stop_event = threading.Event()
         self.task_queue = self.__create_queue()
         self.__result_queues: dict = {"default": self.__create_queue()}
         self.worker_num = worker_num
@@ -83,6 +77,9 @@ class TaskQueue:
         self.__workers = None
         if self.__worker_fun is not None:
             self.start()
+
+    def get_ctx(self):
+        raise NotImplementedError()
 
     def __create_queue(self):
         if self.__ctx is threading:
@@ -127,6 +124,15 @@ class TaskQueue:
         return self.__result_queues[name]
 
     def start(self):
+        if self.stop_event is None:
+            if self.__manager is not None:
+                self.stop_event = self.__manager.Event()
+            else:
+                if hasattr(self.__ctx, "Event"):
+                    self.stop_event = self.__ctx.Event()
+                else:
+                    self.stop_event = threading.Event()
+
         if self.__workers is None:
             self.__workers = dict()
 
@@ -205,6 +211,10 @@ class TaskQueue:
     def get_result(self, queue_name: str = "default"):
         result_queue = self.get_result_queue(queue_name)
         return result_queue.get()
+
+    def has_result(self, queue_name: str = "default") -> bool:
+        result_queue = self.get_result_queue(queue_name)
+        return not result_queue.empty()
 
     async def get_result_async(self, queue_name: str = "default"):
         result_queue = self.get_result_queue(queue_name)
