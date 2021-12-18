@@ -1,5 +1,6 @@
 from shutil import which
 
+from shell.mingw64_script import Mingw64Script
 # from shell.bash_script import BashScript
 # from shell.docker_file import DockerFile
 from shell.msys2_script import MSYS2Script
@@ -17,6 +18,11 @@ def test_exec_cmd():
 def test_msys2_scriot():
     if which("msys2_shell.cmd"):
         MSYS2Script(content="pwd").exec()
+
+
+def test_mingw64_scriot():
+    if which("msys2_shell.cmd"):
+        Mingw64Script(content="pwd").exec()
 
 
 # def test_unix_docker():
