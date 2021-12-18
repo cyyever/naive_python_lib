@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 import asyncio
 import copy
+import multiprocessing
+import multiprocessing.managers
 import os
 import queue
 import threading
 import traceback
 from typing import Callable
 
+import gevent.event
 import gevent.queue
 import psutil
 from cyy_naive_lib.log import get_log_files, get_logger, set_file_handler
@@ -64,12 +67,8 @@ def work(
 
 
 class TaskQueue:
-    def __init__(
-        self, ctx, worker_num: int = 1, worker_fun: Callable = None, manager=None
-    ):
-        self.__ctx = ctx
+    def __init__(self, worker_num: int = 1, worker_fun: Callable = None, manager=None):
         self.stop_event = None
-        self.__manager = manager
         self.task_queue = self.__create_queue()
         self.__result_queues: dict = {"default": self.__create_queue()}
         self.worker_num = worker_num
@@ -82,36 +81,29 @@ class TaskQueue:
         raise NotImplementedError()
 
     def __create_queue(self):
-        if self.__ctx is threading:
+        ctx = self.get_ctx()
+        if ctx is threading:
             return queue.Queue()
-        if self.__ctx is gevent:
+        if ctx is gevent:
             return gevent.queue.Queue()
-        if self.__manager is not None:
-            return self.__manager.Queue()
-        return self.__ctx.Queue()
-
-    @property
-    def manager(self):
-        return self.__manager
+        # if isinstance(multiprocessing.managers.SyncManager)
+        # if self.__manager is not None:
+        #     return self.__manager.Queue()
+        return ctx.Queue()
 
     def __getstate__(self):
         # capture what is normally pickled
         state = self.__dict__.copy()
         state["_TaskQueue__workers"] = None
-        state["_TaskQueue__manager"] = None
-        state["_TaskQueue__ctx"] = None
+        # state["_TaskQueue__manager"] = None
+        # state["_TaskQueue__ctx"] = None
         return state
 
     @property
     def worker_fun(self):
         return self.__worker_fun
 
-    def set_worker_fun(self, worker_fun, ctx=None):
-        if ctx is not None:
-            if self.__ctx is not None:
-                assert self.__ctx is ctx
-            else:
-                self.__ctx = ctx
+    def set_worker_fun(self, worker_fun):
         self.__worker_fun = worker_fun
         self.stop()
         self.start()
@@ -124,17 +116,16 @@ class TaskQueue:
         return self.__result_queues[name]
 
     def start(self):
+        assert self.__worker_fun is not None
         if self.stop_event is None:
-            if self.__manager is not None:
-                self.stop_event = self.__manager.Event()
+            ctx = self.get_ctx()
+            if ctx is gevent:
+                self.stop_event = gevent.event.Event()
             else:
-                if hasattr(self.__ctx, "Event"):
-                    self.stop_event = self.__ctx.Event()
-                else:
-                    self.stop_event = threading.Event()
+                self.stop_event = ctx.Event()
 
         if self.__workers is None:
-            self.__workers = dict()
+            self.__workers = {}
 
         for _ in range(len(self.__workers), self.worker_num):
             worker_id = max(self.__workers.keys(), default=0) + 1
@@ -152,12 +143,16 @@ class TaskQueue:
         assert worker_id not in self.__workers
         worker_creator_fun = None
         use_process = False
-        if hasattr(self.__ctx, "Process"):
-            worker_creator_fun = self.__ctx.Process
+        ctx = self.get_ctx()
+        if isinstance(ctx, multiprocessing.managers.SyncManager):
+            worker_creator_fun = multiprocessing.Process
             use_process = True
-        elif hasattr(self.__ctx, "Thread"):
-            worker_creator_fun = self.__ctx.Thread
-        elif self.__ctx is gevent:
+        elif hasattr(ctx, "Process"):
+            worker_creator_fun = ctx.Process
+            use_process = True
+        elif hasattr(ctx, "Thread"):
+            worker_creator_fun = ctx.Thread
+        elif ctx is gevent:
             self.__workers[worker_id] = gevent.spawn(
                 work,
                 self,
@@ -167,7 +162,7 @@ class TaskQueue:
             )
             return
         else:
-            raise RuntimeError("Unsupported context:" + str(self.__ctx))
+            raise RuntimeError("Unsupported context:" + str(ctx))
 
         self.__workers[worker_id] = worker_creator_fun(
             target=work,
@@ -198,7 +193,7 @@ class TaskQueue:
         # block until all tasks are done
         if wait_task:
             self.join()
-        self.__workers = dict()
+        self.__workers = {}
 
     def force_stop(self):
         self.stop_event.set()

@@ -13,19 +13,19 @@ def hello(task, args):
 
 
 def test_process_task_queue():
-    queue = ProcessTaskQueue(hello, worker_num=8)
+    queue = ProcessTaskQueue(worker_fun=hello, worker_num=8)
     queue.start()
     queue.add_task(())
     time.sleep(1)
     assert queue.has_result()
     assert queue.get_result() == "abc"
     queue.stop()
-    queue = ProcessTaskQueue(hello, worker_num=8, use_manager=True)
+    queue = ProcessTaskQueue(worker_fun=hello, worker_num=8, use_manager=True)
     queue.start()
     queue.add_task(())
     assert queue.get_result() == "abc"
     queue.stop()
-    queue = ProcessTaskQueue(hello, worker_num=8, use_manager=True)
+    queue = ProcessTaskQueue(worker_fun=hello, worker_num=8, use_manager=True)
     queue.start()
     queue.add_task(())
     assert asyncio.run(queue.get_result_async()) == "abc"

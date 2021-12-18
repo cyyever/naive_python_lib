@@ -9,7 +9,7 @@ def worker(*args):
 
 def test_task_queue():
     for queue_type in [ThreadTaskQueue, ProcessTaskQueue, CoroutineTaskQueue]:
-        queue = queue_type(worker, 2)
+        queue = queue_type(worker_fun=worker,worker_num= 2)
         queue.start()
         queue.add_task(())
         queue.add_task(())
