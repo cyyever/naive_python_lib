@@ -7,6 +7,7 @@ import threading
 import traceback
 from typing import Callable
 
+import gevent.queue
 import psutil
 from cyy_naive_lib.log import get_log_files, get_logger, set_file_handler
 
@@ -71,7 +72,10 @@ class TaskQueue:
         if self.__manager is not None:
             self.stop_event = self.__manager.Event()
         else:
-            self.stop_event = self.__ctx.Event()
+            if hasattr(self.__ctx, "Event"):
+                self.stop_event = self.__ctx.Event()
+            else:
+                self.stop_event = threading.Event()
         self.task_queue = self.__create_queue()
         self.__result_queues: dict = {"default": self.__create_queue()}
         self.worker_num = worker_num
@@ -83,6 +87,8 @@ class TaskQueue:
     def __create_queue(self):
         if self.__ctx is threading:
             return queue.Queue()
+        if self.__ctx is gevent:
+            return gevent.queue.Queue()
         if self.__manager is not None:
             return self.__manager.Queue()
         return self.__ctx.Queue()
@@ -145,6 +151,15 @@ class TaskQueue:
             use_process = True
         elif hasattr(self.__ctx, "Thread"):
             worker_creator_fun = self.__ctx.Thread
+        elif self.__ctx is gevent:
+            self.__workers[worker_id] = gevent.spawn(
+                work,
+                self,
+                os.getpid(),
+                set(),
+                self._get_extra_task_arguments(worker_id),
+            )
+            return
         else:
             raise RuntimeError("Unsupported context:" + str(self.__ctx))
 
