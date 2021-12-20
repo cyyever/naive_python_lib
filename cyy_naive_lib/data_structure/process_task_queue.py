@@ -19,6 +19,9 @@ class ProcessTaskQueue(TaskQueue):
         )
 
     def get_ctx(self):
+        return multiprocessing
+
+    def get_manager(self):
         if self.use_manager:
             return multiprocessing.Manager()
-        return multiprocessing
+        return None

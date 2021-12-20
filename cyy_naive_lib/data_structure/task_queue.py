@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
 import copy
-import multiprocessing
-import multiprocessing.managers
 import os
 import queue
 import threading
@@ -67,7 +65,7 @@ def work(
 
 
 class TaskQueue:
-    def __init__(self, worker_num: int = 1, worker_fun: Callable = None, manager=None):
+    def __init__(self, worker_num: int = 1, worker_fun: Callable = None):
         self.stop_event = None
         self.task_queue = self.__create_queue()
         self.__result_queues: dict = {"default": self.__create_queue()}
@@ -80,15 +78,18 @@ class TaskQueue:
     def get_ctx(self):
         raise NotImplementedError()
 
+    def get_manager(self):
+        return None
+
     def __create_queue(self):
+        manager = self.get_manager()
+        if manager is not None:
+            return manager.Queue()
         ctx = self.get_ctx()
         if ctx is threading:
             return queue.Queue()
         if ctx is gevent:
             return gevent.queue.Queue()
-        # if isinstance(multiprocessing.managers.SyncManager)
-        # if self.__manager is not None:
-        #     return self.__manager.Queue()
         return ctx.Queue()
 
     def __getstate__(self):
@@ -144,10 +145,7 @@ class TaskQueue:
         worker_creator_fun = None
         use_process = False
         ctx = self.get_ctx()
-        if isinstance(ctx, multiprocessing.managers.SyncManager):
-            worker_creator_fun = multiprocessing.Process
-            use_process = True
-        elif hasattr(ctx, "Process"):
+        if hasattr(ctx, "Process"):
             worker_creator_fun = ctx.Process
             use_process = True
         elif hasattr(ctx, "Thread"):
