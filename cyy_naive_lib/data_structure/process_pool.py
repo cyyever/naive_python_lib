@@ -4,7 +4,9 @@ from .executor_pool import ExecutorPool
 
 
 class ProcessPool(ExecutorPool):
-    def __init__(self, max_workers=None):
+    def __init__(self, mp_context=None, max_workers=None):
         super().__init__(
-            concurrent.futures.ProcessPoolExecutor(max_workers=max_workers)
+            concurrent.futures.ProcessPoolExecutor(
+                mp_context=mp_context, max_workers=max_workers
+            )
         )
