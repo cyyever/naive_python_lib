@@ -117,6 +117,7 @@ class TaskQueue:
         return self.__result_queues[name]
 
     def start(self):
+        assert self.worker_num > 0
         assert self.__worker_fun is not None
         if self.stop_event is None:
             ctx = self.get_ctx()
@@ -126,7 +127,11 @@ class TaskQueue:
                 self.stop_event = ctx.Event()
 
         if not self.__workers:
+            self.stop_event.clear()
             self.__workers = {}
+            for q in (self.task_queue, *self.__result_queues.values()):
+                while not q.empty():
+                    q.get()
         for _ in range(len(self.__workers), self.worker_num):
             worker_id = max(self.__workers.keys(), default=0) + 1
             self.__start_worker(worker_id)
