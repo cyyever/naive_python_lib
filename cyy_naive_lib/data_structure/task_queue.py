@@ -127,9 +127,10 @@ class TaskQueue:
 
         if not self.__workers:
             self.__workers = {}
-            self.task_queue.clear()
-            for q in self.__result_queues.values():
-                q.clear()
+            # clear queues
+            for q in (self.task_queue, *self.__result_queues.values()):
+                while not q.empty():
+                    q.get()
 
         for _ in range(len(self.__workers), self.worker_num):
             worker_id = max(self.__workers.keys(), default=0) + 1
