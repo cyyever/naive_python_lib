@@ -125,8 +125,11 @@ class TaskQueue:
             else:
                 self.stop_event = ctx.Event()
 
-        if self.__workers is None:
+        if not self.__workers:
             self.__workers = {}
+            self.task_queue.clear()
+            for q in self.__result_queues.values():
+                q.clear()
 
         for _ in range(len(self.__workers), self.worker_num):
             worker_id = max(self.__workers.keys(), default=0) + 1
@@ -184,10 +187,10 @@ class TaskQueue:
             self.add_task(_SentinelTask())
 
     def stop(self, wait_task=True):
-        if not self.__workers:
-            return
         # stop __workers
         self.send_sentinel_task(self.worker_num)
+        if not self.__workers:
+            return
         # block until all tasks are done
         if wait_task:
             self.join()
