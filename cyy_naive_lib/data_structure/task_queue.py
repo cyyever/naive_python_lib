@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import asyncio
 import copy
 import os
 import queue
@@ -213,13 +212,5 @@ class TaskQueue:
         result_queue = self.get_result_queue(queue_name)
         return not result_queue.empty()
 
-    async def get_result_async(self, queue_name: str = "default"):
-        result_queue = self.get_result_queue(queue_name)
-        while True:
-            try:
-                return result_queue.get_nowait()
-            except queue.Empty:
-                await asyncio.sleep(1)
-
     def _get_extra_task_arguments(self, worker_id):
-        return [worker_id]
+        return [self, worker_id]
