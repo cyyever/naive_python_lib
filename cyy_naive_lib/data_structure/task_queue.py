@@ -213,4 +213,4 @@ class TaskQueue:
         return not result_queue.empty()
 
     def _get_extra_task_arguments(self, worker_id):
-        return [self, worker_id]
+        return {"queue": self, "worker_id": worker_id}
