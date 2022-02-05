@@ -13,6 +13,7 @@ class ProcessTaskQueue(TaskQueue):
         use_manager: bool = False,
     ):
         self.use_manager = use_manager
+        self.__manager = None
         super().__init__(
             worker_fun=worker_fun,
             worker_num=worker_num,
@@ -23,5 +24,7 @@ class ProcessTaskQueue(TaskQueue):
 
     def get_manager(self):
         if self.use_manager:
-            return multiprocessing.Manager()
+            if self.__manager is None:
+                self.__manager = multiprocessing.Manager()
+            return self.__manager
         return None
