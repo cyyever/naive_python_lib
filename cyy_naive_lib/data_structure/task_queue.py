@@ -202,7 +202,7 @@ class TaskQueue:
         self.stop_event.clear()
 
     def release(self):
-        self.force_stop()
+        self.stop()
 
     def add_task(self, task):
         self.task_queue.put(task)
