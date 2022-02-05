@@ -65,6 +65,7 @@ def work(
 
 class TaskQueue:
     def __init__(self, worker_num: int = 1, worker_fun: Callable = None):
+        self.__ctx = None
         self.stop_event = None
         self.task_queue = self.__create_queue()
         self.__result_queues: dict = {"default": self.__create_queue()}
@@ -73,6 +74,12 @@ class TaskQueue:
         self.__workers = None
         if self.__worker_fun is not None:
             self.start()
+
+    @property
+    def ctx(self):
+        if self.__ctx is None:
+            self.__ctx = self.get_ctx()
+        return self.__ctx
 
     def get_ctx(self):
         raise NotImplementedError()
@@ -84,12 +91,11 @@ class TaskQueue:
         manager = self.get_manager()
         if manager is not None:
             return manager.Queue()
-        ctx = self.get_ctx()
-        if ctx is threading:
+        if self.ctx is threading:
             return queue.Queue()
-        if ctx is gevent:
+        if self.ctx is gevent:
             return gevent.queue.Queue()
-        return ctx.Queue()
+        return self.ctx.Queue()
 
     def __getstate__(self):
         # capture what is normally pickled
@@ -119,11 +125,10 @@ class TaskQueue:
         assert self.worker_num > 0
         assert self.__worker_fun is not None
         if self.stop_event is None:
-            ctx = self.get_ctx()
-            if ctx is gevent:
+            if self.ctx is gevent:
                 self.stop_event = gevent.event.Event()
             else:
-                self.stop_event = ctx.Event()
+                self.stop_event = self.ctx.Event()
 
         if not self.__workers:
             self.stop_event.clear()
@@ -147,13 +152,12 @@ class TaskQueue:
         assert worker_id not in self.__workers
         worker_creator_fun = None
         use_process = False
-        ctx = self.get_ctx()
-        if hasattr(ctx, "Process"):
-            worker_creator_fun = ctx.Process
+        if hasattr(self.ctx, "Process"):
+            worker_creator_fun = self.ctx.Process
             use_process = True
-        elif hasattr(ctx, "Thread"):
-            worker_creator_fun = ctx.Thread
-        elif ctx is gevent:
+        elif hasattr(self.ctx, "Thread"):
+            worker_creator_fun = self.ctx.Thread
+        elif self.ctx is gevent:
             self.__workers[worker_id] = gevent.spawn(
                 work,
                 self,
@@ -163,7 +167,7 @@ class TaskQueue:
             )
             return
         else:
-            raise RuntimeError("Unsupported context:" + str(ctx))
+            raise RuntimeError("Unsupported context:" + str(self.ctx))
 
         self.__workers[worker_id] = worker_creator_fun(
             target=work,
