@@ -1,12 +1,16 @@
 import time
 import traceback
+
 from cyy_naive_lib.log import get_logger
 
 
 class TimeCounter:
-    def __init__(self, debug_logging=True, with_block_logging=True):
+    def __init__(
+        self, debug_logging=True, with_block_logging=True, log_prefix: str = None
+    ):
         self.debug_logging = debug_logging
         self.with_block_logging = with_block_logging
+        self.__log_prefix = log_prefix
         self.start_ns = None
         self.reset_start_time()
 
@@ -37,7 +41,8 @@ class TimeCounter:
         else:
             logging_func = get_logger().info
         logging_func(
-            "block [%s => %d] uses %s ms",
+            "%s [%s => %d] uses %s ms",
+            self.__log_prefix if self.__log_prefix is not None else "",
             with_block.filename,
             with_block.lineno,
             used_ms,
