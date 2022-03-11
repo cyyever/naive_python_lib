@@ -12,7 +12,7 @@ def __set_formatter(_handler, with_color=True):
     if with_color:
         if os.getenv("eink_screen") == "1":
             with_color = False
-    __format_str: str = "%(asctime)s %(levelname)s {thd:%(threadName)s} [%(filename)s => %(lineno)d] : %(message)s"
+    __format_str: str = "%(asctime)s %(levelname)s {%(threadName)s} [%(filename)s => %(lineno)d] : %(message)s"
     if with_color:
         formatter = ColoredFormatter(
             "%(log_color)s" + __format_str,
@@ -69,8 +69,6 @@ __log_files = set()
 
 
 def set_file_handler(filename: str):
-    global __colored_logger
-    global __log_files
     with __logger_lock:
         if filename in __log_files:
             return
@@ -84,7 +82,6 @@ def set_file_handler(filename: str):
 
 
 def get_log_files():
-    global __log_files
     return __log_files
 
 
