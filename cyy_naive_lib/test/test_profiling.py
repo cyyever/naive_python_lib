@@ -1,4 +1,4 @@
-from profiling import Profile
+from cyy_naive_lib.profiling import Profile
 
 
 def test_profile():

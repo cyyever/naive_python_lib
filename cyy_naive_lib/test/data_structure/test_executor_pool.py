@@ -2,8 +2,8 @@ import multiprocessing
 import threading
 import time
 
-from data_structure.process_pool import ProcessPool
-from data_structure.thread_pool import ThreadPool
+from cyy_naive_lib.data_structure.process_pool import ProcessPool
+from cyy_naive_lib.data_structure.thread_pool import ThreadPool
 
 
 def thd_fun():

@@ -1,7 +1,8 @@
 import os
 import shutil
-from fs.path import list_files_by_suffixes
-from fs.tempdir import TempDir
+
+from cyy_naive_lib.fs.path import list_files_by_suffixes
+from cyy_naive_lib.fs.tempdir import TempDir
 
 
 def test_list_files_by_suffixes():

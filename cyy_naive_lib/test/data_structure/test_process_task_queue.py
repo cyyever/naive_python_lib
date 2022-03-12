@@ -1,8 +1,7 @@
 import time
 
-from log import get_logger
-
-from data_structure.process_task_queue import ProcessTaskQueue
+from cyy_naive_lib.data_structure.process_task_queue import ProcessTaskQueue
+from cyy_naive_lib.log import get_logger
 
 
 def hello(task, args):

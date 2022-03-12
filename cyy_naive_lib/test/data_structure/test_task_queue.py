@@ -1,6 +1,7 @@
-from data_structure.coroutine_task_queue import CoroutineTaskQueue
-from data_structure.process_task_queue import ProcessTaskQueue
-from data_structure.thread_task_queue import ThreadTaskQueue
+from cyy_naive_lib.data_structure.coroutine_task_queue import \
+    CoroutineTaskQueue
+from cyy_naive_lib.data_structure.process_task_queue import ProcessTaskQueue
+from cyy_naive_lib.data_structure.thread_task_queue import ThreadTaskQueue
 
 
 def worker(*args):

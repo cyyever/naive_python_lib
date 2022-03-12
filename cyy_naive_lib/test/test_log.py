@@ -1,9 +1,8 @@
 import logging
 import threading
 
-from log import get_logger, set_file_handler
-
-from fs.tempdir import TempDir
+from cyy_naive_lib.fs.tempdir import TempDir
+from cyy_naive_lib.log import get_logger, set_file_handler
 
 
 def test_log():

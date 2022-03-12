@@ -1,4 +1,4 @@
-from util import retry_operation
+from cyy_naive_lib.util import retry_operation
 
 
 def test_retry_operation():

@@ -1,4 +1,4 @@
-from system_info import get_operating_system, get_processor_name
+from cyy_naive_lib.system_info import get_operating_system, get_processor_name
 
 
 def test_operating_system():

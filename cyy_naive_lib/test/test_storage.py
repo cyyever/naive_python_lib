@@ -1,4 +1,4 @@
-from storage import DataStorage
+from cyy_naive_lib.storage import DataStorage
 
 
 def test_storage():

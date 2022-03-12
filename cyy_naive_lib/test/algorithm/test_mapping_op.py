@@ -1,5 +1,5 @@
-from algorithm.mapping_op import (change_mapping_keys, flatten_mapping,
-                                  get_mapping_values_by_key_order)
+from cyy_naive_lib.algorithm.mapping_op import (
+    change_mapping_keys, flatten_mapping, get_mapping_values_by_key_order)
 
 
 def test_get_mapping_values_by_key_order():

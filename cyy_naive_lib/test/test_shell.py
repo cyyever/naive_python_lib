@@ -1,12 +1,11 @@
 from shutil import which
 
-from shell.mingw64_script import Mingw64Script
+from cyy_naive_lib.fs.tempdir import TempDir
+from cyy_naive_lib.shell.mingw64_script import Mingw64Script
 # from shell.bash_script import BashScript
 # from shell.docker_file import DockerFile
-from shell.msys2_script import MSYS2Script
-from shell_factory import get_shell_script
-
-from fs.tempdir import TempDir
+from cyy_naive_lib.shell.msys2_script import MSYS2Script
+from cyy_naive_lib.shell_factory import get_shell_script
 
 
 def test_exec_cmd():
