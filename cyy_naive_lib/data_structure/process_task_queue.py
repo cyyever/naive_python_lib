@@ -21,7 +21,7 @@ class ProcessTaskQueue(TaskQueue):
 
     def __getstate__(self):
         # capture what is normally pickled
-        state = super().__getstate__("")
+        state = super().__getstate__()
         state["_ProcessTaskQueue__manager"] = None
         return state
 
