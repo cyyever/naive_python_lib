@@ -19,6 +19,12 @@ class ProcessTaskQueue(TaskQueue):
             worker_num=worker_num,
         )
 
+    def __getstate__(self):
+        # capture what is normally pickled
+        state = super().__getstate__("")
+        state["_ProcessTaskQueue__manager"] = None
+        return state
+
     def get_ctx(self):
         return multiprocessing
 
