@@ -25,6 +25,6 @@ class ProcessTaskQueue(TaskQueue):
     def get_manager(self):
         if self.use_manager:
             if self.__manager is None:
-                self.__manager = multiprocessing.Manager()
+                self.__manager = self.get_ctx().Manager()
             return self.__manager
         return None
