@@ -12,7 +12,7 @@ class Shell:
         r"""
         Execute a command line
         """
-        with tempfile.NamedTemporaryFile(mode="w+t") as output_file:
+        with tempfile.NamedTemporaryFile(mode="w+t", encoding="utf8") as output_file:
             output_files = []
             if extra_output_files is not None:
                 output_files = extra_output_files
