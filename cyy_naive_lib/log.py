@@ -68,7 +68,7 @@ if not __stub_colored_logger.handlers:
 __log_files = set()
 
 
-def set_file_handler(filename: str):
+def set_file_handler(filename: str) -> None:
     with __logger_lock:
         if filename in __log_files:
             return
