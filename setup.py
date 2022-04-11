@@ -16,6 +16,7 @@ setuptools.setup(
         "cyy_naive_lib/shell",
         "cyy_naive_lib/fs",
         "cyy_naive_lib/data_structure",
+        "cyy_naive_lib/source_code",
         "cyy_naive_lib/algorithm"],
     classifiers=[
         "Programming Language :: Python :: 3",
