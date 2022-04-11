@@ -10,8 +10,7 @@ class Source:
         self.spec = spec
         self.url = url
         self.root_dir = root_dir
-        self.lock_dir = os.path.join(self.root_dir, ".lock")
-        self.prev_dir: None | str = None
+        self.__prev_dir: None | str = None
 
     @staticmethod
     def is_git_source(url: str | None) -> bool:
@@ -24,11 +23,10 @@ class Source:
         raise NotImplementedError
 
     def __enter__(self) -> str:
-        self.prev_dir = os.getcwd()
-        os.makedirs(self.lock_dir, exist_ok=True)
-        lock_file = os.path.join(
-            self.lock_dir, str(self.spec).replace("/", "_") + ".lock"
-        )
+        self.__prev_dir = os.getcwd()
+        lock_dir = os.path.join(self.root_dir, ".lock")
+        os.makedirs(lock_dir, exist_ok=True)
+        lock_file = os.path.join(lock_dir, str(self.spec).replace("/", "_") + ".lock")
         if os.path.isfile(lock_file):
             with open(lock_file, "rb") as f:
                 pid = f.readline().strip()
@@ -44,4 +42,4 @@ class Source:
             return res
 
     def __exit__(self, exc_type, exc_value, traceback):
-        os.chdir(self.prev_dir)
+        os.chdir(self.__prev_dir)
