@@ -12,10 +12,6 @@ class Source:
         self.root_dir = root_dir
         self.__prev_dir: None | str = None
 
-    @staticmethod
-    def is_git_source(url: str | None) -> bool:
-        return url is not None and url.endswith(".git")
-
     def get_checksum(self) -> str:
         raise NotImplementedError
 
