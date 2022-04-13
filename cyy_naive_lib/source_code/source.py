@@ -20,9 +20,7 @@ class Source:
 
     def __enter__(self) -> str:
         self.__prev_dir = os.getcwd()
-        print(self.root_dir)
         lock_dir = os.path.join(self.root_dir, ".lock")
-        print(lock_dir)
         os.makedirs(lock_dir, exist_ok=True)
         lock_file = os.path.join(lock_dir, str(self.spec).replace("/", "_") + ".lock")
         if os.path.isfile(lock_file):
