@@ -1,8 +1,9 @@
 import os
-import subprocess
 import platform
+import subprocess
 from shutil import which
-from util import readlines
+
+from cyy_naive_lib.util import readlines
 
 __operating_system = None
 
