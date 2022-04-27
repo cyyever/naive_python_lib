@@ -1,5 +1,6 @@
 from cyy_naive_lib.algorithm.mapping_op import (
-    change_mapping_keys, flatten_mapping, get_mapping_values_by_key_order)
+    change_mapping_keys, flatten_mapping, get_mapping_values_by_key_order,
+    reduce_values_by_key)
 
 
 def test_get_mapping_values_by_key_order():
@@ -15,3 +16,10 @@ def test_change_mapping_keys():
 def test_flatten_mapping():
     res = flatten_mapping({2: "b", 1: {1: "c", 2: "a"}})
     assert res == ["c", "a", "b"]
+
+
+def test_reduce_values_by_key():
+    res = reduce_values_by_key(f=len, maps=[{"a": 1, "b": 2}, {"a": 2, "b": 3}])
+    assert res == {"a": 2, "b": 2}
+    res = reduce_values_by_key(f=sum, maps=[{"a": 1, "b": 2}, {"a": 2, "b": 3}])
+    assert res == {"a": 3, "b": 5}

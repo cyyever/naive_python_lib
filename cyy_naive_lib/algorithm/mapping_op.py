@@ -1,4 +1,4 @@
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Callable, Generator
 
 
@@ -38,3 +38,11 @@ def flatten_mapping(d: Mapping) -> list:
         else:
             res.append(v)
     return res
+
+
+def reduce_values_by_key(f: Callable, maps: Sequence[dict]) -> dict:
+    value_seq_dict: dict = {k: [] for k in maps[0]}
+    for m in maps:
+        for k, v in m.items():
+            value_seq_dict[k].append(v)
+    return {k: f(v) for k, v in value_seq_dict.items()}
