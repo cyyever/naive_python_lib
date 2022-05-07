@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 import hashlib
 import os
-import traceback
+import pickle
 import tempfile
+import traceback
+from typing import Any, Callable
+
 from cyy_naive_lib.log import get_logger
 
 
 class DataStorage:
-    """ 封装数据存储操作 """
+    """封装数据存储操作"""
 
     def __init__(self, data, data_path=None):
         assert isinstance(data, bytes)
@@ -67,3 +70,27 @@ class DataStorage:
             get_logger().error("catch exception:%s", e)
             get_logger().error("traceback:%s", traceback.format_exc())
             return False
+
+
+def get_cached_data(path: str, data_fun: Callable) -> Any:
+    def read_data():
+        if not os.path.isfile(path):
+            return None
+        fd = os.open(path, flags=os.O_RDONLY)
+        with os.fdopen(fd, "rb") as f:
+            res = pickle.load(f)
+        return res
+
+    def write_data(data):
+        fd = os.open(path, flags=os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        with os.fdopen(fd, "wb") as f:
+            pickle.dump(data, f)
+
+    data = read_data()
+    if data is not None:
+        return data
+    data = data_fun()
+    if data is None:
+        raise RuntimeError("No data")
+    write_data(data)
+    return data
