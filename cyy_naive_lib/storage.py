@@ -54,7 +54,7 @@ class DataStorage:
 
     def save(self):
         if self.__data is not None and not self.__synced:
-            with open(self.__data_path, "wb") as f:
+            with open(self.data_path, "wb") as f:
                 pickle.dump(self.__data, f)
                 self.__data = None
 
