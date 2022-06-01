@@ -3,21 +3,19 @@ import hashlib
 import os
 import pickle
 import tempfile
-import traceback
 from typing import Any, Callable
-
-from cyy_naive_lib.log import get_logger
 
 
 class DataStorage:
     """封装数据存储操作"""
 
-    def __init__(self, data, data_path=None):
-        assert isinstance(data, bytes)
+    def __init__(self, data: Any, data_path: str | None = None):
+        assert data is not None
         self.__data = data
         self.__data_path = data_path
-        self.__data_hash = None
+        self.__data_hash: str | None = None
         self.__fd = None
+        self.__synced = False
 
     def __del__(self):
         self.clear()
@@ -30,19 +28,19 @@ class DataStorage:
 
     @property
     def data(self):
-        if self.__data:
+        if self.__data is not None:
             return self.__data
         assert self.__data_path
         with open(self.__data_path, "rb") as f:
-            self.__data = f.read()
+            self.__data = pickle.load(f)
             return self.__data
 
     @property
-    def data_hash(self):
-        if self.__data_hash:
+    def data_hash(self) -> str:
+        if self.__data_hash is not None:
             return self.__data_hash
         hash_sha256 = hashlib.sha256()
-        hash_sha256.update(self.data)
+        hash_sha256.update(pickle.dumps(self.data))
         self.__data_hash = hash_sha256.hexdigest()
         return self.__data_hash
 
@@ -55,21 +53,10 @@ class DataStorage:
         self.__data_hash = None
 
     def save(self):
-        try:
-            data_path = self.data_path
-            if self.__fd is not None:
-                os.lseek(self.__fd, 0, 0)
-                os.write(self.__fd, self.__data)
+        if self.__data is not None and not self.__synced:
+            with open(self.__data_path, "wb") as f:
+                pickle.dump(self.__data, f)
                 self.__data = None
-                return True
-            with open(data_path, "xb") as f:
-                f.write(self.__data)
-                self.__data = None
-                return True
-        except Exception as e:
-            get_logger().error("catch exception:%s", e)
-            get_logger().error("traceback:%s", traceback.format_exc())
-            return False
 
 
 def get_cached_data(path: str, data_fun: Callable) -> Any:
