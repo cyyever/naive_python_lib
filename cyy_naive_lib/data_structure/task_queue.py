@@ -66,8 +66,8 @@ def work(
 class TaskQueue:
     def __init__(self, worker_num: int = 1, worker_fun: Callable = None):
         self.stop_event = None
-        self.task_queue = self.__create_queue()
-        self.__result_queues: dict = {"default": self.__create_queue()}
+        self.task_queue = None
+        self.__result_queues: dict = {}
         self.worker_num = worker_num
         self.__worker_fun = worker_fun
         self.__workers = None
@@ -122,6 +122,10 @@ class TaskQueue:
                 self.stop_event = gevent.event.Event()
             else:
                 self.stop_event = ctx.Event()
+        if self.task_queue is None:
+            self.task_queue = self.__create_queue()
+        if not self.__result_queues:
+            self.__result_queues: dict = {"default": self.__create_queue()}
 
         if not self.__workers:
             self.stop_event.clear()
