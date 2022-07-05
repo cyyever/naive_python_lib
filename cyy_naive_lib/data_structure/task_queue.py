@@ -40,12 +40,12 @@ def work(
     pid,
     log_files,
     extra_arguments: list,
-):
+) -> None:
     for log_file in log_files:
         set_file_handler(log_file)
     while not q.stop_event.is_set():
         try:
-            task = q.task_queue.get(3600)
+            task = q.get_task(timeout=3600)
             if isinstance(task, _SentinelTask):
                 break
             res = q.worker_fun(task, extra_arguments)
@@ -66,9 +66,9 @@ def work(
 class TaskQueue:
     def __init__(self, worker_num: int = 1, worker_fun: Callable = None):
         self.stop_event = None
-        self.task_queue = None
+        self.__task_queue = None
         self.__result_queues: dict = {}
-        self.worker_num = worker_num
+        self.__worker_num = worker_num
         self.__worker_fun = worker_fun
         self.__workers = None
         if self.__worker_fun is not None:
@@ -106,15 +106,21 @@ class TaskQueue:
         self.stop()
         self.start()
 
-    def add_result_queue(self, name: str):
+    def add_queue(self, name: str):
         assert name not in self.__result_queues
         self.__result_queues[name] = self.__create_queue()
 
-    def get_result_queue(self, name):
+    def get_queue(self, name):
         return self.__result_queues[name]
 
+    def add_result_queue(self, name: str):
+        return self.add_queue(name)
+
+    def get_result_queue(self, name):
+        return self.get_queue(name)
+
     def start(self):
-        assert self.worker_num > 0
+        assert self.__worker_num > 0
         assert self.__worker_fun is not None
         ctx = self.get_ctx()
         if self.stop_event is None:
@@ -122,23 +128,31 @@ class TaskQueue:
                 self.stop_event = gevent.event.Event()
             else:
                 self.stop_event = ctx.Event()
-        if self.task_queue is None:
-            self.task_queue = self.__create_queue()
+        if self.__task_queue is None:
+            self.__task_queue = self.__create_queue()
         if not self.__result_queues:
             self.__result_queues: dict = {"default": self.__create_queue()}
 
         if not self.__workers:
             self.stop_event.clear()
             self.__workers = {}
-            for q in (self.task_queue, *self.__result_queues.values()):
+            for q in (self.__task_queue, *self.__result_queues.values()):
                 while not q.empty():
                     q.get()
-        for _ in range(len(self.__workers), self.worker_num):
+        for _ in range(len(self.__workers), self.__worker_num):
             worker_id = max(self.__workers.keys(), default=0) + 1
             self.__start_worker(worker_id)
 
     def put_result(self, result, queue_name: str = "default"):
         result_queue = self.get_result_queue(queue_name)
+        if isinstance(result, RepeatedResult):
+            for _ in range(result.num):
+                result_queue.put(result.data)
+        else:
+            result_queue.put(result)
+
+    def put_data(self, result, queue_name: str = "default"):
+        result_queue = self.get_queue(queue_name)
         if isinstance(result, RepeatedResult):
             for _ in range(result.num):
                 result_queue.put(result.data)
@@ -190,7 +204,7 @@ class TaskQueue:
 
     def stop(self, wait_task=True):
         # stop __workers
-        self.send_sentinel_task(self.worker_num)
+        self.send_sentinel_task(self.__worker_num)
         if not self.__workers:
             return
         # block until all tasks are done
@@ -207,14 +221,25 @@ class TaskQueue:
         self.stop()
 
     def add_task(self, task):
-        self.task_queue.put(task)
+        self.__task_queue.put(task)
+
+    def get_task(self, timeout):
+        return self.__task_queue.get(timeout=timeout)
 
     def get_result(self, queue_name: str = "default"):
-        result_queue = self.get_result_queue(queue_name)
+        result_queue = self.get_queue(queue_name)
         return result_queue.get()
 
     def has_result(self, queue_name: str = "default") -> bool:
-        result_queue = self.get_result_queue(queue_name)
+        result_queue = self.get_queue(queue_name)
+        return not result_queue.empty()
+
+    def get_data(self, queue_name: str = "default"):
+        result_queue = self.get_queue(queue_name)
+        return result_queue.get()
+
+    def has_data(self, queue_name: str = "default") -> bool:
+        result_queue = self.get_queue(queue_name)
         return not result_queue.empty()
 
     def _get_extra_task_arguments(self, worker_id):
