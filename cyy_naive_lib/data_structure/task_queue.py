@@ -74,6 +74,10 @@ class TaskQueue:
         if self.__worker_fun is not None:
             self.start()
 
+    @property
+    def worker_num(self):
+        return self.__worker_num
+
     def get_ctx(self):
         raise NotImplementedError()
 
