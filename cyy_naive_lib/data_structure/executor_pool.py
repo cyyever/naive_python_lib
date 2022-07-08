@@ -19,6 +19,7 @@ class ExecutorPool:
             # check the result of future, may raise a exception here
             result = f.result()
             get_logger().debug("future result is %s", result)
+        self.__executor.shutdown()
 
     @staticmethod
     def process_once(fn, *args, **kwargs):
