@@ -37,10 +37,12 @@ def __worker(q, logger, logger_lock):
     while True:
         try:
             record = q.get()
+            if record is None:
+                return
             with logger_lock:
                 logger.handle(record)
         except EOFError:
-            break
+            return
 
 
 __logger_lock = threading.RLock()
@@ -56,14 +58,13 @@ if not __colored_logger.handlers:
 __stub_colored_logger = logging.getLogger("colored_multiprocess_logger")
 if not __stub_colored_logger.handlers:
     __stub_colored_logger.setLevel(logging.INFO)
-    queue: Queue = Queue()
-    qh = logging.handlers.QueueHandler(queue)
+    q: Queue = Queue()
+    qh = logging.handlers.QueueHandler(q)
     __stub_colored_logger.addHandler(qh)
     __stub_colored_logger.propagate = False
-    __lp = threading.Thread(
-        target=__worker, args=(queue, __colored_logger, __logger_lock), daemon=True
-    )
+    __lp = threading.Thread(target=__worker, args=(q, __colored_logger, __logger_lock))
     __lp.start()
+    threading._register_atexit(q.put, None)
 
 __log_files = set()
 
