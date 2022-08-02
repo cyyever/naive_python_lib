@@ -12,7 +12,7 @@ def __set_formatter(_handler, with_color=True):
     if with_color:
         if os.getenv("eink_screen") == "1":
             with_color = False
-    __format_str: str = "%(asctime)s %(levelname)s {%(threadName)s} [%(filename)s => %(lineno)d] : %(message)s"
+    __format_str: str = "%(asctime)s %(levelname)s {%(processName)s} [%(filename)s => %(lineno)d] : %(message)s"
     if with_color:
         formatter = ColoredFormatter(
             "%(log_color)s" + __format_str,
