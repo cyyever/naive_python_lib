@@ -186,6 +186,7 @@ class TaskQueue:
             raise RuntimeError("Unsupported context:" + str(ctx))
 
         self.__workers[worker_id] = worker_creator_fun(
+            name=f"worker {worker_id}",
             target=work,
             args=(
                 self,
