@@ -22,16 +22,17 @@ class Source:
         self.__prev_dir = os.getcwd()
         lock_dir = os.path.join(self.root_dir, ".lock")
         os.makedirs(lock_dir, exist_ok=True)
-        lock_file = os.path.join(lock_dir, str(self.spec).replace("/", "_") + ".lock")
+        lock_file_prefix = os.path.join(lock_dir, str(self.spec).replace("/", "_"))
+        lock_file = lock_file_prefix + ".lock"
         if os.path.isfile(lock_file):
-            with open(lock_file, "rb") as f:
-                pid = f.readline().strip()
+            with open(lock_file, mode="rb") as f:
+                pid = int(str(f.read(100)))
                 if not psutil.pid_exists(pid):
                     f.close()
                     os.remove(lock_file)
 
-        with FileLock(lock_file) as lock:
-            os.write(lock.fd, bytes(os.getpid()))
+        with FileLock(lock_file_prefix) as lock:
+            os.write(lock.fd, bytes(str(os.getpid())))
             res = self._download()
             if os.path.isdir(res):
                 os.chdir(res)
