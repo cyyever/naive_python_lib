@@ -32,7 +32,7 @@ class Source:
                     os.remove(lock_file)
 
         with FileLock(lock_file_prefix) as lock:
-            os.write(lock.fd, bytes(str(os.getpid())))
+            os.write(lock.fd, bytes(str(os.getpid()), encoding="utf8"))
             res = self._download()
             if os.path.isdir(res):
                 os.chdir(res)
