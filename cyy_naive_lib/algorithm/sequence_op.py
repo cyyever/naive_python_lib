@@ -23,8 +23,8 @@ def flatten_list(seq: list) -> list:
     return res
 
 
-def sublist(a, b) -> int | None:
-    idx = 0
+def sublist(a, b, start=0) -> int | None:
+    idx = start
     while True:
         try:
             idx = a.index(b[0], idx)
