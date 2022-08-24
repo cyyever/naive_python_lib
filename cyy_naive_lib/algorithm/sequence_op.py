@@ -23,6 +23,19 @@ def flatten_list(seq: list) -> list:
     return res
 
 
+def sublist(a, b) -> int | None:
+    idx = 0
+    while True:
+        try:
+            idx = a.index(b[0], idx)
+            if a[idx: len(b) + 1] == b:
+                return idx
+            idx += 1
+        except BaseException:
+            break
+    return None
+
+
 def flatten_seq(seq: Sequence) -> list:
     r"""
     Flatten Return a flatted sequence
