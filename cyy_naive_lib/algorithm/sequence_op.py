@@ -28,7 +28,7 @@ def sublist(a, b, start=0) -> int | None:
     while True:
         try:
             idx = a.index(b[0], idx)
-            if a[idx: len(b) + 1] == b:
+            if a[idx: idx + len(b)] == b:
                 return idx
             idx += 1
         except BaseException:
