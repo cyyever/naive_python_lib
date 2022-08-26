@@ -209,9 +209,9 @@ class TaskQueue:
 
     def stop(self, wait_task=True):
         # stop __workers
-        self.send_sentinel_task(self.__worker_num)
         if not self.__workers:
             return
+        self.send_sentinel_task(len(self.__workers))
         # block until all tasks are done
         if wait_task:
             self.join()
