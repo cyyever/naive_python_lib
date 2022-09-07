@@ -1,4 +1,4 @@
-from cyy_naive_lib.algorithm.sequence_op import (flatten_list,
+from cyy_naive_lib.algorithm.sequence_op import (flatten_list, search_sublists,
                                                  split_list_to_chunks, sublist)
 
 
@@ -21,3 +21,13 @@ def test_sublist():
     b = (2,)
     assert sublist(a, b) == 1
     assert sublist(a, b, 3) == 5
+
+
+def test_search_sublists():
+    a = (1, 2, 3, 4, 5, 2)
+    b = (2,)
+    c = (3,)
+    res = search_sublists(a, [b, c])
+    assert res
+    assert res[b] == [1, 5]
+    assert res[c] == [2]

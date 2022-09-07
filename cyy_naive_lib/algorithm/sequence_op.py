@@ -23,6 +23,28 @@ def flatten_list(seq: list) -> list:
     return res
 
 
+def search_sublists(l, sublists) -> dict:
+    assert sublists
+    lookup_table: dict = {}
+    for sublist in sublists:
+        assert sublist
+        a = sublist[0]
+        if a not in lookup_table:
+            lookup_table[a] = []
+        lookup_table[a].append(sublist)
+    result: dict = {}
+    for idx, e in enumerate(l):
+        possible_sublists = lookup_table.get(e, None)
+        if possible_sublists is None:
+            continue
+        for possible_sublist in possible_sublists:
+            if l[idx: idx + len(possible_sublist)] == possible_sublist:
+                if possible_sublist not in result:
+                    result[possible_sublist] = []
+                result[possible_sublist].append(idx)
+    return result
+
+
 def sublist(a, b, start=0) -> int | None:
     idx = start
     while True:
