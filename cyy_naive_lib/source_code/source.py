@@ -26,7 +26,7 @@ class Source:
         lock_file = lock_file_prefix + ".lock"
         if os.path.isfile(lock_file):
             with open(lock_file, mode="rb") as f:
-                pid = int(str(f.read(100)))
+                pid = int(f.read(100).decode("ascii"))
                 if not psutil.pid_exists(pid):
                     f.close()
                     os.remove(lock_file)
