@@ -17,10 +17,9 @@ class DataStorage:
         self.__fd: int | None = None
         self.__synced: bool = False
 
-    def __del__(self) -> None:
-        self.save()
-
     def set_data_path(self, data_path: str) -> None:
+        if self.__data_path == data_path:
+            return
         if self.__data is None and self.__synced:
             self.__data = self.__load_data()
             self.__remove_data_file()
@@ -66,12 +65,12 @@ class DataStorage:
         self.__data_hash = hash_sha256.hexdigest()
         return self.__data_hash
 
-    def clear(self):
+    def clear(self) -> None:
         self.__remove_data_file()
         self.__data = None
         self.__data_hash = None
 
-    def save(self):
+    def save(self) -> None:
         if self.__data is not None and not self.__synced:
             with open(self.data_path, "wb") as f:
                 pickle.dump(self.__data, f)
