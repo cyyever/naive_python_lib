@@ -12,6 +12,9 @@ class ExecutorPool:
         self.__executor = executor
         self.__futures: List[concurrent.futures.Future] = []
 
+    def wait(self, timeout):
+        concurrent.futures.wait(self.__futures, timeout=timeout)
+
     def stop(self):
         concurrent.futures.wait(self.__futures)
         for f in self.__futures:
