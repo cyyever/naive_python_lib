@@ -25,4 +25,5 @@ def test_thread_pool():
 def test_process_pool():
     pool: ProcessPool = ProcessPool()
     pool.exec(process_fun)
+    pool.wait(timeout=1)
     pool.stop()
