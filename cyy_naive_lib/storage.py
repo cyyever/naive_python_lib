@@ -11,29 +11,51 @@ class DataStorage:
 
     def __init__(self, data: Any, data_path: str | None = None):
         assert data is not None
-        self.__data = data
-        self.__data_path = data_path
+        self.__data: Any = data
+        self.__data_path: str | None = data_path
         self.__data_hash: str | None = None
-        self.__fd = None
+        self.__fd: int | None = None
+        self.__synced: bool = False
+
+    def __del__(self) -> None:
+        self.save()
+
+    def set_data_path(self, data_path: str) -> None:
+        if self.__data is None and self.__synced:
+            self.__data = self.__load_data()
+            self.__remove_data_file()
+        self.__data_path = data_path
         self.__synced = False
 
-    def __del__(self):
-        self.clear()
+    def set_data(self, data: Any) -> None:
+        self.__data = data
+        self.__data_hash = None
+        self.__synced = False
 
     @property
-    def data_path(self):
+    def data_path(self) -> str:
         if self.__data_path is None:
             self.__fd, self.__data_path = tempfile.mkstemp()
         return self.__data_path
 
     @property
-    def data(self):
+    def data(self) -> Any:
         if self.__data is not None:
             return self.__data
+        self.__data = self.__load_data()
+        return self.__data
+
+    def __load_data(self) -> Any:
         assert self.__data_path
         with open(self.__data_path, "rb") as f:
-            self.__data = pickle.load(f)
-            return self.__data
+            return pickle.load(f)
+
+    def __remove_data_file(self) -> None:
+        if self.__data_path is not None:
+            if self.__fd is not None:
+                os.close(self.__fd)
+            os.remove(self.__data_path)
+            self.__data_path = None
 
     @property
     def data_hash(self) -> str:
@@ -45,12 +67,8 @@ class DataStorage:
         return self.__data_hash
 
     def clear(self):
-        if self.__data_path is not None:
-            if self.__fd is not None:
-                os.close(self.__fd)
-            os.remove(self.__data_path)
+        self.__remove_data_file()
         self.__data = None
-        self.__data_path = None
         self.__data_hash = None
 
     def save(self):
@@ -58,6 +76,7 @@ class DataStorage:
             with open(self.data_path, "wb") as f:
                 pickle.dump(self.__data, f)
                 self.__data = None
+                self.__synced = True
 
 
 def get_cached_data(path: str, data_fun: Callable) -> Any:
