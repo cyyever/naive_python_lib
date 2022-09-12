@@ -9,8 +9,7 @@ from typing import Any, Callable
 class DataStorage:
     """封装数据存储操作"""
 
-    def __init__(self, data: Any, data_path: str | None = None):
-        assert data is not None
+    def __init__(self, data: Any = None, data_path: str | None = None):
         self.__data: Any = data
         self.__data_path: str | None = data_path
         self.__data_hash: str | None = None
@@ -39,7 +38,7 @@ class DataStorage:
 
     @property
     def data(self) -> Any:
-        if self.__data is not None:
+        if not self.__synced or self.__data is not None:
             return self.__data
         self.__data = self.__load_data()
         return self.__data
@@ -69,6 +68,7 @@ class DataStorage:
         self.__remove_data_file()
         self.__data = None
         self.__data_hash = None
+        self.__synced = False
 
     def save(self) -> None:
         if self.__data is not None and not self.__synced:
