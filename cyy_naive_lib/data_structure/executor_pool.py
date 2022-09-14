@@ -15,14 +15,15 @@ class ExecutorPool:
     def wait(self, timeout):
         concurrent.futures.wait(self.__futures, timeout=timeout)
 
-    def stop(self):
+    def stop(self) -> list:
         concurrent.futures.wait(self.__futures)
-        for f in self.__futures:
-            # DO NOT REMOVE THIS LINE
-            # check the result of future, may raise a exception here
-            result = f.result()
+        results: list = []
+        for future in self.__futures:
+            result = future.result()
             get_logger().debug("future result is %s", result)
+            results.append(result)
         self.__executor.shutdown()
+        return results
 
     @staticmethod
     def process_once(fn, *args, **kwargs):
