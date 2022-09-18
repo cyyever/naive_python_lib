@@ -15,15 +15,17 @@ class DataStorage:
         self.__data_hash: str | None = None
         self.__fd: int | None = None
         self.__synced: bool = False
+        self.__use_tmp_file: bool = False
 
     def set_data_path(self, data_path: str) -> None:
         if self.__data_path == data_path:
             return
         if self.__data is None and self.__synced:
             self.__data = self.__load_data()
-            self.__remove_data_file()
+        self.__remove_data_file()
         self.__data_path = data_path
         self.__synced = False
+        self.__use_tmp_file = False
 
     def set_data(self, data: Any) -> None:
         self.__data = data
@@ -34,6 +36,7 @@ class DataStorage:
     def data_path(self) -> str:
         if self.__data_path is None:
             self.__fd, self.__data_path = tempfile.mkstemp()
+            self.__use_tmp_file = True
         return self.__data_path
 
     @property
@@ -54,6 +57,10 @@ class DataStorage:
                 os.close(self.__fd)
             os.remove(self.__data_path)
             self.__data_path = None
+
+    def __del__(self):
+        if self.__use_tmp_file:
+            self.__remove_data_file()
 
     @property
     def data_hash(self) -> str:
