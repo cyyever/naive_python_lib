@@ -29,6 +29,9 @@ class DataStorage:
 
     def set_data(self, data: Any) -> None:
         self.__data = data
+        self.mark_new_data()
+
+    def mark_new_data(self) -> None:
         self.__data_hash = None
         self.__synced = False
 
