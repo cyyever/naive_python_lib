@@ -148,20 +148,18 @@ class TaskQueue:
             self.__start_worker(worker_id)
 
     def put_result(self, result, queue_name: str = "default"):
-        result_queue = self.get_result_queue(queue_name)
-        if isinstance(result, RepeatedResult):
-            for _ in range(result.num):
-                result_queue.put(result.data)
-        else:
-            result_queue.put(result)
+        self.__put_data(data=result, queue=self.get_result_queue(queue_name))
 
-    def put_data(self, result, queue_name: str = "default"):
-        result_queue = self.get_queue(queue_name)
-        if isinstance(result, RepeatedResult):
-            for _ in range(result.num):
-                result_queue.put(result.data)
+    def put_data(self, data, queue_name: str = "default"):
+        self.__put_data(data=data, queue=self.get_queue(queue_name))
+
+    @classmethod
+    def __put_data(cls, data, queue):
+        if isinstance(data, RepeatedResult):
+            for _ in range(data.num):
+                queue.put(data.data)
         else:
-            result_queue.put(result)
+            queue.put(data)
 
     def __start_worker(self, worker_id):
         assert worker_id not in self.__workers
