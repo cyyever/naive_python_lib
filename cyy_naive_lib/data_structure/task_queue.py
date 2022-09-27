@@ -220,7 +220,7 @@ class TaskQueue:
             self.__workers[worker_id] = gevent.spawn(
                 worker,
                 set(),
-                **self._get_extra_task_arguments(worker_id),
+                **self._get_task_kwargs(worker_id),
             )
             return
         else:
@@ -230,7 +230,7 @@ class TaskQueue:
             name=f"worker {worker_id}",
             target=worker,
             args=(get_log_files() if use_process else set(),),
-            kwargs=self._get_extra_task_arguments(worker_id),
+            kwargs=self._get_task_kwargs(worker_id),
         )
         self.__workers[worker_id].start()
 
@@ -287,5 +287,5 @@ class TaskQueue:
         result_queue = self.get_queue(queue_name)
         return not result_queue.empty()
 
-    def _get_extra_task_arguments(self, worker_id) -> dict:
+    def _get_task_kwargs(self, worker_id) -> dict:
         return {"task_queue": self, "worker_id": worker_id, "ppid": os.getpid()}
