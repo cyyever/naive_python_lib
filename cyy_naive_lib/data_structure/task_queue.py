@@ -35,32 +35,69 @@ class RepeatedResult:
         return self.__data
 
 
-def work(
-    q,
-    pid,
-    log_files,
-    extra_arguments: list,
-) -> None:
-    for log_file in log_files:
-        set_file_handler(log_file)
-    while not q.stop_event.is_set():
-        try:
-            task = q.get_task(timeout=3600)
-            if isinstance(task, _SentinelTask):
+class Worker:
+    def __call__(
+        self,
+        q,
+        ppid,
+        log_files,
+        extra_arguments: list,
+    ) -> None:
+        for log_file in log_files:
+            set_file_handler(log_file)
+        while not q.stop_event.is_set():
+            try:
+                if self.process(q, extra_arguments):
+                    break
+            except queue.Empty:
+                if not psutil.pid_exists(ppid):
+                    get_logger().error("exit because parent process %s has died", ppid)
+                    break
+                continue
+            except Exception as e:
+                get_logger().error("catch exception:%s", e)
+                get_logger().error("traceback:%s", traceback.format_exc())
+                get_logger().error("end worker on exception")
+                return
+
+    def process(self, q, extra_arguments) -> bool:
+        task = q.get_task(timeout=3600)
+        if isinstance(task, _SentinelTask):
+            return True
+        res = q.worker_fun(task, extra_arguments)
+        if res is not None:
+            q.put_result(res)
+        return False
+
+
+class BatchWorker(Worker):
+    def __init__(self):
+        super().__init__()
+        self.batch_num = 1
+
+    def process(self, q, extra_arguments) -> bool:
+        assert self.batch_num > 0
+        end_process = False
+        tasks = []
+        for idx in range(self.batch_num):
+            try:
+                if idx == 0:
+                    task = q.get_task(timeout=3600)
+                elif q.has_task():
+                    task = q.get_task(timeout=0.00001)
+                if isinstance(task, _SentinelTask):
+                    end_process = True
+                    break
+                tasks.append(task)
+            except queue.Empty:
                 break
-            res = q.worker_fun(task, extra_arguments)
-            if res is not None:
-                q.put_result(res)
-        except queue.Empty:
-            if not psutil.pid_exists(pid):
-                get_logger().error("exit because parent process %s has died", pid)
-                break
-            continue
-        except Exception as e:
-            get_logger().error("catch exception:%s", e)
-            get_logger().error("traceback:%s", traceback.format_exc())
-            get_logger().error("end worker on exception")
-            return
+        if not tasks:
+            return end_process
+
+        res = q.worker_fun(tasks, extra_arguments)
+        if res is not None:
+            q.put_result(res)
+        return end_process
 
 
 class TaskQueue:
@@ -173,7 +210,7 @@ class TaskQueue:
             use_process = True
         elif ctx is gevent:
             self.__workers[worker_id] = gevent.spawn(
-                work,
+                Worker(),
                 self,
                 os.getpid(),
                 set(),
@@ -185,7 +222,7 @@ class TaskQueue:
 
         self.__workers[worker_id] = worker_creator_fun(
             name=f"worker {worker_id}",
-            target=work,
+            target=Worker(),
             args=(
                 self,
                 os.getpid(),
@@ -228,6 +265,9 @@ class TaskQueue:
 
     def get_task(self, timeout):
         return self.__task_queue.get(timeout=timeout)
+
+    def has_task(self) -> bool:
+        return not self.__task_queue.empty()
 
     def get_result(self, queue_name: str = "default"):
         result_queue = self.get_queue(queue_name)
