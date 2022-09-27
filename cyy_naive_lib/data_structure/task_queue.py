@@ -213,6 +213,10 @@ class TaskQueue:
         worker_creator_fun = None
         use_process = False
         ctx = self.get_ctx()
+        if self.__batch_process:
+            worker = Worker()
+        else:
+            worker = BatchWorker()
         if hasattr(ctx, "Thread"):
             worker_creator_fun = ctx.Thread
         elif hasattr(ctx, "Process"):
@@ -220,7 +224,7 @@ class TaskQueue:
             use_process = True
         elif ctx is gevent:
             self.__workers[worker_id] = gevent.spawn(
-                Worker(),
+                worker,
                 self,
                 os.getpid(),
                 set(),
@@ -232,7 +236,7 @@ class TaskQueue:
 
         self.__workers[worker_id] = worker_creator_fun(
             name=f"worker {worker_id}",
-            target=Worker(),
+            target=worker,
             args=(
                 self,
                 os.getpid(),
