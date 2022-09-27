@@ -11,13 +11,11 @@ class ProcessTaskQueue(TaskQueue):
         worker_fun: Callable = None,
         worker_num: int = 1,
         use_manager: bool = False,
+        **kwargs
     ):
         self.use_manager = use_manager
         self.__manager = None
-        super().__init__(
-            worker_fun=worker_fun,
-            worker_num=worker_num,
-        )
+        super().__init__(worker_fun=worker_fun, worker_num=worker_num, **kwargs)
 
     def __getstate__(self):
         # capture what is normally pickled
