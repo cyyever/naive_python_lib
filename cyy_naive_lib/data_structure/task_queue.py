@@ -214,9 +214,9 @@ class TaskQueue:
         use_process = False
         ctx = self.get_ctx()
         if self.__batch_process:
-            worker = Worker()
-        else:
             worker = BatchWorker()
+        else:
+            worker = Worker()
         if hasattr(ctx, "Thread"):
             worker_creator_fun = ctx.Thread
         elif hasattr(ctx, "Process"):
