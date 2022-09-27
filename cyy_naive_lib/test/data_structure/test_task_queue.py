@@ -17,3 +17,14 @@ def test_task_queue():
         queue.stop()
         queue.start()
         queue.force_stop()
+
+
+def test_batch_task_queue():
+    for queue_type in [ThreadTaskQueue, ProcessTaskQueue, CoroutineTaskQueue]:
+        queue = queue_type(worker_fun=worker, worker_num=2, batch_process=True)
+        queue.start()
+        queue.add_task(())
+        queue.add_task(())
+        queue.stop()
+        queue.start()
+        queue.force_stop()
