@@ -45,7 +45,7 @@ class Worker:
     ) -> None:
         for log_file in log_files:
             set_file_handler(log_file)
-        while not q.stop_event.is_set():
+        while not q.stopped:
             try:
                 if self.process(q, extra_arguments):
                     break
@@ -101,15 +101,25 @@ class BatchWorker(Worker):
 
 
 class TaskQueue:
-    def __init__(self, worker_num: int = 1, worker_fun: Callable = None):
-        self.stop_event = None
+    def __init__(
+        self,
+        worker_num: int = 1,
+        worker_fun: Callable = None,
+        batch_process: bool = False,
+    ):
+        self.__stop_event = None
         self.__task_queue = None
         self.__result_queues: dict = {}
         self.__worker_num = worker_num
         self.__worker_fun = worker_fun
         self.__workers = None
+        self.__batch_process = batch_process
         if self.__worker_fun is not None:
             self.start()
+
+    @property
+    def stopped(self) -> bool:
+        return self.__stop_event.is_set()
 
     @property
     def worker_num(self):
@@ -147,14 +157,14 @@ class TaskQueue:
         self.stop()
         self.start()
 
-    def add_queue(self, name: str):
+    def add_queue(self, name: str) -> None:
         assert name not in self.__result_queues
         self.__result_queues[name] = self.__create_queue()
 
     def get_queue(self, name):
         return self.__result_queues[name]
 
-    def add_result_queue(self, name: str):
+    def add_result_queue(self, name: str) -> None:
         return self.add_queue(name)
 
     def get_result_queue(self, name):
@@ -164,18 +174,18 @@ class TaskQueue:
         assert self.__worker_num > 0
         assert self.__worker_fun is not None
         ctx = self.get_ctx()
-        if self.stop_event is None:
+        if self.__stop_event is None:
             if ctx is gevent:
-                self.stop_event = gevent.event.Event()
+                self.__stop_event = gevent.event.Event()
             else:
-                self.stop_event = ctx.Event()
+                self.__stop_event = ctx.Event()
         if self.__task_queue is None:
             self.__task_queue = self.__create_queue()
         if not self.__result_queues:
             self.__result_queues: dict = {"default": self.__create_queue()}
 
         if not self.__workers:
-            self.stop_event.clear()
+            self.__stop_event.clear()
             self.__workers = {}
             for q in (self.__task_queue, *self.__result_queues.values()):
                 while not q.empty():
@@ -253,9 +263,9 @@ class TaskQueue:
         self.__workers = {}
 
     def force_stop(self):
-        self.stop_event.set()
+        self.__stop_event.set()
         self.stop()
-        self.stop_event.clear()
+        self.__stop_event.clear()
 
     def release(self):
         self.stop()
