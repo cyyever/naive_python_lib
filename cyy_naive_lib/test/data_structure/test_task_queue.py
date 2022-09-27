@@ -4,7 +4,7 @@ from cyy_naive_lib.data_structure.process_task_queue import ProcessTaskQueue
 from cyy_naive_lib.data_structure.thread_task_queue import ThreadTaskQueue
 
 
-def worker(*args):
+def worker(*args, **kwargs):
     print("hello world")
 
 

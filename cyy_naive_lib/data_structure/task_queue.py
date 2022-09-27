@@ -36,18 +36,12 @@ class RepeatedResult:
 
 
 class Worker:
-    def __call__(
-        self,
-        q,
-        ppid,
-        log_files,
-        extra_arguments: list,
-    ) -> None:
+    def __call__(self, log_files, task_queue, ppid, **kwargs) -> None:
         for log_file in log_files:
             set_file_handler(log_file)
-        while not q.stopped:
+        while not task_queue.stopped:
             try:
-                if self.process(q, extra_arguments):
+                if self.process(task_queue, **kwargs):
                     break
             except queue.Empty:
                 if not psutil.pid_exists(ppid):
@@ -60,13 +54,13 @@ class Worker:
                 get_logger().error("end worker on exception")
                 return
 
-    def process(self, q, extra_arguments) -> bool:
-        task = q.get_task(timeout=3600)
+    def process(self, task_queue, **kwargs) -> bool:
+        task = task_queue.get_task(timeout=3600)
         if isinstance(task, _SentinelTask):
             return True
-        res = q.worker_fun(task, extra_arguments)
+        res = task_queue.worker_fun(task, **kwargs)
         if res is not None:
-            q.put_result(res)
+            task_queue.put_result(res)
         return False
 
 
@@ -75,16 +69,16 @@ class BatchWorker(Worker):
         super().__init__()
         self.batch_num = 1
 
-    def process(self, q, extra_arguments) -> bool:
+    def process(self, task_queue, **kwargs) -> bool:
         assert self.batch_num > 0
         end_process = False
         tasks = []
         for idx in range(self.batch_num):
             try:
                 if idx == 0:
-                    task = q.get_task(timeout=3600)
-                elif q.has_task():
-                    task = q.get_task(timeout=0.00001)
+                    task = task_queue.get_task(timeout=3600)
+                elif task_queue.has_task():
+                    task = task_queue.get_task(timeout=0.00001)
                 if isinstance(task, _SentinelTask):
                     end_process = True
                     break
@@ -94,9 +88,9 @@ class BatchWorker(Worker):
         if not tasks:
             return end_process
 
-        res = q.worker_fun(tasks, extra_arguments)
+        res = task_queue.worker_fun(tasks, **kwargs)
         if res is not None:
-            q.put_result(res)
+            task_queue.put_result(res)
         return end_process
 
 
@@ -113,7 +107,7 @@ class TaskQueue:
         self.__worker_num = worker_num
         self.__worker_fun = worker_fun
         self.__workers = None
-        self.__batch_process = batch_process
+        self._batch_process = batch_process
         if self.__worker_fun is not None:
             self.start()
 
@@ -213,7 +207,7 @@ class TaskQueue:
         worker_creator_fun = None
         use_process = False
         ctx = self.get_ctx()
-        if self.__batch_process:
+        if self._batch_process:
             worker = BatchWorker()
         else:
             worker = Worker()
@@ -225,10 +219,8 @@ class TaskQueue:
         elif ctx is gevent:
             self.__workers[worker_id] = gevent.spawn(
                 worker,
-                self,
-                os.getpid(),
                 set(),
-                self._get_extra_task_arguments(worker_id),
+                **self._get_extra_task_arguments(worker_id),
             )
             return
         else:
@@ -237,12 +229,8 @@ class TaskQueue:
         self.__workers[worker_id] = worker_creator_fun(
             name=f"worker {worker_id}",
             target=worker,
-            args=(
-                self,
-                os.getpid(),
-                get_log_files() if use_process else set(),
-                self._get_extra_task_arguments(worker_id),
-            ),
+            args=(get_log_files() if use_process else set(),),
+            kwargs=self._get_extra_task_arguments(worker_id),
         )
         self.__workers[worker_id].start()
 
@@ -299,5 +287,5 @@ class TaskQueue:
         result_queue = self.get_queue(queue_name)
         return not result_queue.empty()
 
-    def _get_extra_task_arguments(self, worker_id):
-        return {"queue": self, "worker_id": worker_id}
+    def _get_extra_task_arguments(self, worker_id) -> dict:
+        return {"task_queue": self, "worker_id": worker_id, "ppid": os.getpid()}

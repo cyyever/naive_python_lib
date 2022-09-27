@@ -4,7 +4,7 @@ from cyy_naive_lib.data_structure.process_task_queue import ProcessTaskQueue
 from cyy_naive_lib.log import get_logger
 
 
-def hello(task, args):
+def hello(task,**kwargs):
     assert task == ()
     get_logger().info("call from other process")
     return "abc"
