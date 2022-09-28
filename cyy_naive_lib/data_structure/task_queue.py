@@ -65,7 +65,7 @@ class Worker:
             worker_queue=task_queue.get_worker_queue(worker_id),
         )
         if res is not None:
-            task_queue.put_result(res)
+            task_queue.put_data(res)
         return False
 
 
@@ -103,7 +103,7 @@ class BatchWorker(Worker):
                 batch_size=batch_size, **kwargs
             )
         if res is not None:
-            task_queue.put_result(res)
+            task_queue.put_data(res)
         return end_process
 
 
@@ -198,11 +198,8 @@ class TaskQueue:
                 while not q.empty():
                     q.get()
         for _ in range(len(self.__workers), self.__worker_num):
-            worker_id = max(self.__workers.keys(), default=0) + 1
+            worker_id = max(self.__workers.keys(), default=-1) + 1
             self.__start_worker(worker_id)
-
-    def put_result(self, result, queue_name: str = "default"):
-        self.__put_data(data=result, queue=self.get_queue(queue_name))
 
     def put_data(self, data, queue_name: str = "default"):
         self.__put_data(data=data, queue=self.get_queue(queue_name))
