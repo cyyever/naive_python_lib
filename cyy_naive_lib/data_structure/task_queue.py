@@ -54,11 +54,16 @@ class Worker:
                 get_logger().error("end worker on exception")
                 return
 
-    def process(self, task_queue, **kwargs) -> bool:
+    def process(self, task_queue, worker_id, **kwargs) -> bool:
         task = task_queue.get_task(timeout=3600)
         if isinstance(task, _SentinelTask):
             return True
-        res = task_queue.worker_fun(task, **kwargs)
+        res = task_queue.worker_fun(
+            task,
+            **kwargs,
+            worker_id=worker_id,
+            worker_queue=task_queue.get_worker_queue(worker_id),
+        )
         if res is not None:
             task_queue.put_result(res)
         return False
@@ -108,6 +113,7 @@ class TaskQueue:
         worker_num: int = 1,
         worker_fun: Callable = None,
         batch_process: bool = False,
+        use_worker_queue: bool = False,
     ):
         self.__stop_event = None
         self.__task_queue = None
@@ -117,6 +123,7 @@ class TaskQueue:
         self.__worker_fun = worker_fun
         self.__workers = None
         self._batch_process = batch_process
+        self.use_worker_queue = use_worker_queue
         if self.__worker_fun is not None:
             self.start()
 
@@ -133,6 +140,9 @@ class TaskQueue:
 
     def get_manager(self):
         return None
+
+    def get_worker_queue(self, worker_id):
+        return self.__worker_queues.get(worker_id, None)
 
     def __create_queue(self):
         manager = self.get_manager()
@@ -179,7 +189,7 @@ class TaskQueue:
         if self.__task_queue is None:
             self.__task_queue = self.__create_queue()
         if not self.__queues:
-            self.__queues: dict = {"default":self.__create_queue()}
+            self.__queues: dict = {"default": self.__create_queue()}
 
         if not self.__workers:
             self.__stop_event.clear()
@@ -207,6 +217,8 @@ class TaskQueue:
 
     def __start_worker(self, worker_id):
         assert worker_id not in self.__workers
+        if self.use_worker_queue:
+            self.__worker_queues[worker_id] = self.__create_queue()
         worker_creator_fun = None
         use_process = False
         ctx = self.get_ctx()
@@ -243,15 +255,12 @@ class TaskQueue:
         for worker in self.__workers.values():
             worker.join()
 
-    def send_sentinel_task(self, number):
-        for _ in range(number):
-            self.add_task(_SentinelTask())
-
     def stop(self, wait_task=True):
         # stop __workers
         if not self.__workers:
             return
-        self.send_sentinel_task(len(self.__workers))
+        for _ in self.__workers:
+            self.add_task(_SentinelTask())
         # block until all tasks are done
         if wait_task:
             self.join()
