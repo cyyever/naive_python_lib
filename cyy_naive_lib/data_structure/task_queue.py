@@ -67,13 +67,15 @@ class Worker:
 class BatchWorker(Worker):
     def __init__(self):
         super().__init__()
-        self.batch_num = 1
+        self.batch_size = 1
 
-    def process(self, task_queue, **kwargs) -> bool:
-        assert self.batch_num > 0
+    def process(self, task_queue, batch_policy=None, batch_size=None, **kwargs) -> bool:
+        if batch_size is not None:
+            self.batch_size = batch_size
+        assert self.batch_size > 0
         end_process = False
         tasks = []
-        for idx in range(self.batch_num):
+        for idx in range(self.batch_size):
             try:
                 if idx == 0:
                     task = task_queue.get_task(timeout=3600)
@@ -88,7 +90,13 @@ class BatchWorker(Worker):
         if not tasks:
             return end_process
 
+        if batch_policy is not None:
+            batch_policy.start_batch(batch_size=len(task), **kwargs)
         res = task_queue.worker_fun(tasks, **kwargs)
+        if batch_policy is not None:
+            self.batch_size = batch_policy.adjust_batch_size(
+                batch_size=len(task), **kwargs
+            )
         if res is not None:
             task_queue.put_result(res)
         return end_process
