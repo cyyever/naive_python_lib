@@ -111,7 +111,8 @@ class TaskQueue:
     ):
         self.__stop_event = None
         self.__task_queue = None
-        self.__result_queues: dict = {}
+        self.__queues: dict = {}
+        self.__worker_queues: dict = {}
         self.__worker_num = worker_num
         self.__worker_fun = worker_fun
         self.__workers = None
@@ -160,17 +161,11 @@ class TaskQueue:
         self.start()
 
     def add_queue(self, name: str) -> None:
-        assert name not in self.__result_queues
-        self.__result_queues[name] = self.__create_queue()
+        assert name not in self.__queues
+        self.__queues[name] = self.__create_queue()
 
     def get_queue(self, name):
-        return self.__result_queues[name]
-
-    def add_result_queue(self, name: str) -> None:
-        return self.add_queue(name)
-
-    def get_result_queue(self, name):
-        return self.get_queue(name)
+        return self.__queues[name]
 
     def start(self):
         assert self.__worker_num > 0
@@ -183,13 +178,13 @@ class TaskQueue:
                 self.__stop_event = ctx.Event()
         if self.__task_queue is None:
             self.__task_queue = self.__create_queue()
-        if not self.__result_queues:
-            self.__result_queues: dict = {"default": self.__create_queue()}
+        if not self.__queues:
+            self.__queues: dict = {"default":self.__create_queue()}
 
         if not self.__workers:
             self.__stop_event.clear()
             self.__workers = {}
-            for q in (self.__task_queue, *self.__result_queues.values()):
+            for q in (self.__task_queue, *self.__queues.values()):
                 while not q.empty():
                     q.get()
         for _ in range(len(self.__workers), self.__worker_num):
@@ -197,7 +192,7 @@ class TaskQueue:
             self.__start_worker(worker_id)
 
     def put_result(self, result, queue_name: str = "default"):
-        self.__put_data(data=result, queue=self.get_result_queue(queue_name))
+        self.__put_data(data=result, queue=self.get_queue(queue_name))
 
     def put_data(self, data, queue_name: str = "default"):
         self.__put_data(data=data, queue=self.get_queue(queue_name))
