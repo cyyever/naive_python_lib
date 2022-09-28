@@ -89,13 +89,13 @@ class BatchWorker(Worker):
                 break
         if not tasks:
             return end_process
-
+        batch_size = len(tasks)
         if batch_policy is not None:
-            batch_policy.start_batch(batch_size=len(task), **kwargs)
+            batch_policy.start_batch(batch_size=batch_size, **kwargs)
         res = task_queue.worker_fun(tasks, **kwargs)
         if batch_policy is not None:
             self.batch_size = batch_policy.adjust_batch_size(
-                batch_size=len(task), **kwargs
+                batch_size=batch_size, **kwargs
             )
         if res is not None:
             task_queue.put_result(res)
