@@ -196,7 +196,7 @@ class TaskQueue:
         if self.__task_queue is None:
             self.__task_queue = self.__create_queue()
         if not self.__queues:
-            self.__queues: dict = {"default": self.__create_queue()}
+            self.__queues: dict = {"result": self.__create_queue()}
 
         if not self.__workers:
             self.__stop_event.clear()
@@ -208,7 +208,7 @@ class TaskQueue:
             worker_id = max(self.__workers.keys(), default=-1) + 1
             self.__start_worker(worker_id)
 
-    def put_data(self, data, queue_name: str = "default"):
+    def put_data(self, data, queue_name: str = "result"):
         self.__put_data(data=data, queue=self.get_queue(queue_name))
 
     @classmethod
@@ -287,21 +287,12 @@ class TaskQueue:
     def has_task(self) -> bool:
         return not self.__task_queue.empty()
 
-    def get_result(self, queue_name: str = "default"):
+    def get_data(self, queue_name: str = "result"):
         result_queue = self.get_queue(queue_name)
         return result_queue.get()
 
-    def has_result(self, queue_name: str = "default") -> bool:
-        result_queue = self.get_queue(queue_name)
-        return not result_queue.empty()
-
-    def get_data(self, queue_name: str = "default"):
-        result_queue = self.get_queue(queue_name)
-        return result_queue.get()
-
-    def has_data(self, queue_name: str = "default") -> bool:
-        result_queue = self.get_queue(queue_name)
-        return not result_queue.empty()
+    def has_data(self, queue_name: str = "result") -> bool:
+        return not self.get_queue(queue_name).empty()
 
     def _get_task_kwargs(self, worker_id) -> dict:
         return {"task_queue": self, "worker_id": worker_id, "ppid": os.getpid()}
