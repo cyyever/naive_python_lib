@@ -201,7 +201,11 @@ class TaskQueue:
         if not self.__workers:
             self.__stop_event.clear()
             self.__workers = {}
-            for q in (self.__task_queue, *self.__queues.values()):
+            for q in (
+                self.__task_queue,
+                *self.__queues.values(),
+                *self.__worker_queues.values(),
+            ):
                 while not q.empty():
                     q.get()
         for _ in range(len(self.__workers), self.__worker_num):
@@ -209,7 +213,8 @@ class TaskQueue:
             self.__start_worker(worker_id)
 
     def put_data(self, data, queue_name: str = "result"):
-        self.__put_data(data=data, queue=self.get_queue(queue_name))
+        result_queue = self.get_queue(queue_name)
+        self.__put_data(data=data, queue=result_queue)
 
     @classmethod
     def __put_data(cls, data, queue):
@@ -222,6 +227,7 @@ class TaskQueue:
     def __start_worker(self, worker_id):
         assert worker_id not in self.__workers
         if self.use_worker_queue:
+            assert worker_id not in self.__worker_queues
             self.__worker_queues[worker_id] = self.__create_queue()
         worker_creator_fun = None
         use_process = False
