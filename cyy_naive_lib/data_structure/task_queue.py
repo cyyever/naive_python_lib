@@ -74,7 +74,9 @@ class BatchWorker(Worker):
         super().__init__()
         self.batch_size = 1
 
-    def process(self, task_queue, batch_policy=None, batch_size=None, **kwargs) -> bool:
+    def process(
+        self, task_queue, worker_id, batch_policy=None, batch_size=None, **kwargs
+    ) -> bool:
         if batch_size is not None:
             self.batch_size = batch_size
         assert self.batch_size > 0
@@ -97,7 +99,12 @@ class BatchWorker(Worker):
         batch_size = len(tasks)
         if batch_policy is not None:
             batch_policy.start_batch(batch_size=batch_size, **kwargs)
-        res = task_queue.worker_fun(tasks, **kwargs)
+        res = task_queue.worker_fun(
+            tasks,
+            worker_id=worker_id,
+            worker_queue=task_queue.get_worker_queue(worker_id),
+            **kwargs,
+        )
         if batch_policy is not None:
             self.batch_size = batch_policy.adjust_batch_size(
                 batch_size=batch_size, **kwargs
