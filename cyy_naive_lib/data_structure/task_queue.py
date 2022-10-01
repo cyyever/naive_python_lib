@@ -59,7 +59,7 @@ class Worker:
         if isinstance(task, _SentinelTask):
             return True
         res = task_queue.worker_fun(
-            task,
+            task=task,
             **kwargs,
             worker_id=worker_id,
             worker_queue=task_queue.get_worker_queue(worker_id),
@@ -88,10 +88,13 @@ class BatchWorker(Worker):
                     task = task_queue.get_task(timeout=3600)
                 elif task_queue.has_task():
                     task = task_queue.get_task(timeout=0.00001)
+                else:
+                    break
                 if isinstance(task, _SentinelTask):
                     end_process = True
                     break
                 tasks.append(task)
+                task = None
             except queue.Empty:
                 break
         if not tasks:
@@ -100,7 +103,7 @@ class BatchWorker(Worker):
         if batch_policy is not None:
             batch_policy.start_batch(batch_size=batch_size, **kwargs)
         res = task_queue.worker_fun(
-            tasks,
+            tasks=tasks,
             worker_id=worker_id,
             worker_queue=task_queue.get_worker_queue(worker_id),
             **kwargs,
