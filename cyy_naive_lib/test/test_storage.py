@@ -1,6 +1,7 @@
 import os
 
-from cyy_naive_lib.storage import DataStorage, get_cached_data
+from cyy_naive_lib.storage import (DataStorage, get_cached_data,
+                                   persistent_cache)
 
 
 def test_storage():
@@ -13,5 +14,12 @@ def test_storage():
 
 
 def test_get_cached_data():
-    assert get_cached_data(path="./abc", data_fun=lambda: "123") == "123"
+    @persistent_cache(path="./abc")
+    def compute() -> int:
+        return 123
+
+    res = compute()
+    assert res == 123
+
+    assert compute() == 123
     os.remove("./abc")

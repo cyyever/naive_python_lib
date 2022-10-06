@@ -110,3 +110,37 @@ def get_cached_data(path: str, data_fun: Callable) -> Any:
         raise RuntimeError("No data")
     write_data(data)
     return data
+
+
+def persistent_cache(path: str):
+    def read_data():
+        if not os.path.isfile(path):
+            return None
+        fd = os.open(path, flags=os.O_RDONLY)
+        try:
+            with os.fdopen(fd, "rb") as f:
+                res = pickle.load(f)
+            return res
+        except BaseException:
+            return None
+
+    def write_data(data):
+        fd = os.open(path, flags=os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        with os.fdopen(fd, "wb") as f:
+            pickle.dump(data, f)
+
+    def wrap(fun):
+        def wrap2(*args, **kwargs):
+            assert not args and not kwargs
+            data = read_data()
+            if data is not None:
+                return data
+            data = fun()
+            if data is None:
+                raise RuntimeError("No data")
+            write_data(data)
+            return data
+
+        return wrap2
+
+    return wrap
