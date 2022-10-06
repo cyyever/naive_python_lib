@@ -97,7 +97,7 @@ def get_cached_data(path: str, data_fun: Callable) -> Any:
             res = pickle.load(f)
         return res
 
-    def write_data(data):
+    def write_data(data, path):
         fd = os.open(path, flags=os.O_CREAT | os.O_EXCL | os.O_WRONLY)
         with os.fdopen(fd, "wb") as f:
             pickle.dump(data, f)
@@ -112,8 +112,8 @@ def get_cached_data(path: str, data_fun: Callable) -> Any:
     return data
 
 
-def persistent_cache(path: str):
-    def read_data():
+def persistent_cache(path: str, path_kwargs=None):
+    def read_data(path):
         if not os.path.isfile(path):
             return None
         fd = os.open(path, flags=os.O_RDONLY)
@@ -124,21 +124,30 @@ def persistent_cache(path: str):
         except BaseException:
             return None
 
-    def write_data(data):
+    def write_data(data, path):
         fd = os.open(path, flags=os.O_CREAT | os.O_EXCL | os.O_WRONLY)
         with os.fdopen(fd, "wb") as f:
             pickle.dump(data, f)
 
     def wrap(fun):
-        def wrap2(*args, **kwargs):
-            assert not args and not kwargs
-            data = read_data()
+        def wrap2(**kwargs):
+            if kwargs:
+                path_suffix = ""
+                for k, v in kwargs.items():
+                    if path_kwargs is not None and k in path_kwargs:
+                        path_suffix = path_suffix + f"{k}_{v}"
+                    else:
+                        return fun(**kwargs)
+                new_path = path + path_suffix
+            else:
+                new_path = path
+            data = read_data(new_path)
             if data is not None:
                 return data
-            data = fun()
+            data = fun(**kwargs)
             if data is None:
                 raise RuntimeError("No data")
-            write_data(data)
+            write_data(data, new_path)
             return data
 
         return wrap2
