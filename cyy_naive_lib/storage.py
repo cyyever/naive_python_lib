@@ -112,7 +112,7 @@ def get_cached_data(path: str, data_fun: Callable) -> Any:
     return data
 
 
-def persistent_cache(path: str):
+def persistent_cache(path: str | None = None):
     def read_data(path):
         if not os.path.isfile(path):
             return None
@@ -131,11 +131,15 @@ def persistent_cache(path: str):
 
     def wrap(fun):
         def wrap2(**kwargs):
+            cache_path = path
+            if cache_path is None:
+                cache_path = kwargs.pop("cache_path", None)
+            assert cache_path is not None
             if kwargs:
                 kwarg_str = pickle.dumps(kwargs).hex()
-                new_path = path + kwarg_str
+                new_path = cache_path + kwarg_str
             else:
-                new_path = path
+                new_path = cache_path
             data = read_data(new_path)
             if data is not None:
                 return data
