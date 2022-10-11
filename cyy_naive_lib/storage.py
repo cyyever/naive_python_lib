@@ -88,30 +88,6 @@ class DataStorage:
                 self.__synced = True
 
 
-def get_cached_data(path: str, data_fun: Callable) -> Any:
-    def read_data():
-        if not os.path.isfile(path):
-            return None
-        fd = os.open(path, flags=os.O_RDONLY)
-        with os.fdopen(fd, "rb") as f:
-            res = pickle.load(f)
-        return res
-
-    def write_data(data, path):
-        fd = os.open(path, flags=os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-        with os.fdopen(fd, "wb") as f:
-            pickle.dump(data, f)
-
-    data = read_data()
-    if data is not None:
-        return data
-    data = data_fun()
-    if data is None:
-        raise RuntimeError("No data")
-    write_data(data)
-    return data
-
-
 def persistent_cache(path: str | None = None):
     def read_data(path):
         if not os.path.isfile(path):
@@ -152,3 +128,7 @@ def persistent_cache(path: str | None = None):
         return wrap2
 
     return wrap
+
+
+def get_cached_data(path: str, data_fun: Callable) -> Any:
+    return persistent_cache(path=path)(data_fun)()
