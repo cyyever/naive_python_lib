@@ -123,7 +123,7 @@ def persistent_cache(path: str | None = None):
             data = read_data(new_path)
             if data is not None:
                 return data
-            data = fun(**kwargs)
+            data = fun(*args, **kwargs)
             if data is None:
                 raise RuntimeError("No data")
             write_data(data, new_path)
