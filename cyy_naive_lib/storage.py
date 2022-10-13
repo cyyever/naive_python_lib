@@ -106,14 +106,18 @@ def persistent_cache(path: str | None = None):
             pickle.dump(data, f)
 
     def wrap(fun):
-        def wrap2(**kwargs):
+        def wrap2(*args, **kwargs):
             cache_path = path
             if cache_path is None:
                 cache_path = kwargs.pop("cache_path", None)
             assert cache_path is not None
-            if kwargs:
+            if args or kwargs:
+                args_str = pickle.dumps(args).hex()
                 kwarg_str = pickle.dumps(kwargs).hex()
-                new_path = cache_path + kwarg_str
+                os.makedirs(cache_path, exist_ok=True)
+                new_path = os.path.join(
+                    cache_path, f"args_{args_str}_kwargs_{kwarg_str}"
+                )
             else:
                 new_path = cache_path
             data = read_data(new_path)
