@@ -1,6 +1,6 @@
 from cyy_naive_lib.algorithm.mapping_op import (
-    change_mapping_keys, flatten_mapping, get_mapping_values_by_key_order,
-    reduce_values_by_key)
+    change_mapping_keys, change_mapping_values, flatten_mapping,
+    get_mapping_values_by_key_order, reduce_values_by_key)
 
 
 def test_get_mapping_values_by_key_order():
@@ -11,6 +11,11 @@ def test_get_mapping_values_by_key_order():
 def test_change_mapping_keys():
     res = change_mapping_keys({2: "b", 1: "a"}, str)
     assert res == {"2": "b", "1": "a"}
+
+
+def test_change_mappin_values():
+    res = change_mapping_values({2: "b", 1: "a"}, 2, lambda v: v + "c")
+    assert res == {2: "bc", 1: "a"}
 
 
 def test_flatten_mapping():

@@ -26,6 +26,23 @@ def change_mapping_keys(
     return new_d
 
 
+def change_mapping_values(
+    d: MutableMapping, key, f: Callable, recursive: bool = False
+) -> MutableMapping:
+    r"""
+    Return a new mapping with keys changed
+    """
+    new_d = type(d)()
+    for k, v in d.items():
+        if k == key:
+            if recursive and isinstance(v, MutableMapping):
+                v = change_mapping_values(v, key, f, recursive)
+            else:
+                v = f(v)
+        new_d[k] = v
+    return new_d
+
+
 def flatten_mapping(d: Mapping) -> list:
     r"""
     Return a list with values ordered by keys and flatten it
