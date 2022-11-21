@@ -13,9 +13,11 @@ def test_change_mapping_keys():
     assert res == {"2": "b", "1": "a"}
 
 
-def test_change_mappin_values():
+def test_change_mapping_values():
     res = change_mapping_values({2: "b", 1: "a"}, 2, lambda v: v + "c")
     assert res == {2: "bc", 1: "a"}
+    res = change_mapping_values([{2: "b", 1: "a"}], 2, lambda v: v + "c")
+    assert res == [{2: "bc", 1: "a"}]
 
 
 def test_flatten_mapping():
