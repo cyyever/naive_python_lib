@@ -27,6 +27,7 @@ class DockerFile(BashScript):
         src_dir_pair: tuple = None,
         use_experimental=False,
         additional_docker_commands: list = None,
+        additional_ignored_files: list | None = None,
         extra_output_files=None,
     ):
         with TempDir():
@@ -52,9 +53,12 @@ class DockerFile(BashScript):
                     for cmd in additional_docker_commands:
                         print(cmd, file=f)
 
-            with open(".dockerignore", "w") as f:
+            with open(".dockerignore", "wt", encoding="utf8") as f:
                 print(".git", file=f)
                 print("Dockerfile", file=f)
+                if additional_ignored_files is not None:
+                    for ignored_file in additional_ignored_files:
+                        print(ignored_file, file=f)
 
             docker_cmd = ["docker", "build"]
             if get_operating_system() != "windows":
