@@ -1,10 +1,10 @@
 import os
-from typing import Callable, List
 from collections.abc import Sequence
+from typing import Callable, List
 
 
 def list_files(
-    dir_to_search: str, recursive: bool = True, filter_fun: Callable = None
+    dir_to_search: str, recursive: bool = True, filter_fun: Callable | None = None
 ) -> List[str]:
     """
     Return files meeting the specified conditions from the given directory.
@@ -19,6 +19,22 @@ def list_files(
             result.append(full_path)
         elif os.path.isdir(full_path):
             result += list_files(full_path, recursive, filter_fun)
+    return result
+
+
+def list_directories(dir_to_search: str) -> List[str]:
+    """
+    Return directories from the given directory.
+    """
+    result = []
+    dir_to_search = os.path.abspath(dir_to_search)
+    for p in os.listdir(dir_to_search):
+        if p == "." or p == "..":
+            continue
+        full_path = os.path.abspath(os.path.join(dir_to_search, p))
+        if not os.path.isdir(full_path):
+            continue
+        result.append(full_path)
     return result
 
 
