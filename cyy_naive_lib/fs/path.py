@@ -3,8 +3,10 @@ from collections.abc import Sequence
 from typing import Callable, List
 
 
-def list_files(
-    dir_to_search: str, recursive: bool = True, filter_fun: Callable | None = None
+def __list_files(
+    dir_to_search: str,
+    filter_fun: Callable,
+    recursive: bool = True,
 ) -> List[str]:
     """
     Return files meeting the specified conditions from the given directory.
@@ -13,29 +15,22 @@ def list_files(
     dir_to_search = os.path.abspath(dir_to_search)
     for p in os.listdir(dir_to_search):
         full_path = os.path.abspath(os.path.join(dir_to_search, p))
-        if os.path.isfile(full_path):
-            if filter_fun is not None and not filter_fun(p):
-                continue
+        if filter_fun(full_path):
             result.append(full_path)
-        elif os.path.isdir(full_path):
-            result += list_files(full_path, recursive, filter_fun)
+            continue
+        if recursive and os.path.isdir(full_path):
+            result += __list_files(full_path, filter_fun, recursive)
     return result
 
 
-def list_directories(dir_to_search: str) -> List[str]:
-    """
-    Return directories from the given directory.
-    """
-    result = []
-    dir_to_search = os.path.abspath(dir_to_search)
-    for p in os.listdir(dir_to_search):
-        if p == "." or p == "..":
-            continue
-        full_path = os.path.abspath(os.path.join(dir_to_search, p))
-        if not os.path.isdir(full_path):
-            continue
-        result.append(full_path)
-    return result
+def find_directories(dir_to_search: str, dirname: str) -> List[str]:
+    def filter_fun(p: str) -> bool:
+        if os.path.isdir(p):
+            if os.path.basename(p) == dirname:
+                return True
+        return False
+
+    return __list_files(dir_to_search=dir_to_search, filter_fun=filter_fun)
 
 
 def list_files_by_suffixes(
@@ -46,10 +41,10 @@ def list_files_by_suffixes(
     else:
         suffixes = list(suffixes)
 
-    def filter_fun(p: str):
+    def filter_fun(p: str) -> bool:
         for suffix in suffixes:
             if not p.endswith(suffix):
                 return False
         return True
 
-    return list_files(dir_to_search, recursive, filter_fun)
+    return __list_files(dir_to_search, filter_fun, recursive)
