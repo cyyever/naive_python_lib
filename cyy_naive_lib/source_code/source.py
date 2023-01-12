@@ -31,7 +31,7 @@ class Source:
                     f.close()
                     os.remove(lock_file)
 
-        with FileLock(lock_file_prefix) as lock:
+        with FileLock(lock_file_prefix, timeout=3600) as lock:
             os.write(lock.fd, bytes(str(os.getpid()), encoding="utf8"))
             res = self._download()
             if os.path.isdir(res):
