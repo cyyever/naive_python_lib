@@ -28,8 +28,8 @@ class ExecutorPool:
         self.__executor.shutdown()
         return results
 
-    @staticmethod
-    def process_once(fn, *args, **kwargs):
+    @classmethod
+    def _fun_wrapper(cls, fn, *args, **kwargs):
         for log_file in kwargs.pop("log_files", []):
             set_file_handler(log_file)
         try:
@@ -41,10 +41,16 @@ class ExecutorPool:
             get_logger().error("traceback:%s", traceback.format_exc())
             return None
 
+    def submit(self, fn: Callable, *args, **kwargs):
+        kwargs = self.__add_kwargs(kwargs)
+        future = self.__executor.submit(ExecutorPool._fun_wrapper, fn, *args, **kwargs)
+        self.__futures.append(future)
+        return future
+
     def exec(self, fn: Callable, *args, **kwargs):
         kwargs = self.__add_kwargs(kwargs)
         self.__futures.append(
-            self.__executor.submit(ExecutorPool.process_once, fn, *args, **kwargs)
+            self.__executor.submit(ExecutorPool._fun_wrapper, fn, *args, **kwargs)
         )
 
     def _repeated_exec(
@@ -54,7 +60,7 @@ class ExecutorPool:
 
         def worker():
             while True:
-                ExecutorPool.process_once(fn, *args, **kwargs)
+                ExecutorPool._fun_wrapper(fn, *args, **kwargs)
                 if stop_event.wait(wait_time):
                     break
 

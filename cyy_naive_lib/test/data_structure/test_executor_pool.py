@@ -1,6 +1,5 @@
 import multiprocessing
 import threading
-import time
 
 from cyy_naive_lib.data_structure.process_pool import ProcessPool
 from cyy_naive_lib.data_structure.thread_pool import ThreadPool
@@ -16,14 +15,11 @@ def process_fun():
 
 def test_thread_pool():
     pool = ThreadPool()
-    pool.exec(thd_fun)
-    pool.repeated_exec(1, thd_fun)
-    time.sleep(2)
+    pool.submit(thd_fun)
     pool.stop()
 
 
 def test_process_pool():
     pool: ProcessPool = ProcessPool()
-    pool.exec(process_fun)
-    pool.wait(timeout=1)
+    pool.submit(process_fun)
     pool.stop()
