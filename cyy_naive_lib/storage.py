@@ -116,15 +116,17 @@ def persistent_cache(
             if cache_path is None:
                 cache_path = kwargs.pop("cache_path", None)
             assert cache_path is not None
-            if args or kwargs:
-                args_str = pickle.dumps(args).hex()
-                kwarg_str = pickle.dumps(kwargs).hex()
-                os.makedirs(cache_path, exist_ok=True)
-                new_path = os.path.join(
-                    cache_path, f"args_{args_str}_kwargs_{kwarg_str}"
-                )
+            hash_sha256 = hashlib.sha256()
+            if args:
+                hash_sha256.update(pickle.dumps(args))
             else:
-                new_path = cache_path
+                hash_sha256.update(pickle.dumps([]))
+            if kwargs:
+                hash_sha256.update(pickle.dumps(kwargs))
+            else:
+                hash_sha256.update(pickle.dumps({}))
+            os.makedirs(cache_path, exist_ok=True)
+            new_path = os.path.join(cache_path, f"{hash_sha256.hexdigest()}")
             data = read_data(new_path)
             if data is not None:
                 return data

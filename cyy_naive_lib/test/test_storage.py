@@ -1,7 +1,7 @@
-import os
+import shutil
 
-from cyy_naive_lib.storage import (DataStorage, get_cached_data,
-                                   persistent_cache)
+from cyy_naive_lib.fs.tempdir import TempDir
+from cyy_naive_lib.storage import DataStorage, persistent_cache
 
 
 def test_storage():
@@ -14,12 +14,14 @@ def test_storage():
 
 
 def test_get_cached_data():
-    @persistent_cache(path="./abc",cache_time=5)
-    def compute() -> int:
-        return 123
+    with TempDir():
 
-    res = compute()
-    assert res == 123
+        @persistent_cache(path="./abc", cache_time=5)
+        def compute() -> int:
+            return 123
 
-    assert compute() == 123
-    os.remove("./abc")
+        res = compute()
+        assert res == 123
+
+        assert compute() == 123
+        shutil.rmtree("./abc")
