@@ -2,6 +2,7 @@ import asyncio
 import concurrent.futures
 import inspect
 import traceback
+import warnings
 from typing import Callable, List
 
 from cyy_naive_lib.log import get_log_files, get_logger, set_file_handler
@@ -12,19 +13,18 @@ class ExecutorPool:
         self.__executor = executor
         self.__futures: List[concurrent.futures.Future] = []
 
-    def wait(self, timeout=None) -> bool:
-        done, not_done = concurrent.futures.wait(self.__futures, timeout=timeout)
-        if not_done:
-            return False
-        return True
-
-    def stop(self) -> list:
-        self.wait()
+    def wait(self, timeout=None) -> list:
+        concurrent.futures.wait(self.__futures, timeout=timeout)
         results: list = []
         for future in self.__futures:
             result = future.result()
             get_logger().debug("future result is %s", result)
             results.append(result)
+        self.__futures.clear()
+        return results
+
+    def stop(self) -> list:
+        results = self.wait()
         self.__executor.shutdown()
         return results
 
@@ -48,6 +48,7 @@ class ExecutorPool:
         return future
 
     def exec(self, fn: Callable, *args, **kwargs):
+        warnings.warn("replaced by submit", DeprecationWarning)
         kwargs = self.__add_kwargs(kwargs)
         self.__futures.append(
             self.__executor.submit(ExecutorPool._fun_wrapper, fn, *args, **kwargs)
@@ -66,7 +67,7 @@ class ExecutorPool:
 
         self.__futures.append(self.__executor.submit(worker))
 
-    def __add_kwargs(self, kwargs: dict):
+    def __add_kwargs(self, kwargs: dict) -> dict:
         if "log_files" not in kwargs:
             kwargs["log_files"] = get_log_files()
         return kwargs
