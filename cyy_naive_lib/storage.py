@@ -129,8 +129,6 @@ def persistent_cache(
             if data is not None:
                 return data
             data = fun(*args, **kwargs)
-            if data is None:
-                raise RuntimeError("No data")
             write_data(data, new_path)
             return data
 
