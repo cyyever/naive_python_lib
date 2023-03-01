@@ -3,6 +3,7 @@ import hashlib
 import os
 import pickle
 import tempfile
+import time
 from typing import Any, Callable
 
 
@@ -88,9 +89,13 @@ class DataStorage:
                 self.__synced = True
 
 
-def persistent_cache(path: str | None = None):
-    def read_data(path):
+def persistent_cache(
+    path: str | None = None, cache_time: float | None = None
+) -> Callable:
+    def read_data(path: str) -> Any:
         if not os.path.isfile(path):
+            return None
+        if cache_time is not None and time.time() > cache_time + os.path.getmtime(path):
             return None
         fd = os.open(path, flags=os.O_RDONLY)
         try:
@@ -100,12 +105,12 @@ def persistent_cache(path: str | None = None):
         except BaseException:
             return None
 
-    def write_data(data, path):
+    def write_data(data: Any, path: str) -> None:
         fd = os.open(path, flags=os.O_CREAT | os.O_EXCL | os.O_WRONLY)
         with os.fdopen(fd, "wb") as f:
             pickle.dump(data, f)
 
-    def wrap(fun):
+    def wrap(fun: Callable) -> Callable:
         def wrap2(*args, **kwargs):
             cache_path = path
             if cache_path is None:

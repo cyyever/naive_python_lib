@@ -14,7 +14,7 @@ def test_storage():
 
 
 def test_get_cached_data():
-    @persistent_cache(path="./abc")
+    @persistent_cache(path="./abc",cache_time=5)
     def compute() -> int:
         return 123
 
