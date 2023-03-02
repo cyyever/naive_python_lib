@@ -126,6 +126,8 @@ def persistent_cache(
             else:
                 hash_sha256.update(pickle.dumps({}))
             os.makedirs(cache_path, exist_ok=True)
+            if os.path.isfile(cache_path):
+                os.remove(cache_path)
             new_path = os.path.join(cache_path, f"{hash_sha256.hexdigest()}")
             data = read_data(new_path)
             if data is not None:
