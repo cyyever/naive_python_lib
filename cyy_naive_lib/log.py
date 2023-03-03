@@ -3,6 +3,7 @@ import logging
 import logging.handlers
 import os
 import threading
+import warnings
 from multiprocessing import Queue
 
 from colorlog import ColoredFormatter
@@ -69,7 +70,7 @@ if not __stub_colored_logger.handlers:
 __log_files = set()
 
 
-def set_file_handler(filename: str) -> None:
+def add_file_handler(filename: str) -> None:
     with __logger_lock:
         if filename in __log_files:
             return
@@ -80,6 +81,11 @@ def set_file_handler(filename: str) -> None:
         __set_formatter(handler, with_color=False)
         __log_files.add(filename)
         __colored_logger.addHandler(handler)
+
+
+def set_file_handler(filename: str) -> None:
+    warnings.warn("replaced by add_file_handler", DeprecationWarning)
+    add_file_handler(filename)
 
 
 def get_log_files():
