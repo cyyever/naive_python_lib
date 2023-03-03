@@ -16,10 +16,10 @@ def process_fun():
 def test_thread_pool():
     pool = ThreadPool()
     pool.submit(thd_fun)
-    pool.stop()
+    pool.shutdown()
 
 
 def test_process_pool():
     pool: ProcessPool = ProcessPool()
     pool.submit(process_fun)
-    pool.stop()
+    pool.shutdown()
