@@ -4,7 +4,7 @@ import os
 import queue
 import threading
 import traceback
-from typing import Callable
+from typing import Any, Callable
 
 import gevent.event
 import gevent.queue
@@ -36,7 +36,7 @@ class RepeatedResult:
 
 
 class Worker:
-    def __call__(self, log_files, task_queue, ppid, **kwargs) -> None:
+    def __call__(self, log_files: list, task_queue, ppid: int, **kwargs) -> None:
         for log_file in log_files:
             set_file_handler(log_file)
         while not task_queue.stopped:
@@ -123,14 +123,12 @@ class TaskQueue:
     def __init__(
         self,
         worker_num: int = 1,
-        worker_fun: Callable = None,
+        worker_fun: Callable | None = None,
         batch_process: bool = False,
         use_worker_queue: bool = False,
-    ):
+    ) -> None:
         self.__stop_event = None
-        self.__task_queue = None
         self.__queues: dict = {}
-        self.__worker_queues: dict = {}
         self.__worker_num = worker_num
         self.__worker_fun = worker_fun
         self.__workers = None
@@ -141,6 +139,8 @@ class TaskQueue:
 
     @property
     def stopped(self) -> bool:
+        if self.__stop_event is None:
+            return True
         return self.__stop_event.is_set()
 
     @property
@@ -154,9 +154,9 @@ class TaskQueue:
         return None
 
     def get_worker_queue(self, worker_id):
-        return self.__worker_queues.get(worker_id, None)
+        return self.get_queue(name=f"__worker{worker_id}")
 
-    def __create_queue(self):
+    def __create_queue(self) -> Any:
         manager = self.get_manager()
         if manager is not None:
             return manager.Queue()
@@ -167,7 +167,7 @@ class TaskQueue:
             return gevent.queue.Queue()
         return ctx.Queue()
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict:
         # capture what is normally pickled
         state = self.__dict__.copy()
         state["_TaskQueue__workers"] = None
@@ -177,7 +177,7 @@ class TaskQueue:
     def worker_fun(self):
         return self.__worker_fun
 
-    def set_worker_fun(self, worker_fun):
+    def set_worker_fun(self, worker_fun: Callable) -> None:
         self.__worker_fun = worker_fun
         self.stop()
         self.start()
@@ -186,10 +186,10 @@ class TaskQueue:
         assert name not in self.__queues
         self.__queues[name] = self.__create_queue()
 
-    def get_queue(self, name):
-        return self.__queues[name]
+    def get_queue(self, name: str, default=None):
+        return self.__queues.get(name, default)
 
-    def start(self):
+    def start(self) -> None:
         assert self.__worker_num > 0
         assert self.__worker_fun is not None
         ctx = self.get_ctx()
@@ -198,42 +198,37 @@ class TaskQueue:
                 self.__stop_event = gevent.event.Event()
             else:
                 self.__stop_event = ctx.Event()
-        if self.__task_queue is None:
-            self.__task_queue = self.__create_queue()
         if not self.__queues:
-            self.__queues: dict = {"result": self.__create_queue()}
+            self.__queues = {}
+        if "__task" not in self.__queues:
+            self.add_queue("__task")
+        if "__result" not in self.__queues:
+            self.add_queue("__result")
 
         if not self.__workers:
             self.__stop_event.clear()
             self.__workers = {}
-            for q in (
-                self.__task_queue,
-                *self.__queues.values(),
-                *self.__worker_queues.values(),
-            ):
-                while not q.empty():
-                    q.get()
         for _ in range(len(self.__workers), self.__worker_num):
             worker_id = max(self.__workers.keys(), default=-1) + 1
             self.__start_worker(worker_id)
 
-    def put_data(self, data, queue_name: str = "result"):
+    def put_data(self, data: Any, queue_name: str = "__result") -> None:
         result_queue = self.get_queue(queue_name)
         self.__put_data(data=data, queue=result_queue)
 
     @classmethod
-    def __put_data(cls, data, queue):
+    def __put_data(cls, data: Any, queue) -> None:
         if isinstance(data, RepeatedResult):
             for _ in range(data.num):
                 queue.put(data.data)
         else:
             queue.put(data)
 
-    def __start_worker(self, worker_id):
+    def __start_worker(self, worker_id: int) -> None:
         assert worker_id not in self.__workers
         if self.use_worker_queue:
-            assert worker_id not in self.__worker_queues
-            self.__worker_queues[worker_id] = self.__create_queue()
+            queue_name = f"__worker{worker_id}"
+            self.add_queue(queue_name)
         worker_creator_fun = None
         use_process = False
         ctx = self.get_ctx()
@@ -264,13 +259,13 @@ class TaskQueue:
         )
         self.__workers[worker_id].start()
 
-    def join(self):
+    def join(self) -> None:
         if not self.__workers:
             return
         for worker in self.__workers.values():
             worker.join()
 
-    def stop(self, wait_task=True):
+    def stop(self, wait_task: bool = True) -> None:
         # stop __workers
         if not self.__workers:
             return
@@ -280,6 +275,14 @@ class TaskQueue:
         if wait_task:
             self.join()
         self.__workers = {}
+        for q in [
+            self.get_worker_queue(worker_id)
+            for worker_id in range(len(self.__workers), self.__worker_num)
+        ] + [self.get_queue("__result")]:
+            if q is None:
+                continue
+            while not q.empty():
+                q.get()
 
     def force_stop(self):
         self.__stop_event.set()
@@ -289,21 +292,23 @@ class TaskQueue:
     def release(self):
         self.stop()
 
-    def add_task(self, task):
-        self.__task_queue.put(task)
+    def add_task(self, task: Any) -> None:
+        self.put_data(task, queue_name="__task")
 
-    def get_task(self, timeout):
-        return self.__task_queue.get(timeout=timeout)
+    def get_task(self, timeout) -> Any:
+        return self.get_data(queue_name="__task", timeout=timeout)
 
     def has_task(self) -> bool:
-        return not self.__task_queue.empty()
+        return self.has_data(queue_name="__task")
 
-    def get_data(self, queue_name: str = "result"):
+    def get_data(
+        self, queue_name: str = "__result", timeout: float | None = None
+    ) -> Any:
         result_queue = self.get_queue(queue_name)
-        return result_queue.get()
+        return result_queue.get(timeout=timeout)
 
-    def has_data(self, queue_name: str = "result") -> bool:
+    def has_data(self, queue_name: str = "__result") -> bool:
         return not self.get_queue(queue_name).empty()
 
-    def _get_task_kwargs(self, worker_id) -> dict:
+    def _get_task_kwargs(self, worker_id: int) -> dict:
         return {"task_queue": self, "worker_id": worker_id, "ppid": os.getpid()}
