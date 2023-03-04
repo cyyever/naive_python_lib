@@ -13,10 +13,10 @@ def __set_formatter(_handler: logging.Handler, with_color: bool = True) -> None:
     if with_color:
         if os.getenv("eink_screen") == "1":
             with_color = False
-    __format_str: str = "%(asctime)s %(levelname)s {%(processName)s} [%(filename)s => %(lineno)d] : %(message)s"
+    format_str: str = "%(asctime)s %(levelname)s {%(processName)s} [%(filename)s => %(lineno)d] : %(message)s"
     if with_color:
         formatter = ColoredFormatter(
-            "%(log_color)s" + __format_str,
+            "%(log_color)s" + format_str,
             log_colors={
                 "DEBUG": "green",
                 "WARNING": "yellow",
@@ -27,7 +27,7 @@ def __set_formatter(_handler: logging.Handler, with_color: bool = True) -> None:
         )
     else:
         formatter = logging.Formatter(
-            __format_str,
+            format_str,
             style="%",
         )
 
@@ -60,12 +60,13 @@ __stub_colored_logger = logging.getLogger("colored_multiprocess_logger")
 if not __stub_colored_logger.handlers:
     __stub_colored_logger.setLevel(logging.INFO)
     q: Queue = Queue()
-    qh = logging.handlers.QueueHandler(q)
-    __stub_colored_logger.addHandler(qh)
+    __stub_colored_logger.addHandler(logging.handlers.QueueHandler(q))
     __stub_colored_logger.propagate = False
-    __lp = threading.Thread(target=__worker, args=(q, __colored_logger, __logger_lock))
-    __lp.start()
-    threading._register_atexit(__lp.join, None)
+    __background_thd = threading.Thread(
+        target=__worker, args=(q, __colored_logger, __logger_lock)
+    )
+    __background_thd.start()
+    threading._register_atexit(__background_thd.join, None)
     threading._register_atexit(q.put, None)
 
 
