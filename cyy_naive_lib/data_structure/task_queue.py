@@ -9,7 +9,8 @@ from typing import Any, Callable
 import gevent.event
 import gevent.queue
 import psutil
-from cyy_naive_lib.log import get_log_files, get_logger, set_file_handler
+from cyy_naive_lib.log import (apply_logger_setting, get_logger,
+                               get_logger_setting)
 
 
 class _SentinelTask:
@@ -36,9 +37,9 @@ class RepeatedResult:
 
 
 class Worker:
-    def __call__(self, log_files: list, task_queue, ppid: int, **kwargs) -> None:
-        for log_file in log_files:
-            set_file_handler(log_file)
+    def __call__(self, log_setting: dict, task_queue, ppid: int, **kwargs) -> None:
+        if log_setting:
+            apply_logger_setting(log_setting)
         while not task_queue.stopped:
             try:
                 if self.process(task_queue, **kwargs):
@@ -254,7 +255,7 @@ class TaskQueue:
         self.__workers[worker_id] = worker_creator_fun(
             name=f"worker {worker_id}",
             target=worker,
-            args=(get_log_files() if use_process else set(),),
+            args=(get_logger_setting() if use_process else dict(),),
             kwargs=self._get_task_kwargs(worker_id),
         )
         self.__workers[worker_id].start()

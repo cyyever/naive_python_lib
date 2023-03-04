@@ -3,14 +3,15 @@ import threading
 
 from cyy_naive_lib.data_structure.process_pool import ProcessPool
 from cyy_naive_lib.data_structure.thread_pool import ThreadPool
+from cyy_naive_lib.log import get_logger
 
 
 def thd_fun():
-    print("thread is", threading.current_thread())
+    get_logger().warning("thread is %s", threading.current_thread())
 
 
 def process_fun():
-    print("process is", multiprocessing.current_process())
+    get_logger().warning("process is %s", multiprocessing.current_process())
 
 
 def test_thread_pool():

@@ -2,10 +2,11 @@ from cyy_naive_lib.data_structure.coroutine_task_queue import \
     CoroutineTaskQueue
 from cyy_naive_lib.data_structure.process_task_queue import ProcessTaskQueue
 from cyy_naive_lib.data_structure.thread_task_queue import ThreadTaskQueue
+from cyy_naive_lib.log import get_logger
 
 
 def worker(*args, **kwargs):
-    print("hello world")
+    get_logger().warning("hello world")
 
 
 def test_task_queue():

@@ -9,7 +9,7 @@ from multiprocessing import Queue
 from colorlog import ColoredFormatter
 
 
-def __set_formatter(_handler, with_color=True):
+def __set_formatter(_handler: logging.Handler, with_color: bool = True) -> None:
     if with_color:
         if os.getenv("eink_screen") == "1":
             with_color = False
@@ -50,9 +50,9 @@ __logger_lock = threading.RLock()
 __colored_logger: logging.Logger = logging.getLogger("colored_logger")
 if not __colored_logger.handlers:
     __colored_logger.setLevel(logging.DEBUG)
-    _handler = logging.StreamHandler()
-    __set_formatter(_handler, with_color=True)
-    __colored_logger.addHandler(_handler)
+    handler = logging.StreamHandler()
+    __set_formatter(handler, with_color=True)
+    __colored_logger.addHandler(handler)
     __colored_logger.propagate = False
 
 
@@ -65,22 +65,29 @@ if not __stub_colored_logger.handlers:
     __stub_colored_logger.propagate = False
     __lp = threading.Thread(target=__worker, args=(q, __colored_logger, __logger_lock))
     __lp.start()
+    threading._register_atexit(__lp.join, None)
     threading._register_atexit(q.put, None)
 
-__log_files = set()
 
-
-def add_file_handler(filename: str) -> None:
+def add_file_handler(filename: str) -> logging.Handler | None:
+    filename = os.path.normpath(os.path.abspath(filename))
     with __logger_lock:
-        if filename in __log_files:
-            return
+        for handler in __colored_logger.handlers:
+            if isinstance(handler, logging.FileHandler):
+                if handler.baseFilename == filename:
+                    return handler
         log_dir = os.path.dirname(filename)
         if log_dir:
             os.makedirs(log_dir, exist_ok=True)
         handler = logging.FileHandler(filename)
         __set_formatter(handler, with_color=False)
-        __log_files.add(filename)
         __colored_logger.addHandler(handler)
+        return handler
+
+
+def set_level(level) -> None:
+    with __logger_lock:
+        __stub_colored_logger.setLevel(level)
 
 
 def set_file_handler(filename: str) -> None:
@@ -88,8 +95,38 @@ def set_file_handler(filename: str) -> None:
     add_file_handler(filename)
 
 
-def get_log_files():
-    return __log_files
+def get_logger_setting() -> dict:
+    setting: dict = {}
+    with __logger_lock:
+        setting["level"] = __stub_colored_logger.level
+        setting["handlers"] = []
+        for handler in __colored_logger.handlers:
+            handler_dict = {"formatter": handler.formatter}
+            match handler:
+                case logging.FileHandler():
+                    handler_dict["type"] = "file"
+                    handler_dict["filename"] = handler.baseFilename
+                case logging.StreamHandler():
+                    handler_dict["type"] = "stream"
+                case _:
+                    raise NotImplementedError()
+            setting["handlers"].append(handler_dict)
+    return setting
+
+
+def apply_logger_setting(setting: dict) -> None:
+    with __logger_lock:
+        set_level(setting["level"])
+        for handler_info in setting["handlers"]:
+            match handler_info["type"]:
+                case "stream":
+                    handler = __colored_logger.handlers[0]
+                    assert isinstance(handler, logging.StreamHandler)
+                case "file":
+                    handler = add_file_handler(handler_info["filename"])
+                case _:
+                    raise NotImplementedError()
+            handler.setFormatter(handler_info["formatter"])
 
 
 def get_logger():

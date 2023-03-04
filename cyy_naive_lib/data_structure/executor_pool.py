@@ -4,10 +4,10 @@ import concurrent.futures
 import inspect
 import traceback
 import warnings
-# concurrent.futures.ProcessPoolExecutor(mp_context=mp_context, **kwargs)
 from typing import Callable, List
 
-from cyy_naive_lib.log import get_log_files, get_logger, set_file_handler
+from cyy_naive_lib.log import (apply_logger_setting, get_logger,
+                               get_logger_setting)
 
 
 class ExecutorPool(concurrent.futures._base.Executor):
@@ -58,9 +58,8 @@ class ExecutorPool(concurrent.futures._base.Executor):
 
     @classmethod
     def _fun_wrapper(cls, fn, *args, **kwargs):
-        for log_file in kwargs.pop("log_files", []):
-            set_file_handler(log_file)
         try:
+            apply_logger_setting(kwargs.pop("__logger_setting"))
             if inspect.iscoroutinefunction(fn):
                 return asyncio.run(fn(*args, **kwargs))
             return fn(*args, **kwargs)
@@ -90,6 +89,5 @@ class ExecutorPool(concurrent.futures._base.Executor):
         self.__futures.append(self.__executor.submit(worker))
 
     def __add_kwargs(self, kwargs: dict) -> dict:
-        if "log_files" not in kwargs:
-            kwargs["log_files"] = get_log_files()
+        kwargs["__logger_setting"] = get_logger_setting()
         return kwargs
