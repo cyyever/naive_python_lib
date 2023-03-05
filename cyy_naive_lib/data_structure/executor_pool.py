@@ -14,7 +14,7 @@ class ExecutorPool(concurrent.futures._base.Executor):
         self.__executor = executor
         self.__futures: List[concurrent.futures.Future] = []
 
-    def submit(self, fn, /, *args, **kwargs):
+    def submit(self, fn, *args, **kwargs):
         """Submits a callable to be executed with the given arguments.
 
         Schedules the callable to be executed as fn(*args, **kwargs) and returns
