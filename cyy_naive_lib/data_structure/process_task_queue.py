@@ -1,21 +1,14 @@
 #!/usr/bin/env python
 import multiprocessing
-from typing import Callable
 
 from .task_queue import TaskQueue
 
 
 class ProcessTaskQueue(TaskQueue):
-    def __init__(
-        self,
-        worker_fun: Callable = None,
-        worker_num: int = 1,
-        use_manager: bool = False,
-        **kwargs
-    ):
+    def __init__(self, use_manager: bool = False, **kwargs: dict):
         self.use_manager = use_manager
         self.__manager = None
-        super().__init__(worker_fun=worker_fun, worker_num=worker_num, **kwargs)
+        super().__init__(**kwargs)
 
     def __getstate__(self):
         # capture what is normally pickled

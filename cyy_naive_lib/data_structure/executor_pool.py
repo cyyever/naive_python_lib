@@ -6,8 +6,7 @@ import traceback
 import warnings
 from typing import Callable, List
 
-from cyy_naive_lib.log import (apply_logger_setting, get_logger,
-                               get_logger_setting)
+from cyy_naive_lib.log import get_logger
 
 
 class ExecutorPool(concurrent.futures._base.Executor):
@@ -24,7 +23,6 @@ class ExecutorPool(concurrent.futures._base.Executor):
         Returns:
             A Future representing the given call.
         """
-        kwargs = self.__add_kwargs(kwargs)
         future = self.__executor.submit(ExecutorPool._fun_wrapper, fn, *args, **kwargs)
         self.__futures.append(future)
         return future
@@ -59,7 +57,6 @@ class ExecutorPool(concurrent.futures._base.Executor):
     @classmethod
     def _fun_wrapper(cls, fn, *args, **kwargs):
         try:
-            apply_logger_setting(kwargs.pop("__logger_setting"))
             if inspect.iscoroutinefunction(fn):
                 return asyncio.run(fn(*args, **kwargs))
             return fn(*args, **kwargs)
@@ -70,16 +67,14 @@ class ExecutorPool(concurrent.futures._base.Executor):
 
     def exec(self, fn: Callable, *args, **kwargs):
         warnings.warn("replaced by submit", DeprecationWarning)
-        kwargs = self.__add_kwargs(kwargs)
+        # kwargs = self.__add_kwargs(kwargs)
         self.__futures.append(
             self.__executor.submit(ExecutorPool._fun_wrapper, fn, *args, **kwargs)
         )
 
     def _repeated_exec(
         self, stop_event, wait_time: float, fn: Callable, *args, **kwargs
-    ):
-        kwargs = self.__add_kwargs(kwargs)
-
+    ) -> None:
         def worker():
             while True:
                 ExecutorPool._fun_wrapper(fn, *args, **kwargs)
@@ -87,7 +82,3 @@ class ExecutorPool(concurrent.futures._base.Executor):
                     break
 
         self.__futures.append(self.__executor.submit(worker))
-
-    def __add_kwargs(self, kwargs: dict) -> dict:
-        kwargs["__logger_setting"] = get_logger_setting()
-        return kwargs
