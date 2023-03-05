@@ -9,7 +9,7 @@ from multiprocessing import Queue
 from colorlog import ColoredFormatter
 
 
-def __set_formatter(_handler: logging.Handler, with_color: bool = True) -> None:
+def __set_default_formatter(handler: logging.Handler, with_color: bool = True) -> None:
     if with_color:
         if os.getenv("eink_screen") == "1":
             with_color = False
@@ -31,7 +31,7 @@ def __set_formatter(_handler: logging.Handler, with_color: bool = True) -> None:
             style="%",
         )
 
-    _handler.setFormatter(formatter)
+    handler.setFormatter(formatter)
 
 
 def __worker(q, logger, logger_lock):
@@ -51,7 +51,7 @@ __colored_logger: logging.Logger = logging.getLogger("colored_logger")
 if not __colored_logger.handlers:
     __colored_logger.setLevel(logging.DEBUG)
     handler = logging.StreamHandler()
-    __set_formatter(handler, with_color=True)
+    __set_default_formatter(handler, with_color=True)
     __colored_logger.addHandler(handler)
     __colored_logger.propagate = False
 
@@ -81,7 +81,7 @@ def add_file_handler(filename: str) -> logging.Handler | None:
         if log_dir:
             os.makedirs(log_dir, exist_ok=True)
         handler = logging.FileHandler(filename)
-        __set_formatter(handler, with_color=False)
+        __set_default_formatter(handler, with_color=False)
         __colored_logger.addHandler(handler)
         return handler
 
@@ -94,6 +94,12 @@ def set_level(level) -> None:
 def set_file_handler(filename: str) -> None:
     warnings.warn("replaced by add_file_handler", DeprecationWarning)
     add_file_handler(filename)
+
+
+def set_formatter(formatter) -> None:
+    with __logger_lock:
+        for handler in __colored_logger.handlers:
+            handler.setFormatter(formatter)
 
 
 def get_logger_setting() -> dict:
