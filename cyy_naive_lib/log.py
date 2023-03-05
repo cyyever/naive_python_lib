@@ -109,14 +109,13 @@ def get_logger_setting() -> dict:
         setting["handlers"] = []
         for handler in __colored_logger.handlers:
             handler_dict = {"formatter": handler.formatter}
-            match handler:
-                case logging.FileHandler():
-                    handler_dict["type"] = "file"
-                    handler_dict["filename"] = handler.baseFilename
-                case logging.StreamHandler():
-                    handler_dict["type"] = "stream"
-                case _:
-                    raise NotImplementedError()
+            if isinstance(handler,logging.FileHandler):
+                handler_dict["type"] = "file"
+                handler_dict["filename"] = handler.baseFilename
+            elif isinstance(handler,logging.StreamHandler):
+                handler_dict["type"] = "stream"
+            else:
+                raise NotImplementedError()
             setting["handlers"].append(handler_dict)
     return setting
 
@@ -125,14 +124,13 @@ def apply_logger_setting(setting: dict) -> None:
     with __logger_lock:
         set_level(setting["level"])
         for handler_info in setting["handlers"]:
-            match handler_info["type"]:
-                case "stream":
-                    handler = __colored_logger.handlers[0]
-                    assert isinstance(handler, logging.StreamHandler)
-                case "file":
-                    handler = add_file_handler(handler_info["filename"])
-                case _:
-                    raise NotImplementedError()
+            if handler_info["type"]=="stream":
+                handler = __colored_logger.handlers[0]
+                assert isinstance(handler, logging.StreamHandler)
+            elif handler_info["type"]=="file":
+                handler = add_file_handler(handler_info["filename"])
+            else:
+                raise NotImplementedError()
             handler.setFormatter(handler_info["formatter"])
 
 
