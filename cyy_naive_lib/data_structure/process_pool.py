@@ -12,14 +12,13 @@ def reinitialize_logger(__logger_setting, **kwargs):
 
 class ProcessPool(ExecutorPool):
     def __init__(self, mp_context=None, initializer=None, initargs=(), **kwargs):
+        if not initargs:
+            initargs = [[], {}, {}]
         if initializer is None:
-            initargs = (
-                [reinitialize_logger],
-                {"__logger_setting": get_logger_setting()},
-            )
+            initargs[0] = [reinitialize_logger] + initargs[0]
         else:
             initargs[0] = [reinitialize_logger, initializer] + initargs[0]
-            initargs[1]["__logger_setting"] = get_logger_setting()
+        initargs[1]["__logger_setting"] = get_logger_setting()
 
         super().__init__(
             concurrent.futures.ProcessPoolExecutor(
