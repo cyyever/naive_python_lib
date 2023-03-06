@@ -16,7 +16,10 @@ def default_initializer(*init_args: tuple[dict]) -> None:
     init_arg_dict: dict = init_args[0]
     initializers: list[Callable] = init_arg_dict["initializers"]
     for initializer in initializers:
-        initializer(**init_arg_dict["init_kwargs"])
+        if "init_kwargs" in init_arg_dict:
+            initializer(**init_arg_dict["init_kwargs"])
+        else:
+            initializer()
     __local_data.data = init_arg_dict["fun_kwargs"]
 
 
