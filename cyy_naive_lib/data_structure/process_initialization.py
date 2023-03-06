@@ -20,7 +20,7 @@ def default_initializer(*init_args: tuple[dict]) -> None:
             initializer(**init_arg_dict["init_kwargs"])
         else:
             initializer()
-    __local_data.data = init_arg_dict["fun_kwargs"]
+    __local_data.data = init_arg_dict.get("fun_kwargs", {})
 
 
 def get_process_data() -> dict:
