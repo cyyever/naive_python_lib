@@ -16,22 +16,22 @@ from cyy_naive_lib.time_counter import TimeCounter
 
 class BatchPolicy:
     def __init__(self):
-        self.__processing_times: dict = {}
+        self._processing_times: dict = {}
         self.__time_counter = TimeCounter()
 
     def start_batch(self, **kwargs: dict) -> None:
         self.__time_counter.reset_start_time()
 
     def end_batch(self, batch_size: int, **kwargs: dict) -> None:
-        self.__processing_times[batch_size] = (
+        self._processing_times[batch_size] = (
             self.__time_counter.elapsed_milliseconds() / batch_size
         )
 
     def adjust_batch_size(self, batch_size: int, **kwargs: dict) -> int:
         if (
-            batch_size + 1 not in self.__processing_times
-            or self.__processing_times[batch_size + 1]
-            < self.__processing_times[batch_size]
+            batch_size + 1 not in self._processing_times
+            or self._processing_times[batch_size + 1]
+            < self._processing_times[batch_size]
         ):
             return batch_size + 1
         return batch_size
@@ -104,11 +104,10 @@ class BatchWorker(Worker):
         task_queue,
         worker_id,
         batch_policy: BatchPolicy | None = None,
-        batch_size=None,
         **kwargs,
     ) -> bool:
-        if batch_size is not None:
-            self.batch_size = batch_size
+        if batch_policy is None:
+            batch_policy = BatchPolicy()
         assert self.batch_size > 0
         end_process = False
         tasks = []
