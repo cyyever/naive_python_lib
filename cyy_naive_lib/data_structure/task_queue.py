@@ -11,6 +11,30 @@ import gevent.queue
 import psutil
 from cyy_naive_lib.log import (apply_logger_setting, get_logger,
                                get_logger_setting)
+from cyy_naive_lib.time_counter import TimeCounter
+
+
+class BatchPolicy:
+    def __init__(self):
+        self.__processing_times: dict = {}
+        self.__time_counter = TimeCounter()
+
+    def start_batch(self, **kwargs: dict) -> None:
+        self.__time_counter.reset_start_time()
+
+    def end_batch(self, batch_size: int, **kwargs: dict) -> None:
+        self.__processing_times[batch_size] = (
+            self.__time_counter.elapsed_milliseconds() / batch_size
+        )
+
+    def adjust_batch_size(self, batch_size: int, **kwargs: dict) -> int:
+        if (
+            batch_size + 1 not in self.__processing_times
+            or self.__processing_times[batch_size + 1]
+            < self.__processing_times[batch_size]
+        ):
+            return batch_size + 1
+        return batch_size
 
 
 class _SentinelTask:
@@ -76,7 +100,12 @@ class BatchWorker(Worker):
         self.batch_size = 1
 
     def process(
-        self, task_queue, worker_id, batch_policy=None, batch_size=None, **kwargs
+        self,
+        task_queue,
+        worker_id,
+        batch_policy: BatchPolicy | None = None,
+        batch_size=None,
+        **kwargs,
     ) -> bool:
         if batch_size is not None:
             self.batch_size = batch_size
