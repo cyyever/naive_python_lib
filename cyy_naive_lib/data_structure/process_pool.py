@@ -15,9 +15,9 @@ class ProcessPool(ExecutorPool):
         if initializer is not None:
             initargs[0]["initializers"].insert(0, initializer)
         initargs[0]["initializers"].insert(0, reinitialize_logger)
-        if "initargs" not in initargs[0]:
-            initargs[0]["initargs"] = {}
-        initargs[0]["initargs"]["__logger_setting"] = get_logger_setting()
+        if "init_kwargs" not in initargs[0]:
+            initargs[0]["init_kwargs"] = {}
+        initargs[0]["init_kwargs"]["__logger_setting"] = get_logger_setting()
 
         super().__init__(
             concurrent.futures.ProcessPoolExecutor(
