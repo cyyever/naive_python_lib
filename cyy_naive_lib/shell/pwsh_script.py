@@ -25,7 +25,7 @@ class PowerShellScript(Script):
         )
 
     def _get_line_seperator(self):
-        return "\r"
+        return "\r\n"
 
     def get_suffix(self) -> str:
         return "ps1"
