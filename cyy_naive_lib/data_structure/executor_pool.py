@@ -29,21 +29,20 @@ class ExecutorPool(concurrent.futures._base.Executor):
 
     def wait_results(
         self, timeout=None, return_when=concurrent.futures._base.ALL_COMPLETED
-    ) -> list:
-        concurrent.futures.wait(
+    ) -> tuple:
+        done_futures, not_done_futures = concurrent.futures.wait(
             self.__futures, timeout=timeout, return_when=return_when
         )
-        results: list = []
-        for future in self.__futures:
+        results: dict = {}
+        for future in done_futures:
             result = future.result()
             get_logger().debug("future result is %s", result)
-            results.append(result)
-        self.__futures.clear()
-        return results
+            results[future] = result
+        return results, not_done_futures
 
     def wait(
         self, timeout=None, return_when=concurrent.futures._base.ALL_COMPLETED
-    ) -> list:
+    ) -> tuple:
         warnings.warn("replaced by wait_results", DeprecationWarning)
         return self.wait_results(timeout=timeout, return_when=return_when)
 
