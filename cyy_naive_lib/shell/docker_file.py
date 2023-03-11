@@ -1,34 +1,30 @@
 #!/usr/bin/env python3
 import os
-import sys
 
-sys.path.insert(0, os.path.join(sys.path[0], ".."))
-
-
-from fs.tempdir import TempDir
-from system_info import get_operating_system
-
-from .bash_script import BashScript
-from .shell import Shell
+from cyy_naive_lib.fs.tempdir import TempDir
+from cyy_naive_lib.shell.bash_script import BashScript
+from cyy_naive_lib.shell.shell import Shell
+from cyy_naive_lib.system_info import get_operating_system
 
 
-class DockerFile(BashScript):
-    def __init__(self, from_image: str, script: BashScript):
+class DockerFile:
+    def __init__(
+        self,
+        from_image: str,
+        image_name: str,
+        script: BashScript,
+        use_experimental: bool = False,
+    ):
         self.content = ["FROM " + from_image]
+        self.image_name = image_name
         self.script = script
-        self.throw_on_failure = True
-
-    def _get_exec_command_line(self):
-        raise RuntimeError("Unsupported")
+        self.use_experimental = use_experimental
 
     def build(
         self,
-        result_image: str,
-        src_dir_pair: tuple = None,
-        use_experimental=False,
-        additional_docker_commands: list = None,
-        additional_ignored_files: list | None = None,
-        extra_output_files=None,
+        src_dir_pair: tuple | None = None,
+        additional_docker_commands: list | None = None,
+        docker_ignored_files: list | None = None,
     ):
         with TempDir():
             host_src_dir, docker_src_dir = None, None
@@ -39,11 +35,11 @@ class DockerFile(BashScript):
                 docker_src_dir = "/"
 
             script_name = "docker.sh"
-            with open(script_name, "wt") as f:
+            with open(script_name, "wt", encoding="utf8") as f:
                 f.write(self.script.get_complete_content())
             script_path = os.path.join(docker_src_dir, script_name)
 
-            with open("Dockerfile", "wt") as f:
+            with open("Dockerfile", "wt", encoding="utf8") as f:
                 for line in self.content:
                     print(line, file=f)
 
@@ -59,25 +55,20 @@ class DockerFile(BashScript):
             with open(".dockerignore", "wt", encoding="utf8") as f:
                 print(".git", file=f)
                 print("Dockerfile", file=f)
-                if additional_ignored_files is not None:
-                    for ignored_file in additional_ignored_files:
+                if docker_ignored_files is not None:
+                    for ignored_file in docker_ignored_files:
                         print(ignored_file, file=f)
 
             docker_cmd = ["docker", "build"]
             if get_operating_system() != "windows":
                 docker_cmd.insert(0, "sudo")
-            if use_experimental:
+            if self.use_experimental:
                 docker_cmd.append("--squash")
             docker_cmd += [
                 "-t",
-                result_image,
+                self.image_name,
                 "-f",
                 "Dockerfile",
                 ".",
             ]
-            output, exit_code = Shell.exec(
-                docker_cmd, extra_output_files=extra_output_files
-            )
-            if self.throw_on_failure and exit_code != 0:
-                raise RuntimeError("failed to build " + result_image)
-            return output, exit_code
+            return Shell.exec(docker_cmd)
