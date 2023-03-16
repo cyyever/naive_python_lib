@@ -1,3 +1,4 @@
+import os
 from shutil import which
 
 from cyy_naive_lib.fs.tempdir import TempDir
@@ -23,7 +24,7 @@ def test_mingw64_scriot():
 
 
 def test_unix_docker():
-    if which("docker") and exec_cmd("sudo docker ps"):
+    if os.getenv("test_docker") and which("docker") and exec_cmd("sudo docker ps"):
         from cyy_naive_lib.shell.bash_script import BashScript
         from cyy_naive_lib.shell.docker_file import DockerFile
 
