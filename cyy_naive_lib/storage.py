@@ -106,6 +106,8 @@ def persistent_cache(
             return None
 
     def write_data(data: Any, path: str) -> None:
+        if os.path.isfile(path):
+            os.remove(path)
         fd = os.open(path, flags=os.O_CREAT | os.O_EXCL | os.O_WRONLY)
         with os.fdopen(fd, "wb") as f:
             pickle.dump(data, f)
@@ -114,7 +116,7 @@ def persistent_cache(
         def wrap2(*args, **kwargs):
             cache_path = path
             if cache_path is None:
-                cache_path = kwargs.pop("cache_path", None)
+                cache_path = kwargs.get("cache_path", None)
             assert cache_path is not None
             hash_sha256 = hashlib.sha256()
             if args:
