@@ -25,6 +25,7 @@ class DockerFile:
         src_dir_pair: tuple | None = None,
         additional_docker_commands: list | None = None,
         docker_ignored_files: list | None = None,
+        exec_kwargs: dict | None = None,
     ):
         with TempDir():
             host_src_dir, docker_src_dir = None, None
@@ -71,4 +72,6 @@ class DockerFile:
                 "Dockerfile",
                 ".",
             ]
+            if exec_kwargs:
+                return Shell.exec(docker_cmd, **exec_kwargs)
             return Shell.exec(docker_cmd)
