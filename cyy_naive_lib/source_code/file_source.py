@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import shutil
 
 import requests
 from cyy_naive_lib.algorithm.hash import file_hash
@@ -30,28 +31,31 @@ class FileSource(Source):
 
     def _download(self) -> str:
         if not os.path.isfile(self._file_path):
-            get_logger().debug("downloading %s", self.file_name)
+            if self.url.startswith("file://"):
+                shutil.copyfile(self.url.replace("file://", ""), self._file_path)
+            else:
+                get_logger().debug("downloading %s", self.file_name)
 
-            response = requests.get(self.url, stream=True)
-            with open(self._file_path, "wb") as f:
-                total_length = response.headers.get("content-length")
-                if total_length is None:
+                response = requests.get(self.url, stream=True)
+                with open(self._file_path, "wb") as f:
+                    total_length = response.headers.get("content-length")
+                    if total_length is None:
+                        raise RuntimeError(
+                            f"download failed for {self.file_name} content-length is None"
+                        )
+                    for chunk in tqdm(
+                        response.iter_content(chunk_size=1024 * 1024),
+                        total=int(int(total_length) / (1024 * 1024)),
+                        unit="mb",
+                    ):
+                        if chunk:
+                            f.write(chunk)
+                    f.flush()
+
+                if response.status_code != 200:
                     raise RuntimeError(
-                        f"download failed for {self.file_name} content-length is None"
+                        f"download failed for {self.file_name}, status_code:{response.status_code}"
                     )
-                for chunk in tqdm(
-                    response.iter_content(chunk_size=1024 * 1024),
-                    total=int(int(total_length) / (1024 * 1024)),
-                    unit="mb",
-                ):
-                    if chunk:
-                        f.write(chunk)
-                f.flush()
-
-            if response.status_code != 200:
-                raise RuntimeError(
-                    f"download failed for {self.file_name}, status_code:{response.status_code}"
-                )
 
         if self.checksum == "no_checksum":
             return self._file_path
