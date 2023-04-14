@@ -2,30 +2,43 @@
 import hashlib
 import os
 import pickle
+import shutil
 import tempfile
 import time
+from enum import IntEnum, auto
 from typing import Any, Callable
+
+
+class DataLocation(IntEnum):
+    NoData = auto()
+    Memory = auto()
+    Disk = auto()
 
 
 class DataStorage:
     """封装数据存储操作"""
 
     def __init__(self, data: Any = None, data_path: str | None = None):
+        assert not (data is not None and data_path is not None)
         self.__data: Any = data
         self.__data_path: str | None = data_path
         self.__data_hash: str | None = None
+        self.__data_location: DataLocation = DataLocation.NoData
+        if data_path is not None:
+            self.__data_location = DataLocation.Disk
+        if data is not None:
+            self.__data_location = DataLocation.Memory
         self.__fd: int | None = None
-        self.__synced: bool = False
         self.__use_tmp_file: bool = False
 
     def set_data_path(self, data_path: str) -> None:
         if self.__data_path == data_path:
             return
-        if self.__data is None and self.__synced:
-            self.__data = self.__load_data()
-        self.__remove_data_file()
+        if self.__data_location == DataLocation.Disk:
+            assert self.__data_path is not None
+            self.__close_data_file()
+            shutil.copy(self.__data_path, data_path)
         self.__data_path = data_path
-        self.__synced = False
         self.__use_tmp_file = False
 
     def set_data(self, data: Any) -> None:
@@ -34,20 +47,16 @@ class DataStorage:
 
     def mark_new_data(self) -> None:
         self.__data_hash = None
-        self.__synced = False
+        self.__data_location = DataLocation.Memory
 
     @property
     def data_path(self) -> str:
-        if self.__data_path is None:
-            self.__fd, self.__data_path = tempfile.mkstemp()
-            self.__use_tmp_file = True
         return self.__data_path
 
     @property
     def data(self) -> Any:
-        if not self.__synced or self.__data is not None:
-            return self.__data
-        self.__data = self.__load_data()
+        if self.__data_location == DataLocation.Disk:
+            self.__data = self.__load_data()
         return self.__data
 
     def __load_data(self) -> Any:
@@ -55,12 +64,16 @@ class DataStorage:
         with open(self.__data_path, "rb") as f:
             return pickle.load(f)
 
-    def __remove_data_file(self) -> None:
+    def __close_data_file(self) -> None:
         if self.__data_path is not None:
             if self.__fd is not None:
                 os.close(self.__fd)
+            self.__fd = None
+
+    def __remove_data_file(self) -> None:
+        if self.__data_path is not None:
+            self.__close_data_file()
             os.remove(self.__data_path)
-            self.__data_path = None
 
     def __del__(self):
         if self.__use_tmp_file:
@@ -79,14 +92,18 @@ class DataStorage:
         self.__remove_data_file()
         self.__data = None
         self.__data_hash = None
-        self.__synced = False
+        self.__data_path = None
+        self.__data_location = DataLocation.NoData
 
     def save(self) -> None:
-        if self.__data is not None and not self.__synced:
+        if self.__data_location == DataLocation.Memory:
+            if self.__data_path is None:
+                self.__fd, self.__data_path = tempfile.mkstemp()
+                self.__use_tmp_file = True
             with open(self.data_path, "wb") as f:
                 pickle.dump(self.__data, f)
                 self.__data = None
-                self.__synced = True
+                self.__data_location = DataLocation.Disk
 
 
 def persistent_cache(
