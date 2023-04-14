@@ -19,15 +19,14 @@ class DataStorage:
     """封装数据存储操作"""
 
     def __init__(self, data: Any = None, data_path: str | None = None):
-        assert not (data is not None and data_path is not None)
         self.__data: Any = data
         self.__data_path: str | None = data_path
         self.__data_hash: str | None = None
         self.__data_location: DataLocation = DataLocation.NoData
-        if data_path is not None:
-            self.__data_location = DataLocation.Disk
         if data is not None:
             self.__data_location = DataLocation.Memory
+        elif data_path is not None:
+            self.__data_location = DataLocation.Disk
         self.__fd: int | None = None
         self.__use_tmp_file: bool = False
 
