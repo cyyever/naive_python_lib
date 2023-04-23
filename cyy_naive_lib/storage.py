@@ -99,6 +99,8 @@ class DataStorage:
             if self.__data_path is None:
                 self.__fd, self.__data_path = tempfile.mkstemp()
                 self.__use_tmp_file = True
+            else:
+                os.makedirs(os.path.dirname(self.__data_path), exist_ok=True)
             with open(self.data_path, "wb") as f:
                 pickle.dump(self.__data, f)
                 self.__data = None
