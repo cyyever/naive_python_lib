@@ -6,8 +6,8 @@ import threading
 import traceback
 from typing import Any, Callable
 
-import gevent.event
-import gevent.queue
+# import gevent.event
+# import gevent.queue
 import psutil
 from cyy_naive_lib.log import (apply_logger_setting, get_logger,
                                get_logger_setting)
@@ -192,8 +192,8 @@ class TaskQueue:
         ctx = self.get_ctx()
         if ctx is threading:
             return queue.Queue()
-        if ctx is gevent:
-            return gevent.queue.Queue()
+        # if ctx is gevent:
+        #     return gevent.queue.Queue()
         return ctx.Queue()
 
     def __getstate__(self) -> dict:
@@ -223,9 +223,9 @@ class TaskQueue:
         assert self.__worker_fun is not None
         ctx = self.get_ctx()
         if self.__stop_event is None:
-            if ctx is gevent:
-                self.__stop_event = gevent.event.Event()
-            else:
+            # if ctx is gevent:
+            #     self.__stop_event = gevent.event.Event()
+            # else:
                 self.__stop_event = ctx.Event()
         if not self.__queues:
             self.__queues = {}
@@ -270,13 +270,13 @@ class TaskQueue:
         elif hasattr(ctx, "Process"):
             worker_creator_fun = ctx.Process
             use_process = True
-        elif ctx is gevent:
-            self.__workers[worker_id] = gevent.spawn(
-                worker,
-                set(),
-                **self._get_task_kwargs(worker_id),
-            )
-            return
+        # elif ctx is gevent:
+        #     self.__workers[worker_id] = gevent.spawn(
+        #         worker,
+        #         set(),
+        #         **self._get_task_kwargs(worker_id),
+        #     )
+        #     return
         else:
             raise RuntimeError("Unsupported context:" + str(ctx))
 
