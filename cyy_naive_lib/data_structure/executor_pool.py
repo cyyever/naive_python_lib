@@ -3,7 +3,6 @@ import concurrent
 import concurrent.futures
 import inspect
 import traceback
-import warnings
 from typing import Callable, List
 
 from cyy_naive_lib.log import get_logger
@@ -40,18 +39,8 @@ class ExecutorPool(concurrent.futures._base.Executor):
             results[future] = result
         return results, not_done_futures
 
-    def wait(
-        self, timeout=None, return_when=concurrent.futures._base.ALL_COMPLETED
-    ) -> tuple:
-        warnings.warn("replaced by wait_results", DeprecationWarning)
-        return self.wait_results(timeout=timeout, return_when=return_when)
-
     def shutdown(self, wait=True, *, cancel_futures=False):
         self.__executor.shutdown(wait=wait, cancel_futures=cancel_futures)
-
-    def stop(self) -> list:
-        warnings.warn("replaced by shutdown", DeprecationWarning)
-        return self.shutdown()
 
     @classmethod
     def _fun_wrapper(cls, fn, *args, **kwargs):
@@ -63,13 +52,6 @@ class ExecutorPool(concurrent.futures._base.Executor):
             get_logger().error("catch exception:%s", e)
             get_logger().error("traceback:%s", traceback.format_exc())
             return None
-
-    def exec(self, fn: Callable, *args, **kwargs):
-        warnings.warn("replaced by submit", DeprecationWarning)
-        # kwargs = self.__add_kwargs(kwargs)
-        self.__futures.append(
-            self.__executor.submit(ExecutorPool._fun_wrapper, fn, *args, **kwargs)
-        )
 
     def _repeated_exec(
         self, stop_event, wait_time: float, fn: Callable, *args, **kwargs

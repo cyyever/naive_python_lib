@@ -7,7 +7,7 @@ from .process_initialization import default_initializer, reinitialize_logger
 
 
 class ProcessPool(ExecutorPool):
-    def __init__(self, mp_context=None, initializer=None, initargs=(), **kwargs):
+    def __init__(self, initializer=None, initargs=(), **kwargs):
         if not initargs:
             initargs = [{}]
         if "initializers" not in initargs[0]:
@@ -21,9 +21,6 @@ class ProcessPool(ExecutorPool):
 
         super().__init__(
             concurrent.futures.ProcessPoolExecutor(
-                mp_context=mp_context,
-                initializer=default_initializer,
-                initargs=initargs,
-                **kwargs
+                initializer=default_initializer, initargs=initargs, **kwargs
             )
         )
