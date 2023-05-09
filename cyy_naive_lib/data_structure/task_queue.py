@@ -2,7 +2,6 @@
 import copy
 import os
 import queue
-import threading
 import traceback
 from typing import Any, Callable
 
@@ -12,6 +11,8 @@ import psutil
 from cyy_naive_lib.log import (apply_logger_setting, get_logger,
                                get_logger_setting)
 from cyy_naive_lib.time_counter import TimeCounter
+
+from .mp_context import MultiProcessingContext
 
 
 class BatchPolicy:
@@ -61,7 +62,7 @@ class RepeatedResult:
 
 
 class Worker:
-    def __call__(self, log_setting: dict, task_queue, ppid: int, **kwargs) -> None:
+    def __call__(self, *, log_setting: dict, task_queue, ppid: int, **kwargs) -> None:
         if log_setting:
             apply_logger_setting(log_setting)
         while not task_queue.stopped:
@@ -151,17 +152,19 @@ class BatchWorker(Worker):
 class TaskQueue:
     def __init__(
         self,
+        mp_ctx: MultiProcessingContext,
         worker_num: int = 1,
         worker_fun: Callable | None = None,
         batch_process: bool = False,
         use_worker_queue: bool = False,
     ) -> None:
-        self.__stop_event = None
+        self.__mp_ctx = mp_ctx
+        self.__worker_num: int = worker_num
+        self.__worker_fun: Callable | None = worker_fun
+        self.__workers: None | dict = None
+        self._batch_process: bool = batch_process
+        self.__stop_event: Any | None = None
         self.__queues: dict = {}
-        self.__worker_num = worker_num
-        self.__worker_fun = worker_fun
-        self.__workers = None
-        self._batch_process = batch_process
         self.use_worker_queue = use_worker_queue
         if self.__worker_fun is not None:
             self.start()
@@ -176,25 +179,11 @@ class TaskQueue:
     def worker_num(self):
         return self.__worker_num
 
-    def get_ctx(self):
-        raise NotImplementedError()
-
-    def get_manager(self):
-        return None
-
     def get_worker_queue(self, worker_id):
         return self.get_queue(name=f"__worker{worker_id}")
 
-    def __create_queue(self) -> Any:
-        manager = self.get_manager()
-        if manager is not None:
-            return manager.Queue()
-        ctx = self.get_ctx()
-        if ctx is threading:
-            return queue.Queue()
-        # if ctx is gevent:
-        #     return gevent.queue.Queue()
-        return ctx.Queue()
+    def _create_queue(self) -> Any:
+        return self.__mp_ctx.create_queue()
 
     def __getstate__(self) -> dict:
         # capture what is normally pickled
@@ -213,7 +202,7 @@ class TaskQueue:
 
     def add_queue(self, name: str) -> None:
         assert name not in self.__queues
-        self.__queues[name] = self.__create_queue()
+        self.__queues[name] = self._create_queue()
 
     def get_queue(self, name: str, default=None):
         return self.__queues.get(name, default)
@@ -221,12 +210,8 @@ class TaskQueue:
     def start(self) -> None:
         assert self.__worker_num > 0
         assert self.__worker_fun is not None
-        ctx = self.get_ctx()
         if self.__stop_event is None:
-            # if ctx is gevent:
-            #     self.__stop_event = gevent.event.Event()
-            # else:
-                self.__stop_event = ctx.Event()
+            self.__stop_event = self.__mp_ctx.create_event()
         if not self.__queues:
             self.__queues = {}
         if "__task" not in self.__queues:
@@ -254,36 +239,19 @@ class TaskQueue:
             queue.put(data)
 
     def __start_worker(self, worker_id: int) -> None:
-        assert worker_id not in self.__workers
+        assert self.__workers is not None and worker_id not in self.__workers
         if self.use_worker_queue:
             queue_name = f"__worker{worker_id}"
             self.add_queue(queue_name)
-        worker_creator_fun = None
-        use_process = False
-        ctx = self.get_ctx()
         if self._batch_process:
-            worker = BatchWorker()
+            target = BatchWorker()
         else:
-            worker = Worker()
-        if hasattr(ctx, "Thread"):
-            worker_creator_fun = ctx.Thread
-        elif hasattr(ctx, "Process"):
-            worker_creator_fun = ctx.Process
-            use_process = True
-        # elif ctx is gevent:
-        #     self.__workers[worker_id] = gevent.spawn(
-        #         worker,
-        #         set(),
-        #         **self._get_task_kwargs(worker_id),
-        #     )
-        #     return
-        else:
-            raise RuntimeError("Unsupported context:" + str(ctx))
+            target = Worker()
 
-        self.__workers[worker_id] = worker_creator_fun(
+        self.__workers[worker_id] = self.__mp_ctx.create_worker(
             name=f"worker {worker_id}",
-            target=worker,
-            args=(get_logger_setting() if use_process else dict(),),
+            target=target,
+            args=(),
             kwargs=self._get_task_kwargs(worker_id),
         )
         self.__workers[worker_id].start()
@@ -340,4 +308,9 @@ class TaskQueue:
         return not self.get_queue(queue_name).empty()
 
     def _get_task_kwargs(self, worker_id: int) -> dict:
-        return {"task_queue": self, "worker_id": worker_id, "ppid": os.getpid()}
+        return {
+            "log_setting": get_logger_setting(),
+            "task_queue": self,
+            "worker_id": worker_id,
+            "ppid": os.getpid(),
+        }

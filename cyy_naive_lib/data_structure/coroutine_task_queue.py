@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-import gevent
 
+from .coroutine_context import CoroutineContext
 from .task_queue import TaskQueue
 
 
 class CoroutineTaskQueue(TaskQueue):
-    def get_ctx(self):
-        return gevent
+    def __init__(self, **kwargs: dict):
+        super().__init__(mp_ctx=CoroutineContext(), **kwargs)

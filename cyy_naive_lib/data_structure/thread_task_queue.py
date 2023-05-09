@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-import threading
 
 from .task_queue import TaskQueue
+from .thread_context import ThreadContext
 
 
 class ThreadTaskQueue(TaskQueue):
-    def get_ctx(self):
-        return threading
+    def __init__(self, use_manager: bool = False, **kwargs: dict):
+        super().__init__(mp_ctx=ThreadContext(), **kwargs)
