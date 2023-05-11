@@ -2,12 +2,20 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Callable, Generator
 
 
+def get_mapping_items_by_key_order(d: Mapping) -> Generator:
+    r"""
+    Return a generator giving the items by key order.
+    """
+    for k in sorted(d.keys()):
+        yield (k, d[k])
+
+
 def get_mapping_values_by_key_order(d: Mapping) -> Generator:
     r"""
     Return a generator giving the values by key order.
     """
-    for k in sorted(d.keys()):
-        yield d[k]
+    for _, v in get_mapping_items_by_key_order(d):
+        yield v
 
 
 def change_mapping_keys(
