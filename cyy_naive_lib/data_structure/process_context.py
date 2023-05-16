@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import multiprocessing
 from typing import Any
 
@@ -20,7 +19,7 @@ class ProcessContext(MultiProcessingContext):
     #     state["_ProcessContext__manager"] = None
     #     return state
 
-    def __get_ctx(self):
+    def get_ctx(self):
         ctx = self.get_manager()
         if ctx is None:
             ctx = self.__underlying_ctx
@@ -34,10 +33,10 @@ class ProcessContext(MultiProcessingContext):
         return self.managers[self.__underlying_ctx]
 
     def create_queue(self) -> Any:
-        return self.__get_ctx().Queue()
+        return self.get_ctx().Queue()
 
     def create_event(self) -> Any:
-        return self.__get_ctx().Event()
+        return self.get_ctx().Event()
 
     def create_worker(self, name, target, args, kwargs):
         return self.__underlying_ctx.Process(
