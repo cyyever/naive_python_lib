@@ -1,10 +1,10 @@
 import os
 from shutil import which
 
-from cyy_naive_lib.fs.tempdir import TempDir
-from cyy_naive_lib.shell.mingw64_script import Mingw64Script
-from cyy_naive_lib.shell.msys2_script import MSYS2Script
-from cyy_naive_lib.shell_factory import exec_cmd, get_shell_script
+from ..fs.tempdir import TempDir
+from ..shell.mingw64_script import Mingw64Script
+from ..shell.msys2_script import MSYS2Script
+from ..shell_factory import exec_cmd, get_shell_script
 
 
 def test_exec_cmd():
@@ -25,8 +25,8 @@ def test_mingw64_scriot():
 
 def test_unix_docker():
     if os.getenv("test_docker") and which("docker") and exec_cmd("sudo docker ps"):
-        from cyy_naive_lib.shell.bash_script import BashScript
-        from cyy_naive_lib.shell.docker_file import DockerFile
+        from ..shell.bash_script import BashScript
+        from ..shell.docker_file import DockerFile
 
         with TempDir():
             bash_script = BashScript(content="ls")

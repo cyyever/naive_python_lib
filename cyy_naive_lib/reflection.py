@@ -15,7 +15,7 @@ def call_fun(fun: Callable, kwargs: dict) -> Any:
     return fun(**{k: v for k, v in kwargs.items() if k in get_kwarg_names(fun)})
 
 
-def get_class_attrs(obj: Any, filter_fun: Callable = None) -> dict:
+def get_class_attrs(obj: Any, filter_fun: Callable | None = None) -> dict:
     classes = {
         name: getattr(obj, name)
         for name in dir(obj)

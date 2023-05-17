@@ -8,7 +8,6 @@ from filelock_git.filelock import FileLock
 class Source:
     def __init__(self, spec: str, root_dir: str, url: str | None = None):
         self.spec = spec
-        self.url = url
         self.root_dir = root_dir
         self.__prev_dir: None | str = None
 

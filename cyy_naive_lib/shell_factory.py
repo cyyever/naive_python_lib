@@ -1,7 +1,7 @@
-from shell.bash_script import BashScript
-from shell.pwsh_script import PowerShellScript
-from shell.script import Script
-from system_info import get_operating_system
+from .shell.bash_script import BashScript
+from .shell.pwsh_script import PowerShellScript
+from .shell.script import Script
+from .system_info import get_operating_system
 
 
 def get_shell_script_type(os_hint: str | None = None) -> Script:

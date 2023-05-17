@@ -19,7 +19,8 @@ class FileSource(Source):
         checksum: str,
         file_name: None | str = None,
     ):
-        super().__init__(spec=spec, url=url, root_dir=root_dir)
+        super().__init__(spec=spec, root_dir=root_dir)
+        self.url: str = url
         self.file_name: str = (
             file_name if file_name is not None else self.url.split("/")[-1]
         )
@@ -36,7 +37,7 @@ class FileSource(Source):
             else:
                 get_logger().debug("downloading %s", self.file_name)
 
-                response = requests.get(self.url, stream=True)
+                response = requests.get(self.url, stream=True, timeout=60)
                 with open(self._file_path, "wb") as f:
                     total_length = response.headers.get("content-length")
                     if total_length is None:

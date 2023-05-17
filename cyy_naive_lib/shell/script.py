@@ -4,7 +4,7 @@ from .shell import Shell
 
 
 class Script:
-    def __init__(self, content: str = None):
+    def __init__(self, content: str | None = None):
         self.content: list = []
         if content is not None:
             self.append_content(content)

@@ -49,7 +49,7 @@ class DataStorage:
         self.__data_location = DataLocation.Memory
 
     @property
-    def data_path(self) -> str:
+    def data_path(self) -> str | None:
         return self.__data_path
 
     @property
@@ -101,7 +101,8 @@ class DataStorage:
                 self.__use_tmp_file = True
             else:
                 os.makedirs(os.path.dirname(self.__data_path), exist_ok=True)
-            with open(self.data_path, "wb") as f:
+            assert self.__data_path is not None
+            with open(self.__data_path, "wb") as f:
                 pickle.dump(self.__data, f)
                 self.__data = None
                 self.__data_location = DataLocation.Disk
