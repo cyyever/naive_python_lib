@@ -273,14 +273,15 @@ class TaskQueue:
         if wait_task:
             self.join()
         self.__workers = {}
-        for q in [
-            self.get_worker_queue(worker_id)
-            for worker_id in range(len(self.__workers), self.__worker_num)
-        ] + [self.get_queue("__result")]:
-            if q is None:
-                continue
-            while not q.empty():
-                q.get()
+        self.__queues = {}
+        # for q in [
+        #     self.get_worker_queue(worker_id)
+        #     for worker_id in range(len(self.__workers), self.__worker_num)
+        # ] + [self.get_queue("__result")]:
+        #     if q is None:
+        #         continue
+        #     while not q.empty():
+        #         q.get()
 
     def force_stop(self):
         self.__stop_event.set()
