@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-
-
 from shell.bash_script import BashScript
 from shell.pwsh_script import PowerShellScript
 from shell.script import Script
@@ -19,7 +16,7 @@ def get_shell_script(content: str, os_hint: str | None = None) -> Script:
     return get_shell_script_type(os_hint)(content)
 
 
-def exec_cmd(cmd: str, os_hint: str = None, throw: bool = True):
+def exec_cmd(cmd: str, os_hint: str | None = None, throw: bool = True) -> tuple:
     output, exit_code = get_shell_script(cmd).exec(throw=False)
     if throw and exit_code != 0:
         raise RuntimeError(f"failed to execute commands: {cmd} \n outputs: {output}")

@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
 import os
 
-from cyy_naive_lib.fs.tempdir import TempDir
-from cyy_naive_lib.shell.bash_script import BashScript
-from cyy_naive_lib.shell.shell import Shell
-from cyy_naive_lib.system_info import get_operating_system
+from ..fs.tempdir import TempDir
+from ..system_info import get_operating_system
+from .bash_script import BashScript
+from .shell import Shell
 
 
 class DockerFile:

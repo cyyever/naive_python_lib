@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import copy
 import os
 import queue
@@ -16,19 +15,19 @@ from .mp_context import MultiProcessingContext
 
 
 class BatchPolicy:
-    def __init__(self):
+    def __init__(self) -> None:
         self._processing_times: dict = {}
         self.__time_counter = TimeCounter()
 
-    def start_batch(self, **kwargs: dict) -> None:
+    def start_batch(self, **kwargs: Any) -> None:
         self.__time_counter.reset_start_time()
 
-    def end_batch(self, batch_size: int, **kwargs: dict) -> None:
+    def end_batch(self, batch_size: int, **kwargs: Any) -> None:
         self._processing_times[batch_size] = (
             self.__time_counter.elapsed_milliseconds() / batch_size
         )
 
-    def adjust_batch_size(self, batch_size: int, **kwargs: dict) -> int:
+    def adjust_batch_size(self, batch_size: int, **kwargs: Any) -> int:
         if (
             batch_size + 1 not in self._processing_times
             or self._processing_times[batch_size + 1]
@@ -62,7 +61,9 @@ class RepeatedResult:
 
 
 class Worker:
-    def __call__(self, *, log_setting: dict, task_queue, ppid: int, **kwargs) -> None:
+    def __call__(
+        self, *, log_setting: dict, task_queue: Any, ppid: int, **kwargs: Any
+    ) -> None:
         if log_setting:
             apply_logger_setting(log_setting)
         while not task_queue.stopped:
@@ -80,7 +81,7 @@ class Worker:
                 get_logger().error("end worker on exception")
                 return
 
-    def process(self, task_queue, worker_id, **kwargs) -> bool:
+    def process(self, task_queue: Any, worker_id: int, **kwargs: Any) -> bool:
         task = task_queue.get_task(timeout=3600)
         if isinstance(task, _SentinelTask):
             return True
@@ -96,16 +97,16 @@ class Worker:
 
 
 class BatchWorker(Worker):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self.batch_size = 1
+        self.batch_size: int = 1
 
     def process(
         self,
-        task_queue,
-        worker_id,
+        task_queue: Any,
+        worker_id: int,
         batch_policy: BatchPolicy | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> bool:
         if batch_policy is None:
             batch_policy = BatchPolicy()
@@ -204,7 +205,7 @@ class TaskQueue:
         assert name not in self.__queues
         self.__queues[name] = self._create_queue()
 
-    def get_queue(self, name: str, default=None):
+    def get_queue(self, name: str, default: Any = None) -> Any:
         return self.__queues.get(name, default)
 
     def start(self) -> None:
@@ -231,7 +232,7 @@ class TaskQueue:
         self.__put_data(data=data, queue=result_queue)
 
     @classmethod
-    def __put_data(cls, data: Any, queue) -> None:
+    def __put_data(cls, data: Any, queue: Any) -> None:
         if isinstance(data, RepeatedResult):
             for _ in range(data.num):
                 queue.put(data.data)
@@ -244,7 +245,7 @@ class TaskQueue:
             queue_name = f"__worker{worker_id}"
             self.add_queue(queue_name)
         if self._batch_process:
-            target = BatchWorker()
+            target: Worker = BatchWorker()
         else:
             target = Worker()
 
@@ -292,7 +293,7 @@ class TaskQueue:
     def add_task(self, task: Any) -> None:
         self.put_data(task, queue_name="__task")
 
-    def get_task(self, timeout) -> Any:
+    def get_task(self, timeout: float) -> Any:
         return self.get_data(queue_name="__task", timeout=timeout)
 
     def has_task(self) -> bool:
