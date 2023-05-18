@@ -1,10 +1,12 @@
+from typing import Type
+
 from .shell.bash_script import BashScript
 from .shell.pwsh_script import PowerShellScript
 from .shell.script import Script
 from .system_info import get_operating_system
 
 
-def get_shell_script_type(os_hint: str | None = None) -> Script:
+def get_shell_script_type(os_hint: str | None = None) -> Type:
     if os_hint is None:
         os_hint = get_operating_system()
     if os_hint == "windows":

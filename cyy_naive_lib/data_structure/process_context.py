@@ -5,12 +5,13 @@ from .mp_context import MultiProcessingContext
 
 
 class ProcessContext(MultiProcessingContext):
-    managers = {}
+    managers: dict = {}
 
-    def __init__(self, ctx=multiprocessing, use_manager: bool = False, **kwargs):
+    def __init__(
+        self, ctx: Any = multiprocessing, use_manager: bool = False, **kwargs: Any
+    ) -> None:
         self.__underlying_ctx = ctx
         self.__use_manager = use_manager
-        # self.__manager = None
         super().__init__(**kwargs)
 
     # def __getstate__(self):
@@ -19,13 +20,13 @@ class ProcessContext(MultiProcessingContext):
     #     state["_ProcessContext__manager"] = None
     #     return state
 
-    def get_ctx(self):
+    def get_ctx(self) -> Any:
         ctx = self.get_manager()
         if ctx is None:
             ctx = self.__underlying_ctx
         return ctx
 
-    def get_manager(self):
+    def get_manager(self) -> Any | None:
         if not self.__use_manager:
             return None
         if self.__underlying_ctx not in self.managers:
@@ -38,7 +39,7 @@ class ProcessContext(MultiProcessingContext):
     def create_event(self) -> Any:
         return self.get_ctx().Event()
 
-    def create_worker(self, name, target, args, kwargs):
+    def create_worker(self, name: str, target: Any, args: list, kwargs: dict) -> Any:
         return self.__underlying_ctx.Process(
             name=name, target=target, args=args, kwargs=kwargs
         )

@@ -10,7 +10,7 @@ def reinitialize_logger(__logger_setting, **kwargs):
     apply_logger_setting(__logger_setting)
 
 
-def default_initializer(*init_args: tuple[dict]) -> None:
+def default_initializer(*init_args: dict) -> None:
     # We save fun_kwargs for further processing and call the initialization function
     assert len(init_args) == 1
     init_arg_dict: dict = init_args[0]
