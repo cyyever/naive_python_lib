@@ -1,23 +1,19 @@
 import copy
 import os
-import queue
 import traceback
 from typing import Any, Callable
 
-# import gevent.event
-# import gevent.queue
 import psutil
-from cyy_naive_lib.log import (apply_logger_setting, get_logger,
-                               get_logger_setting)
-from cyy_naive_lib.time_counter import TimeCounter
 
+from ..log import apply_logger_setting, get_logger, get_logger_setting
+from ..time_counter import TimeCounter
 from .mp_context import MultiProcessingContext
 
 
 class BatchPolicy:
     def __init__(self) -> None:
         self._processing_times: dict = {}
-        self.__time_counter = TimeCounter()
+        self.__time_counter: TimeCounter = TimeCounter()
 
     def start_batch(self, **kwargs: Any) -> None:
         self.__time_counter.reset_start_time()
@@ -42,19 +38,20 @@ class _SentinelTask:
 
 
 class RepeatedResult:
-    def __init__(self, data, num, copy_data=True):
+    def __init__(self, data: Any, num: int, copy_data: bool = True) -> None:
         self.__data = data
-        self.num = num
+        self.__num = num
         self.__copy_data = copy_data
 
-    def get_data(self):
-        return self.__data
+    def add_to_queue(self, queue) -> None:
+        for _ in range(self.__num):
+            queue.put(self.data)
 
-    def set_data(self, data):
+    def set_data(self, data) -> None:
         self.__data = data
 
     @property
-    def data(self):
+    def data(self) -> None:
         if self.__copy_data:
             return copy.deepcopy(self.__data)
         return self.__data
@@ -70,12 +67,10 @@ class Worker:
             try:
                 if self.process(task_queue, **kwargs):
                     break
-            except queue.Empty:
+            except Exception as e:
                 if not psutil.pid_exists(ppid):
                     get_logger().error("exit because parent process %s has died", ppid)
-                    break
-                continue
-            except Exception as e:
+                    return
                 get_logger().error("catch exception:%s", e)
                 get_logger().error("traceback:%s", traceback.format_exc())
                 get_logger().error("end worker on exception")
@@ -83,10 +78,10 @@ class Worker:
 
     def process(self, task_queue: Any, worker_id: int, **kwargs: Any) -> bool:
         task = task_queue.get_task(timeout=3600)
-        if isinstance(task, _SentinelTask):
+        if task is None:
             return True
         res = task_queue.worker_fun(
-            task=task,
+            task=task[0],
             **kwargs,
             worker_id=worker_id,
             worker_queue=task_queue.get_worker_queue(worker_id),
@@ -114,20 +109,16 @@ class BatchWorker(Worker):
         end_process = False
         tasks = []
         for idx in range(self.batch_size):
-            try:
-                if idx == 0:
-                    task = task_queue.get_task(timeout=3600)
-                elif task_queue.has_task():
-                    task = task_queue.get_task(timeout=0.00001)
-                else:
-                    break
-                if isinstance(task, _SentinelTask):
-                    end_process = True
-                    break
-                tasks.append(task)
-                task = None
-            except queue.Empty:
+            if idx == 0:
+                task = task_queue.get_task(timeout=3600)
+            elif task_queue.has_task():
+                task = task_queue.get_task(timeout=0.00001)
+            else:
                 break
+            if task is None:
+                end_process = True
+                break
+            tasks.append(task[0])
         if not tasks:
             return end_process
         batch_size = len(tasks)
@@ -180,7 +171,7 @@ class TaskQueue:
     def worker_num(self):
         return self.__worker_num
 
-    def get_worker_queue(self, worker_id):
+    def get_worker_queue(self, worker_id: int):
         return self.get_queue(name=f"__worker{worker_id}")
 
     def _create_queue(self) -> Any:
@@ -233,9 +224,8 @@ class TaskQueue:
 
     @classmethod
     def __put_data(cls, data: Any, queue: Any) -> None:
-        if isinstance(data, RepeatedResult):
-            for _ in range(data.num):
-                queue.put(data.data)
+        if hasattr(data, "add_to_queue"):
+            data.add_to_queue(queue)
         else:
             queue.put(data)
 
@@ -283,18 +273,20 @@ class TaskQueue:
         #     while not q.empty():
         #         q.get()
 
-    def force_stop(self):
-        self.__stop_event.set()
+    def force_stop(self) -> None:
+        if self.__stop_event is not None:
+            self.__stop_event.set()
         self.stop()
-        self.__stop_event.clear()
+        if self.__stop_event is not None:
+            self.__stop_event.clear()
 
-    def release(self):
+    def release(self) -> None:
         self.stop()
 
     def add_task(self, task: Any) -> None:
         self.put_data(task, queue_name="__task")
 
-    def get_task(self, timeout: float) -> Any:
+    def get_task(self, timeout: float | None) -> None | tuple:
         return self.get_data(queue_name="__task", timeout=timeout)
 
     def has_task(self) -> bool:
@@ -302,9 +294,12 @@ class TaskQueue:
 
     def get_data(
         self, queue_name: str = "__result", timeout: float | None = None
-    ) -> Any:
+    ) -> None | tuple:
         result_queue = self.get_queue(queue_name)
-        return result_queue.get(timeout=timeout)
+        res = result_queue.get(timeout=timeout)
+        if isinstance(res, _SentinelTask):
+            return None
+        return (res,)
 
     def has_data(self, queue_name: str = "__result") -> bool:
         return not self.get_queue(queue_name).empty()
