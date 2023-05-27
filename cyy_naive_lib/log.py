@@ -42,6 +42,8 @@ def __worker(
                 return
             with logger_lock:
                 logger.handle(record)
+        except ValueError:
+            return
         except EOFError:
             return
 
