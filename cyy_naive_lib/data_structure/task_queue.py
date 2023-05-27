@@ -59,13 +59,19 @@ class RepeatedResult:
 
 class Worker:
     def __call__(
-        self, *, log_setting: dict, task_queue: Any, ppid: int, **kwargs: Any
+        self,
+        *,
+        log_setting: dict,
+        task_queue: Any,
+        ppid: int,
+        worker_id: int,
+        **kwargs: Any,
     ) -> None:
         if log_setting:
             apply_logger_setting(log_setting)
         while not task_queue.stopped:
             try:
-                if self.process(task_queue, **kwargs):
+                if self.process(task_queue, worker_id=worker_id, **kwargs):
                     break
             except Exception as e:
                 if not psutil.pid_exists(ppid):
@@ -75,6 +81,13 @@ class Worker:
                 get_logger().error("traceback:%s", traceback.format_exc())
                 get_logger().error("end worker on exception")
                 return
+        while True:
+            data = task_queue.get_data(
+                queue_name=task_queue.get_worker_queue_name(worker_id=worker_id),
+                timeout=0.1,
+            )
+            if data is None:
+                break
 
     def process(self, task_queue: Any, worker_id: int, **kwargs: Any) -> bool:
         task = task_queue.get_task(timeout=3600)
@@ -171,8 +184,11 @@ class TaskQueue:
     def worker_num(self):
         return self.__worker_num
 
+    def get_worker_queue_name(self, worker_id: int) -> str:
+        return f"__worker{worker_id}"
+
     def get_worker_queue(self, worker_id: int):
-        return self.get_queue(name=f"__worker{worker_id}")
+        return self.get_queue(name=self.get_worker_queue_name(worker_id=worker_id))
 
     def _create_queue(self) -> Any:
         return self.__mp_ctx.create_queue()
@@ -296,9 +312,16 @@ class TaskQueue:
         self, queue_name: str = "__result", timeout: float | None = None
     ) -> None | tuple:
         result_queue = self.get_queue(queue_name)
-        res = result_queue.get(timeout=timeout)
-        if isinstance(res, _SentinelTask):
+        if result_queue is None:
             return None
+        res = None
+        try:
+            res = result_queue.get(timeout=timeout)
+            if isinstance(res, _SentinelTask):
+                return None
+        except Exception as e:
+            if "empty" in e.__class__.__name__.lower():
+                return None
         return (res,)
 
     def has_data(self, queue_name: str = "__result") -> bool:
