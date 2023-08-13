@@ -28,6 +28,8 @@ class FileSource(Source):
         self._file_path = os.path.join(root_dir, self.file_name)
 
     def get_checksum(self) -> str:
+        if self.checksum == "no_checksum":
+            return self.file_name
         return self.checksum
 
     def _download(self) -> str:
