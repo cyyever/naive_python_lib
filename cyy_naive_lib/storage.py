@@ -74,6 +74,9 @@ class DataStorage:
             self.__close_data_file()
             os.remove(self.__data_path)
 
+    def __getitem__(self, key) -> Any:
+        return self.data[key]
+
     def __del__(self):
         if self.__use_tmp_file:
             self.__remove_data_file()
