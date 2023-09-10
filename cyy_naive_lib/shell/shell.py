@@ -61,7 +61,7 @@ class Shell:
             return line.decode("utf-8", errors="ignore")
 
     @staticmethod
-    def __output_text_line(input_file, output_files):
+    def __output_text_line(input_file, output_files) -> None:
         for line in iter(input_file.readline, b""):
             decoded_line = Shell.__decode_output(line)
             for f in output_files:

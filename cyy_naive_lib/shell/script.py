@@ -4,7 +4,7 @@ from .shell import Shell
 
 
 class Script:
-    def __init__(self, content: str | None = None):
+    def __init__(self, content: str | None = None) -> None:
         self.content: list = []
         if content is not None:
             self.append_content(content)
@@ -12,22 +12,22 @@ class Script:
         self.strict_mode = True
         self.line_seperator = self._get_line_seperator()
 
-    def append_env(self, key: str, value: str):
+    def append_env(self, key: str, value: str) -> None:
         r"""
         Add an environment variable to the script
         """
         self.env.append((key, value))
 
-    def prepend_env(self, key: str, value: str):
+    def prepend_env(self, key: str, value: str) -> None:
         r"""
         Add an environment variable to the script
         """
         self.env = [(key, value)] + self.env
 
-    def append_env_path(self, key: str, value: str):
+    def append_env_path(self, key: str, value: str) -> None:
         self.append_env(key, self._convert_path(value))
 
-    def prepend_env_path(self, key: str, value: str):
+    def prepend_env_path(self, key: str, value: str) -> None:
         self.prepend_env(key, self._convert_path(value))
 
     def _convert_path(self, path: str):
@@ -62,7 +62,7 @@ class Script:
             return self._wrap_content_in_strict_mode(env_part, content_part)
         return env_part + self.line_seperator + content_part
 
-    def exec(self, throw=True, extra_output_files=None):
+    def exec(self, throw: bool=True, extra_output_files=None):
         output, exit_code = Shell.exec(
             command_line=self._get_exec_command_line(),
             extra_output_files=extra_output_files,
@@ -86,5 +86,5 @@ class Script:
     def _get_line_seperator(self) -> str:
         raise NotImplementedError()
 
-    def __remove_newline(self):
+    def __remove_newline(self) -> None:
         self.content = [line.rstrip("\r\n") for line in self.content]

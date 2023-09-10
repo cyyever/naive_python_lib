@@ -8,7 +8,7 @@ def get_temp_dir():
 
 
 class TempDir:
-    def __init__(self):
+    def __init__(self) -> None:
         self.prev_dir = None
         self.temp_dir = None
 

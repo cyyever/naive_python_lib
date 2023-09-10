@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 import os
+from types import TracebackType
+from typing import Optional, Type
 
 import psutil
 from filelock_git.filelock import FileLock
 
 
 class Source:
-    def __init__(self, spec: str, root_dir: str, url: str | None = None):
+    def __init__(self, spec: str, root_dir: str, url: str | None = None) -> None:
         self.spec = spec
         self.root_dir = root_dir
         self.__prev_dir: None | str = None
@@ -37,5 +39,11 @@ class Source:
                 os.chdir(res)
             return res
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
+        assert self.__prev_dir is not None
         os.chdir(self.__prev_dir)

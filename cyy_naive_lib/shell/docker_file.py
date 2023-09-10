@@ -13,7 +13,7 @@ class DockerFile:
         image_name: str,
         script: BashScript,
         use_experimental: bool = False,
-    ):
+    ) -> None:
         self.content = ["FROM " + from_image]
         self.image_name = image_name
         self.script = script

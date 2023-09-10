@@ -1,10 +1,12 @@
 import cProfile
 import pstats
 import sys
+from types import TracebackType
+from typing import Optional, Type
 
 
 class Profile:
-    def __init__(self, stats_stream=sys.stdout):
+    def __init__(self, stats_stream=sys.stdout) -> None:
         self.__profile = None
         self.__stats_stream = stats_stream
 
@@ -18,7 +20,7 @@ class Profile:
         self.profile.enable()
         return self
 
-    def __exit__(self, exc_type, exc_value, real_traceback):
+    def __exit__(self, exc_type: Optional[Type[BaseException]], exc_value: Optional[BaseException], real_traceback: Optional[TracebackType]) -> None:
         self.profile.disable()
         if real_traceback:
             return
@@ -28,5 +30,5 @@ class Profile:
         ps.print_stats()
         ps.print_callers()
 
-    def dump(self, path: str):
+    def dump(self, path: str) -> None:
         self.profile.dump_stats(path)

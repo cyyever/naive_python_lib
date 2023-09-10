@@ -18,7 +18,7 @@ class FileSource(Source):
         root_dir: str,
         checksum: str,
         file_name: None | str = None,
-    ):
+    ) -> None:
         super().__init__(spec=spec, root_dir=root_dir)
         self.url: str = url
         self.file_name: str = (

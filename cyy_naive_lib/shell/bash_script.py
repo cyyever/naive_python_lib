@@ -39,7 +39,7 @@ class BashScript(Script):
                 )
         return "export " + key + "=" + self.__double_quota_escape_str(value)
 
-    def _get_line_seperator(self):
+    def _get_line_seperator(self) -> str:
         return "\n"
 
     def __double_quota_escape_str(self, string):

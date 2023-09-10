@@ -5,7 +5,7 @@ from .script import Script
 
 
 class PowerShellScript(Script):
-    def __init__(self, content: str | None = None):
+    def __init__(self, content: str | None = None) -> None:
         super().__init__(content=content)
         self.use_bash_stype_env_var = True
 
@@ -24,7 +24,7 @@ class PowerShellScript(Script):
             + content_part
         )
 
-    def _get_line_seperator(self):
+    def _get_line_seperator(self) -> str:
         return "\r\n"
 
     def get_suffix(self) -> str:

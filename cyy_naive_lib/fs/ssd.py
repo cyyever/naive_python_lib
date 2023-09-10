@@ -9,7 +9,7 @@ def _fullpath(path):
     return realpath(expanduser(path))
 
 
-def _get_parent_device_id(device_id):
+def _get_parent_device_id(device_id) -> str:
     major = os.major(device_id)
     minor = os.minor(device_id)
 

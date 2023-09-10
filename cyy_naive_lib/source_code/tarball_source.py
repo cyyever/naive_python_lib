@@ -11,7 +11,7 @@ from .file_source import FileSource
 
 
 class TarballSource(FileSource):
-    def __init__(self, tarball_dir: None | str = None, **kwargs):
+    def __init__(self, tarball_dir: None | str = None, **kwargs) -> None:
         super().__init__(**kwargs)
         self.suffix = None
         for suffix in [".7z", ".zip", ".tar", ".tar.gz", ".tar.xz", ".tar.bz2", ".tgz"]:
