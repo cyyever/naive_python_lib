@@ -1,6 +1,7 @@
 import multiprocessing
 from typing import Any
 
+from ..system_info import get_operating_system
 from .mp_context import MultiProcessingContext
 
 
@@ -10,6 +11,12 @@ class ProcessContext(MultiProcessingContext):
     def __init__(
         self, ctx: Any = multiprocessing, use_manager: bool = False, **kwargs: Any
     ) -> None:
+        if hasattr(ctx, "get_context"):
+            match get_operating_system():
+                case "freebsd" | "macos":
+                    ctx = ctx.get_context("fork")
+                case "windows":
+                    ctx = ctx.get_context("spawn")
         self.__underlying_ctx = ctx
         self.__use_manager = use_manager
         super().__init__(**kwargs)
