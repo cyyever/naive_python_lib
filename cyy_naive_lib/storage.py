@@ -77,6 +77,9 @@ class DataStorage:
     def __getitem__(self, key) -> Any:
         return self.data[key]
 
+    def __contains__(self, key) -> bool:
+        return key in self.data
+
     def __del__(self):
         if self.__use_tmp_file:
             self.__remove_data_file()
