@@ -18,11 +18,11 @@ from cyy_naive_lib.log import get_logger
 class ReproducibleRandomEnv:
     lock = threading.RLock()
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__randomlib_state = None
         self.__numpy_state = None
-        self._enabled = False
-        self.__last_seed_path = None
+        self._enabled: bool = False
+        self.__last_seed_path: None | str = None
 
     @property
     def enabled(self):
@@ -32,7 +32,7 @@ class ReproducibleRandomEnv:
     def last_seed_path(self):
         return self.__last_seed_path
 
-    def enable(self):
+    def enable(self) -> None:
         with self.lock:
             if self._enabled:
                 get_logger().warning("%s use reproducible env", id(self))
@@ -55,7 +55,7 @@ class ReproducibleRandomEnv:
                     self.__numpy_state = np.random.get_state()
             self._enabled = True
 
-    def disable(self):
+    def disable(self) -> None:
         get_logger().warning("disable reproducible env")
         with self.lock:
             self._enabled = False
@@ -64,8 +64,8 @@ class ReproducibleRandomEnv:
         self.enable()
         return self
 
-    def __exit__(self, exc_type, exc_value, real_traceback):
-        if real_traceback:
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        if traceback:
             return
         self.disable()
 
@@ -102,5 +102,5 @@ class ReproducibleRandomEnv:
                 get_logger().warning("%s load reproducible env from %s", id(self), path)
                 self.load_state(pickle.load(f))
 
-    def load_last_seed(self):
+    def load_last_seed(self) -> None:
         self.load(self.last_seed_path)
