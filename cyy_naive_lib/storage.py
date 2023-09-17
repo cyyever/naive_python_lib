@@ -2,7 +2,6 @@
 import hashlib
 import os
 import pickle
-import shutil
 import tempfile
 import time
 from enum import IntEnum, auto
@@ -33,10 +32,7 @@ class DataStorage:
     def set_data_path(self, data_path: str) -> None:
         if self.__data_path == data_path:
             return
-        if self.__data_location == DataLocation.Disk:
-            assert self.__data_path is not None
-            self.__close_data_file()
-            shutil.copy(self.__data_path, data_path)
+        assert self.__data_location != DataLocation.Disk
         self.__data_path = data_path
         self.__use_tmp_file = False
 
@@ -71,8 +67,10 @@ class DataStorage:
 
     def __remove_data_file(self) -> None:
         if self.__data_path is not None:
-            self.__close_data_file()
-            os.remove(self.__data_path)
+            if os.path.isfile(self.__data_path):
+                self.__close_data_file()
+                os.remove(self.__data_path)
+            self.__data_path = None
 
     def __getitem__(self, key) -> Any:
         return self.data[key]
