@@ -84,9 +84,9 @@ def add_file_handler(filename: str) -> logging.Handler:
         log_dir = os.path.dirname(filename)
         if log_dir:
             os.makedirs(log_dir, exist_ok=True)
-        handler = logging.FileHandler(filename)
-        __set_default_formatter(handler, with_color=False)
+        handler = logging.FileHandler(filename, mode="wt", encoding="utf8", delay=False)
         __colored_logger.addHandler(handler)
+        __set_default_formatter(handler, with_color=False)
         return handler
 
 
