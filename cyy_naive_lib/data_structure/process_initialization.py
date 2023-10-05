@@ -1,16 +1,16 @@
 import threading
-from typing import Callable
+from typing import Any, Callable
 
 from cyy_naive_lib.log import apply_logger_setting
 
-__local_data = threading.local()
+__local_data: threading.local = threading.local()
 
 
-def reinitialize_logger(__logger_setting, **kwargs):
-    apply_logger_setting(__logger_setting)
+def reinitialize_logger(logger_setting: dict, **kwargs: Any) -> None:
+    apply_logger_setting(logger_setting)
 
 
-def default_initializer(*init_args: dict) -> None:
+def default_initializer(*init_args: Any) -> None:
     # We save fun_kwargs for further processing and call the initialization function
     assert len(init_args) == 1
     init_arg_dict: dict = init_args[0]
