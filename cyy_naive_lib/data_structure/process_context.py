@@ -37,6 +37,9 @@ class ProcessContext(MultiProcessingContext):
     def create_queue(self) -> multiprocessing.Queue:
         return self.get_ctx().Queue()
 
+    def create_pipe(self) -> multiprocessing.Pipe:
+        return self.get_ctx().Pipe()
+
     def create_event(self) -> Any:
         return self.get_ctx().Event()
 
