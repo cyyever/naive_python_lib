@@ -21,12 +21,6 @@ class ProcessContext(MultiProcessingContext):
         self.__use_manager = use_manager
         super().__init__(**kwargs)
 
-    # def __getstate__(self):
-    #     # capture what is normally pickled
-    #     state = super().__getstate__()
-    #     state["_ProcessContext__manager"] = None
-    #     return state
-
     def get_ctx(self) -> Any:
         ctx = self.get_manager()
         if ctx is None:
@@ -40,7 +34,7 @@ class ProcessContext(MultiProcessingContext):
             self.managers[self.__underlying_ctx] = self.__underlying_ctx.Manager()
         return self.managers[self.__underlying_ctx]
 
-    def create_queue(self) -> Any:
+    def create_queue(self) -> multiprocessing.Queue:
         return self.get_ctx().Queue()
 
     def create_event(self) -> Any:
