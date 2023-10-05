@@ -1,7 +1,6 @@
 from typing import Any
 
-from data_structure.process_context import ProcessContext
-
+from ..data_structure.process_context import ProcessContext
 from .topology import Topology
 
 
@@ -36,10 +35,12 @@ class CentralTopology(Topology):
 
 class ProcessPipeCentralTopology(CentralTopology):
     def __init__(
-        self, *args, mp_context: ProcessContext = ProcessContext(), **kwargs
+        self, *args, mp_context: ProcessContext | None = None, **kwargs
     ) -> None:
         super().__init__(*args, **kwargs)
         self.__pipes: dict = {}
+        if mp_context is None:
+            mp_context = ProcessContext()
         self.__context = mp_context
         for worker_id in range(self.worker_num):
             # 0 => server 1=> worker
