@@ -6,8 +6,8 @@ from cyy_naive_lib.log import apply_logger_setting
 __local_data: threading.local = threading.local()
 
 
-def reinitialize_logger(logger_setting: dict, **kwargs: Any) -> None:
-    apply_logger_setting(logger_setting)
+def reinitialize_logger(__logger_setting: dict, **kwargs: Any) -> None:
+    apply_logger_setting(__logger_setting)
 
 
 def default_initializer(*init_args: Any) -> None:
