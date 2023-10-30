@@ -186,10 +186,7 @@ class TaskQueue:
         return f"__worker{worker_id}"
 
     def get_worker_queue(self, worker_id: int):
-        return self.get_queue(name=self.get_worker_queue_name(worker_id=worker_id))
-
-    def _create_queue(self) -> Any:
-        return self.__mp_ctx.create_queue()
+        return self.__get_queue(name=self.get_worker_queue_name(worker_id=worker_id))
 
     def __getstate__(self) -> dict:
         # capture what is normally pickled
@@ -208,9 +205,12 @@ class TaskQueue:
 
     def add_queue(self, name: str) -> None:
         assert name not in self.__queues
-        self.__queues[name] = self._create_queue()
+        self.__queues[name] = self.__mp_ctx.create_queue()
+        # if self.__mp_ctx.support_pipe():
+        #     self.__queues[name] = self.__mp_ctx.create_pipe()
+        # else:
 
-    def get_queue(self, name: str, default: Any = None) -> Any:
+    def __get_queue(self, name: str, default: Any = None) -> Any:
         return self.__queues.get(name, default)
 
     def start(self) -> None:
@@ -233,7 +233,7 @@ class TaskQueue:
             self.__start_worker(worker_id)
 
     def put_data(self, data: Any, queue_name: str = "__result") -> None:
-        result_queue = self.get_queue(queue_name)
+        result_queue = self.__get_queue(queue_name)
         self.__put_data(data=data, queue=result_queue)
 
     @classmethod
@@ -308,7 +308,7 @@ class TaskQueue:
     def get_data(
         self, queue_name: str = "__result", timeout: float | None = None
     ) -> None | tuple:
-        result_queue = self.get_queue(queue_name)
+        result_queue = self.__get_queue(queue_name)
         if result_queue is None:
             return None
         res = None
@@ -322,7 +322,7 @@ class TaskQueue:
         return (res,)
 
     def has_data(self, queue_name: str = "__result") -> bool:
-        return not self.get_queue(queue_name).empty()
+        return not self.__get_queue(queue_name).empty()
 
     def _get_task_kwargs(self, worker_id: int) -> dict:
         return {

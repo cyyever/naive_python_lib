@@ -22,7 +22,7 @@ class ProcessContext(MultiProcessingContext):
     def create_queue(self) -> multiprocessing.Queue:
         return self.get_ctx().Queue()
 
-    def has_pipe(self) -> bool:
+    def support_pipe(self) -> bool:
         return True
 
     def create_pipe(self) -> tuple:
