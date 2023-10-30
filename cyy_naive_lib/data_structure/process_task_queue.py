@@ -5,5 +5,5 @@ from .task_queue import TaskQueue
 
 
 class ProcessTaskQueue(TaskQueue):
-    def __init__(self, use_manager: bool = False, **kwargs: Any):
-        super().__init__(mp_ctx=ProcessContext(use_manager=use_manager), **kwargs)
+    def __init__(self, mp_ctx=ProcessContext(), **kwargs: Any):
+        super().__init__(mp_ctx=mp_ctx, **kwargs)

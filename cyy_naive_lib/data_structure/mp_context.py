@@ -5,6 +5,9 @@ class MultiProcessingContext:
     def create_queue(self) -> Any:
         raise NotImplementedError()
 
+    def has_pipe(self) -> bool:
+        return False
+
     def create_event(self) -> Any:
         raise NotImplementedError()
 

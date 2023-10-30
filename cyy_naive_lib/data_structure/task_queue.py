@@ -161,18 +161,16 @@ class TaskQueue:
         worker_num: int = 1,
         worker_fun: Callable | None = None,
         batch_process: bool = False,
-        use_worker_queue: bool = False,
     ) -> None:
         self.__mp_ctx = mp_ctx
         self.__worker_num: int = worker_num
-        self.__worker_fun: Callable | None = worker_fun
+        self.__worker_fun: Callable | None = None
         self.__workers: None | dict = None
         self._batch_process: bool = batch_process
         self.__stop_event: Any | None = None
         self.__queues: dict = {}
-        self.use_worker_queue = use_worker_queue
-        if self.__worker_fun is not None:
-            self.start()
+        if worker_fun is not None:
+            self.set_worker_fun(worker_fun)
 
     @property
     def stopped(self) -> bool:
@@ -247,9 +245,8 @@ class TaskQueue:
 
     def __start_worker(self, worker_id: int) -> None:
         assert self.__workers is not None and worker_id not in self.__workers
-        if self.use_worker_queue:
-            queue_name = f"__worker{worker_id}"
-            self.add_queue(queue_name)
+        queue_name = f"__worker{worker_id}"
+        self.add_queue(queue_name)
         if self._batch_process:
             target: Worker = BatchWorker()
         else:
