@@ -43,9 +43,8 @@ class RepeatedResult:
         self.__num = num
         self.__copy_data = copy_data
 
-    def add_to_queue(self, queue) -> None:
-        for _ in range(self.__num):
-            queue.put(self.data)
+    def get_data_list(self) -> list:
+        return [self.data for _ in range(self.__num)]
 
     def set_data(self, data) -> None:
         self.__data = data
@@ -198,15 +197,15 @@ class TaskQueue:
         self.stop()
         self.start()
 
-    def add_queue(self, name: str) -> None:
+    def add_queue(self, name: str, use_pipe: bool = True) -> None:
         assert name not in self.__queues
-        self.__queues[name] = self.__mp_ctx.create_queue()
-        # if self.__mp_ctx.support_pipe():
-        #     self.__queues[name] = self.__mp_ctx.create_pipe()
-        # else:
+        if use_pipe and self.__mp_ctx.support_pipe():
+            self.__queues[name] = (self.__mp_ctx.create_pipe(), True)
+        else:
+            self.__queues[name] = (self.__mp_ctx.create_queue(), False)
 
-    def __get_queue(self, name: str, default: Any = None) -> Any:
-        return self.__queues.get(name, default)
+    def __get_queue(self, name: str) -> tuple:
+        return self.__queues[name]
 
     def start(self) -> None:
         assert self.__worker_num > 0
@@ -216,7 +215,7 @@ class TaskQueue:
         if not self.__queues:
             self.__queues = {}
         if "__task" not in self.__queues:
-            self.add_queue("__task")
+            self.add_queue("__task", use_pipe=False)
         if "__result" not in self.__queues:
             self.add_queue("__result")
 
@@ -228,15 +227,17 @@ class TaskQueue:
             self.__start_worker(worker_id)
 
     def put_data(self, data: Any, queue_name: str = "__result") -> None:
-        result_queue = self.__get_queue(queue_name)
-        self.__put_data(data=data, queue=result_queue)
+        queue, is_pipe = self.__get_queue(queue_name)
+        data_list = [data]
+        if hasattr(data, "get_data_list"):
+            data_list = data.get_data_list()
 
-    @classmethod
-    def __put_data(cls, data: Any, queue: Any) -> None:
-        if hasattr(data, "add_to_queue"):
-            data.add_to_queue(queue)
+        if is_pipe:
+            for a in data_list:
+                queue[0].send(a)
         else:
-            queue.put(data)
+            for a in data_list:
+                queue.put(a)
 
     def __start_worker(self, worker_id: int) -> None:
         assert self.__workers is not None and worker_id not in self.__workers
@@ -303,21 +304,32 @@ class TaskQueue:
     def get_data(
         self, queue_name: str = "__result", timeout: float | None = None
     ) -> None | tuple:
-        result_queue = self.__get_queue(queue_name)
-        if result_queue is None:
-            return None
-        res = None
+        result_queue, is_pipe = self.__get_queue(queue_name)
         try:
+            if is_pipe:
+                if result_queue[1].poll(timeout):
+                    res = result_queue[1].recv()
+                    if isinstance(res, _SentinelTask):
+                        return None
+                    return (res,)
+                return None
             res = result_queue.get(timeout=timeout)
             if isinstance(res, _SentinelTask):
                 return None
+            return (res,)
         except Exception as e:
-            if "empty" in e.__class__.__name__.lower():
+            if (
+                "empty" in e.__class__.__name__.lower()
+                or "eof" in e.__class__.__name__.lower()
+            ):
                 return None
-        return (res,)
+            raise e
 
     def has_data(self, queue_name: str = "__result") -> bool:
-        return not self.__get_queue(queue_name).empty()
+        queue, is_pipe = self.__get_queue(queue_name)
+        if is_pipe:
+            return queue[1].poll()
+        return not queue.empty()
 
     def _get_task_kwargs(self, worker_id: int) -> dict:
         return {
