@@ -97,7 +97,6 @@ class Worker:
             task=task[0],
             **kwargs,
             worker_id=worker_id,
-            worker_queue=task_queue.get_worker_queue(worker_id),
         )
         if res is not None:
             task_queue.put_data(res)
@@ -140,7 +139,6 @@ class BatchWorker(Worker):
         res = task_queue.worker_fun(
             tasks=tasks,
             worker_id=worker_id,
-            worker_queue=task_queue.get_worker_queue(worker_id),
             **kwargs,
         )
         if not end_process and batch_policy is not None:
@@ -184,9 +182,6 @@ class TaskQueue:
 
     def get_worker_queue_name(self, worker_id: int) -> str:
         return f"__worker{worker_id}"
-
-    def get_worker_queue(self, worker_id: int):
-        return self.__get_queue(name=self.get_worker_queue_name(worker_id=worker_id))
 
     def __getstate__(self) -> dict:
         # capture what is normally pickled
