@@ -229,7 +229,7 @@ class TaskQueue:
 
     def __start_worker(self, worker_id: int) -> None:
         assert self.__workers is not None and worker_id not in self.__workers
-        self.add_queue(name=self.get_worker_queue_name(worker_id))
+        self.add_queue(name=self.get_worker_queue_name(worker_id), use_pipe=False)
         if self._batch_process:
             target: Worker = BatchWorker()
         else:
