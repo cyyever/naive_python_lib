@@ -86,6 +86,7 @@ class Worker:
                 get_logger().error("traceback:%s", traceback.format_exc())
                 get_logger().error("end worker on exception")
                 return
+        task_queue.clear_data(task_queue.get_worker_queue_name(worker_id))
 
     def process(self, task_queue: Any, worker_id: int, **kwargs: Any) -> bool:
         task = task_queue.get_task(timeout=3600)
@@ -294,6 +295,14 @@ class TaskQueue:
 
     def has_task(self) -> bool:
         return self.has_data(queue_name="__task")
+
+    def clear_data(self, queue_name) -> None:
+        if queue_name not in self.__queues:
+            return
+        while True:
+            res = self.get_data(queue_name=queue_name, timeout=0.000001)
+            if res is None:
+                return
 
     def get_data(
         self, queue_name: str = "__result", timeout: float | None = None
