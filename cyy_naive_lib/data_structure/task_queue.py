@@ -80,13 +80,6 @@ class Worker:
                 get_logger().error("traceback:%s", traceback.format_exc())
                 get_logger().error("end worker on exception")
                 return
-        while True:
-            data = task_queue.get_data(
-                queue_name=task_queue.get_worker_queue_name(worker_id=worker_id),
-                timeout=0.1,
-            )
-            if data is None:
-                break
 
     def process(self, task_queue: Any, worker_id: int, **kwargs: Any) -> bool:
         task = task_queue.get_task(timeout=3600)
@@ -98,7 +91,7 @@ class Worker:
             worker_id=worker_id,
         )
         if res is not None:
-            task_queue.put_data(res)
+            task_queue.put_data(data=res, queue_name="__result")
         return False
 
 
@@ -143,7 +136,7 @@ class BatchWorker(Worker):
         if not end_process and batch_policy is not None:
             batch_policy.end_batch(batch_size=batch_size, **kwargs)
         if res is not None:
-            task_queue.put_data(res)
+            task_queue.put_data(data=res, queue_name="__result")
         if not end_process and batch_policy is not None:
             self.batch_size = batch_policy.adjust_batch_size(
                 batch_size=batch_size, **kwargs
@@ -156,7 +149,6 @@ class TaskQueue:
         self,
         mp_ctx: MultiProcessingContext,
         worker_num: int = 1,
-        worker_fun: Callable | None = None,
         batch_process: bool = False,
     ) -> None:
         self.__mp_ctx = mp_ctx
@@ -166,8 +158,6 @@ class TaskQueue:
         self._batch_process: bool = batch_process
         self.__stop_event: Any | None = None
         self.__queues: dict = {}
-        if worker_fun is not None:
-            self.set_worker_fun(worker_fun)
 
     @property
     def stopped(self) -> bool:
@@ -192,12 +182,7 @@ class TaskQueue:
     def worker_fun(self):
         return self.__worker_fun
 
-    def set_worker_fun(self, worker_fun: Callable) -> None:
-        self.__worker_fun = worker_fun
-        self.stop()
-        self.start()
-
-    def add_queue(self, name: str, use_pipe: bool = True) -> None:
+    def add_queue(self, name: str, use_pipe: bool = False) -> None:
         assert name not in self.__queues
         if use_pipe and self.__mp_ctx.support_pipe():
             self.__queues[name] = (self.__mp_ctx.create_pipe(), True)
@@ -207,7 +192,10 @@ class TaskQueue:
     def __get_queue(self, name: str) -> tuple:
         return self.__queues[name]
 
-    def start(self) -> None:
+    def start(self, worker_fun: Callable | None = None) -> None:
+        self.stop()
+        if worker_fun is not None:
+            self.__worker_fun = worker_fun
         assert self.__worker_num > 0
         assert self.__worker_fun is not None
         if self.__stop_event is None:
@@ -217,7 +205,7 @@ class TaskQueue:
         if "__task" not in self.__queues:
             self.add_queue("__task", use_pipe=False)
         if "__result" not in self.__queues:
-            self.add_queue("__result")
+            self.add_queue("__result", use_pipe=True)
 
         if not self.__workers:
             self.__stop_event.clear()
@@ -226,7 +214,7 @@ class TaskQueue:
             worker_id = max(self.__workers.keys(), default=-1) + 1
             self.__start_worker(worker_id)
 
-    def put_data(self, data: Any, queue_name: str = "__result") -> None:
+    def put_data(self, data: Any, queue_name: str) -> None:
         queue, is_pipe = self.__get_queue(queue_name)
         data_list = [data]
         if hasattr(data, "get_data_list"):
@@ -241,8 +229,7 @@ class TaskQueue:
 
     def __start_worker(self, worker_id: int) -> None:
         assert self.__workers is not None and worker_id not in self.__workers
-        queue_name = f"__worker{worker_id}"
-        self.add_queue(queue_name)
+        self.add_queue(name=self.get_worker_queue_name(worker_id))
         if self._batch_process:
             target: Worker = BatchWorker()
         else:
@@ -273,14 +260,6 @@ class TaskQueue:
             self.join()
         self.__workers = {}
         self.__queues = {}
-        # for q in [
-        #     self.get_worker_queue(worker_id)
-        #     for worker_id in range(len(self.__workers), self.__worker_num)
-        # ] + [self.get_queue("__result")]:
-        #     if q is None:
-        #         continue
-        #     while not q.empty():
-        #         q.get()
 
     def force_stop(self) -> None:
         if self.__stop_event is not None:
@@ -293,7 +272,7 @@ class TaskQueue:
         self.stop()
 
     def add_task(self, task: Any) -> None:
-        self.put_data(task, queue_name="__task")
+        self.put_data(data=task, queue_name="__task")
 
     def get_task(self, timeout: float | None) -> None | tuple:
         return self.get_data(queue_name="__task", timeout=timeout)

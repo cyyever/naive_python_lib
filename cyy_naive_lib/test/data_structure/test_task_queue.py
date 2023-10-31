@@ -23,8 +23,8 @@ def get_queue_types():
 
 def test_task_queue():
     for queue_type in get_queue_types():
-        queue = queue_type(worker_fun=worker, worker_num=2)
-        queue.start()
+        queue = queue_type(worker_num=2)
+        queue.start(worker_fun=worker)
         queue.add_task(())
         queue.add_task(())
         queue.stop()
@@ -34,8 +34,8 @@ def test_task_queue():
 
 def test_batch_task_queue():
     for queue_type in get_queue_types():
-        queue = queue_type(worker_fun=worker, worker_num=2, batch_process=True)
-        queue.start()
+        queue = queue_type(worker_num=2, batch_process=True)
+        queue.start(worker_fun=worker)
         queue.add_task(())
         queue.add_task(())
         queue.stop()

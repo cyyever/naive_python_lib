@@ -13,17 +13,15 @@ def hello(task, **kwargs):
 
 
 def test_process_task_queue():
-    queue = ProcessTaskQueue(worker_fun=hello, worker_num=8)
-    queue.start()
+    queue = ProcessTaskQueue(worker_num=8)
+    queue.start(worker_fun=hello)
     queue.add_task(())
     time.sleep(1)
     assert queue.has_data()
     assert queue.get_data()[0] == "abc"
     queue.stop()
-    queue = ProcessTaskQueue(
-        worker_fun=hello, worker_num=8, mp_ctx=ManageredProcessContext()
-    )
-    queue.start()
+    queue = ProcessTaskQueue(worker_num=8, mp_ctx=ManageredProcessContext())
+    queue.start(worker_fun=hello)
     queue.add_task(())
     assert queue.get_data()[0] == "abc"
     queue.stop()
