@@ -1,6 +1,7 @@
 import copy
 import os
 import traceback
+from enum import StrEnum, auto
 from typing import Any, Callable
 
 import psutil
@@ -8,6 +9,11 @@ import psutil
 from ..log import apply_logger_setting, get_logger, get_logger_setting
 from ..time_counter import TimeCounter
 from .mp_context import MultiProcessingContext
+
+
+class QueueType(StrEnum):
+    Pipe = auto()
+    Queue = auto()
 
 
 class BatchPolicy:
@@ -182,17 +188,21 @@ class TaskQueue:
     def worker_fun(self):
         return self.__worker_fun
 
-    def add_queue(self, name: str, use_pipe: bool = False) -> None:
+    def add_queue(self, name: str, queue_type: QueueType) -> None:
         assert name not in self.__queues
-        if use_pipe and self.__mp_ctx.support_pipe():
-            self.__queues[name] = (self.__mp_ctx.create_pipe(), True)
+        if queue_type == QueueType.Pipe and self.__mp_ctx.support_pipe():
+            self.__queues[name] = (self.__mp_ctx.create_pipe(), QueueType.Pipe)
         else:
-            self.__queues[name] = (self.__mp_ctx.create_queue(), False)
+            self.__queues[name] = (self.__mp_ctx.create_queue(), QueueType.Queue)
 
     def __get_queue(self, name: str) -> tuple:
         return self.__queues[name]
 
-    def start(self, worker_fun: Callable | None = None) -> None:
+    def start(
+        self,
+        worker_fun: Callable | None = None,
+        worker_queue_type: None | QueueType = None,
+    ) -> None:
         self.stop()
         if worker_fun is not None:
             self.__worker_fun = worker_fun
@@ -203,33 +213,38 @@ class TaskQueue:
         if not self.__queues:
             self.__queues = {}
         if "__task" not in self.__queues:
-            self.add_queue("__task", use_pipe=False)
+            self.add_queue("__task", queue_type=QueueType.Queue)
         if "__result" not in self.__queues:
-            self.add_queue("__result", use_pipe=True)
+            self.add_queue("__result", queue_type=QueueType.Pipe)
 
         if not self.__workers:
             self.__stop_event.clear()
             self.__workers = {}
         for _ in range(len(self.__workers), self.__worker_num):
             worker_id = max(self.__workers.keys(), default=-1) + 1
-            self.__start_worker(worker_id)
+            self.__start_worker(worker_id, worker_queue_type)
 
     def put_data(self, data: Any, queue_name: str) -> None:
-        queue, is_pipe = self.__get_queue(queue_name)
+        queue, queue_type = self.__get_queue(queue_name)
         data_list = [data]
         if hasattr(data, "get_data_list"):
             data_list = data.get_data_list()
 
-        if is_pipe:
+        if queue_type == QueueType.Pipe:
             for a in data_list:
                 queue[0].send(a)
         else:
             for a in data_list:
                 queue.put(a)
 
-    def __start_worker(self, worker_id: int) -> None:
+    def __start_worker(
+        self, worker_id: int, worker_queue_type: None | QueueType = None
+    ) -> None:
         assert self.__workers is not None and worker_id not in self.__workers
-        self.add_queue(name=self.get_worker_queue_name(worker_id), use_pipe=False)
+        if worker_queue_type is not None:
+            self.add_queue(
+                name=self.get_worker_queue_name(worker_id), queue_type=worker_queue_type
+            )
         if self._batch_process:
             target: Worker = BatchWorker()
         else:
@@ -283,9 +298,9 @@ class TaskQueue:
     def get_data(
         self, queue_name: str = "__result", timeout: float | None = None
     ) -> None | tuple:
-        result_queue, is_pipe = self.__get_queue(queue_name)
+        result_queue, queue_type = self.__get_queue(queue_name)
         try:
-            if is_pipe:
+            if queue_type == QueueType.Pipe:
                 if result_queue[1].poll(timeout):
                     res = result_queue[1].recv()
                     if isinstance(res, _SentinelTask):
@@ -305,8 +320,8 @@ class TaskQueue:
             raise e
 
     def has_data(self, queue_name: str = "__result") -> bool:
-        queue, is_pipe = self.__get_queue(queue_name)
-        if is_pipe:
+        queue, queue_type = self.__get_queue(queue_name)
+        if queue_type == QueueType.Pipe:
             return queue[1].poll()
         return not queue.empty()
 
