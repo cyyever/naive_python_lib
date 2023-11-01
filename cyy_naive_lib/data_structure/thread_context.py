@@ -13,4 +13,4 @@ class ThreadContext(MultiProcessingContext):
         return threading.Event()
 
     def create_worker(self, name, target, args, kwargs):
-        return threading.Thread(name=name, target=target, args=args, kwargs=kwargs)
+        return self.create_thread(name=name, target=target, args=args, kwargs=kwargs)
