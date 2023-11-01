@@ -200,9 +200,7 @@ class TaskQueue:
         return self.__queues[name]
 
     def start(
-        self,
-        worker_fun: Callable | None = None,
-        worker_queue_type: None | QueueType = None,
+        self, worker_fun: Callable | None = None, use_thread: bool = False
     ) -> None:
         self.stop()
         if worker_fun is not None:
@@ -216,14 +214,14 @@ class TaskQueue:
         if "__task" not in self.__queues:
             self.add_queue("__task", queue_type=QueueType.Queue)
         if "__result" not in self.__queues:
-            self.add_queue("__result", queue_type=QueueType.Pipe)
+            self.add_queue("__result", queue_type=QueueType.Queue)
 
         if not self.__workers:
             self.__stop_event.clear()
             self.__workers = {}
         for _ in range(len(self.__workers), self.__worker_num):
             worker_id = max(self.__workers.keys(), default=-1) + 1
-            self.__start_worker(worker_id, worker_queue_type)
+            self._start_worker(worker_id, use_thread=use_thread)
 
     def put_data(self, data: Any, queue_name: str) -> None:
         queue, queue_type = self.__get_queue(queue_name)
@@ -238,25 +236,27 @@ class TaskQueue:
             for a in data_list:
                 queue.put(a)
 
-    def __start_worker(
-        self, worker_id: int, worker_queue_type: None | QueueType = None
-    ) -> None:
+    def _start_worker(self, worker_id: int, use_thread: bool) -> None:
         assert self.__workers is not None and worker_id not in self.__workers
-        if worker_queue_type is not None:
-            self.add_queue(
-                name=self.get_worker_queue_name(worker_id), queue_type=worker_queue_type
-            )
         if self._batch_process:
             target: Worker = BatchWorker()
         else:
             target = Worker()
 
-        self.__workers[worker_id] = self.__mp_ctx.create_worker(
-            name=f"worker {worker_id}",
-            target=target,
-            args=(),
-            kwargs=self._get_task_kwargs(worker_id),
-        )
+        if use_thread:
+            self.__workers[worker_id] = self.__mp_ctx.create_thread(
+                name=f"worker {worker_id}",
+                target=target,
+                args=(),
+                kwargs=self._get_task_kwargs(worker_id),
+            )
+        else:
+            self.__workers[worker_id] = self.__mp_ctx.create_worker(
+                name=f"worker {worker_id}",
+                target=target,
+                args=(),
+                kwargs=self._get_task_kwargs(worker_id),
+            )
         self.__workers[worker_id].start()
 
     def join(self) -> None:
