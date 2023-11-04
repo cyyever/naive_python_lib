@@ -69,7 +69,7 @@ if not __stub_colored_logger.handlers:
     )
     __background_thd.start()
     threading._register_atexit(__background_thd.join, None)
-    threading._register_atexit(q.put, None)
+    threading._register_atexit(q.put_nowait, None)
 
 
 def add_file_handler(filename: str) -> logging.Handler:
