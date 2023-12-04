@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from .shell import Shell
 
 
@@ -9,8 +7,8 @@ class Script:
         if content is not None:
             self.append_content(content)
         self.env: list = []
-        self.strict_mode = True
-        self.line_seperator = self._get_line_seperator()
+        self.strict_mode: bool = True
+        self.line_seperator: str = self._get_line_seperator()
 
     def append_env(self, key: str, value: str) -> None:
         r"""
@@ -30,10 +28,10 @@ class Script:
     def prepend_env_path(self, key: str, value: str) -> None:
         self.prepend_env(key, self._convert_path(value))
 
-    def _convert_path(self, path: str):
+    def _convert_path(self, path: str) -> str:
         return path
 
-    def prepend_content(self, content):
+    def prepend_content(self, content: str | list) -> None:
         if isinstance(content, list):
             self.content = content + self.content
         elif isinstance(content, str):
@@ -42,7 +40,7 @@ class Script:
             raise RuntimeError("unsupported content type")
         self.__remove_newline()
 
-    def append_content(self, content):
+    def append_content(self, content: str | list) -> None:
         if isinstance(content, list):
             self.content += content
         elif isinstance(content, str):
@@ -54,7 +52,7 @@ class Script:
     def get_suffix(self) -> str:
         raise NotImplementedError()
 
-    def get_complete_content(self):
+    def get_complete_content(self) -> str:
         env_part = self.line_seperator.join([self._export(k, v) for (k, v) in self.env])
         content_part = self.line_seperator.join(self.content)
 
@@ -62,7 +60,7 @@ class Script:
             return self._wrap_content_in_strict_mode(env_part, content_part)
         return env_part + self.line_seperator + content_part
 
-    def exec(self, throw: bool = True, extra_output_files=None):
+    def exec(self, throw: bool = True, extra_output_files: None | list = None) -> tuple:
         output, exit_code = Shell.exec(
             command_line=self._get_exec_command_line(),
             extra_output_files=extra_output_files,
@@ -74,10 +72,10 @@ class Script:
     def _get_exec_command_line(self):
         raise NotImplementedError()
 
-    def _wrap_content_in_strict_mode(self, env_part: str, content_part: str):
+    def _wrap_content_in_strict_mode(self, env_part: str, content_part: str) -> str:
         raise NotImplementedError()
 
-    def _export(self, key: str, value: str):
+    def _export(self, key: str, value: str) -> str:
         r"""
         Return an command to export the environment variable
         """

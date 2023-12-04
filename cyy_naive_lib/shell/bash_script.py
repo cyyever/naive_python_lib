@@ -5,8 +5,8 @@ class BashScript(Script):
     def get_suffix(self) -> str:
         return "sh"
 
-    def _get_exec_command_line(self):
-        with open("script.sh", "w") as f:
+    def _get_exec_command_line(self) -> list:
+        with open("script.sh", "w", encoding="utf8") as f:
             f.write(self.get_complete_content())
             return ["bash", "script.sh"]
 
@@ -19,7 +19,7 @@ class BashScript(Script):
             + content_part
         )
 
-    def _export(self, key, value):
+    def _export(self, key: str, value: str) -> str:
         for special_key in ("PATH", "LD_LIBRARY_PATH"):
             if key == special_key:
                 return (
@@ -42,7 +42,7 @@ class BashScript(Script):
     def _get_line_seperator(self) -> str:
         return "\n"
 
-    def __double_quota_escape_str(self, string):
+    def __double_quota_escape_str(self, string: str) -> str:
         escaped_str = ""
         escaped_str += '"'
         for a in string:
