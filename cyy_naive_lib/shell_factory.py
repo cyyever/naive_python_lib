@@ -19,7 +19,7 @@ def get_shell_script(content: str, os_hint: str | None = None) -> Script:
 
 
 def exec_cmd(cmd: str, os_hint: str | None = None, throw: bool = True) -> tuple:
-    output, exit_code = get_shell_script(cmd).exec(throw=False)
+    output, exit_code = get_shell_script(cmd, os_hint=os_hint).exec(throw=False)
     if throw and exit_code != 0:
         raise RuntimeError(f"failed to execute commands: {cmd} \n outputs: {output}")
     return output, exit_code

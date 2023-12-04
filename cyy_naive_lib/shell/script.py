@@ -62,7 +62,7 @@ class Script:
             return self._wrap_content_in_strict_mode(env_part, content_part)
         return env_part + self.line_seperator + content_part
 
-    def exec(self, throw: bool=True, extra_output_files=None):
+    def exec(self, throw: bool = True, extra_output_files=None):
         output, exit_code = Shell.exec(
             command_line=self._get_exec_command_line(),
             extra_output_files=extra_output_files,
