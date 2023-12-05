@@ -10,11 +10,11 @@ class Shell:
         command_line: list,
         print_out: bool = True,
         extra_output_files: list[str] | None = None,
-    ):
+    ) -> tuple:
         r"""
         Execute a command line
         """
-        output_files = []
+        output_files: list = []
         if extra_output_files is not None:
             output_files = extra_output_files
         output_lines: list[str] = []
@@ -23,7 +23,7 @@ class Shell:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         ) as proc:
-            threads = [
+            threads: list = [
                 Thread(
                     target=Shell.__output_text_line,
                     args=(
@@ -59,17 +59,17 @@ class Shell:
             exit_code = proc.wait()
             for thd in threads:
                 thd.join()
-            return ["\n".join(output_lines), exit_code]
+            return "\n".join(output_lines), exit_code
 
     @staticmethod
-    def __decode_output(line):
+    def __decode_output(line) -> str:
         try:
             return line.decode("gb2312")
         except Exception:
             return line.decode("utf-8", errors="ignore")
 
     @staticmethod
-    def __output_text_line(input_file, output_files, output_lines) -> None:
+    def __output_text_line(input_file, output_files: list, output_lines: list) -> None:
         for line in iter(input_file.readline, b""):
             decoded_line = Shell.__decode_output(line)
             if output_lines is not None:
