@@ -14,13 +14,19 @@ def call_fun(fun: Callable, kwargs: dict) -> Any:
     return fun(**{k: v for k, v in kwargs.items() if k in get_kwarg_names(fun)})
 
 
-def get_descendant_attrs(obj: Any, filter_fun: Callable, recursive: bool) -> Generator:
-    for name in dir(obj):
-        attr = getattr(obj, name)
-        if filter_fun(attr=attr, name=name):
-            yield name, attr
-        elif recursive:
-            yield from get_descendant_attrs(attr, filter_fun, True)
+def get_descendant_attrs(
+    obj: Any, filter_fun: Callable, recursive: bool, data_only: bool = True
+) -> Generator:
+    for name, attr in inspect.getmembers(obj):
+        if not name.startswith("__") and not name.endswith("__"):
+            if data_only and not inspect.isdatadescriptor(attr):
+                continue
+            if filter_fun(name=name, attr=attr):
+                yield name, attr
+            elif recursive:
+                yield from get_descendant_attrs(
+                    attr, filter_fun, True, data_only=data_only
+                )
 
 
 def get_class_attrs(obj: Any, filter_fun: Callable | None = None) -> dict:
@@ -29,4 +35,6 @@ def get_class_attrs(obj: Any, filter_fun: Callable | None = None) -> dict:
             return inspect.isclass(attr)
         return inspect.isclass(attr) and filter_fun(name, attr)
 
-    return dict(get_descendant_attrs(obj, new_filter_fun, recursive=False))
+    return dict(
+        get_descendant_attrs(obj, new_filter_fun, recursive=False, data_only=False)
+    )
