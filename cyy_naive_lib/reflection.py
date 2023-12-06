@@ -3,10 +3,9 @@ from typing import Any, Callable, Generator
 
 
 def get_kwarg_names(fun: Callable) -> set:
-    sig = inspect.signature(fun)
     return {
         p.name
-        for p in sig.parameters.values()
+        for p in inspect.signature(fun).parameters.values()
         if p.kind in (p.POSITIONAL_OR_KEYWORD, p.KEYWORD_ONLY)
     }
 
@@ -20,8 +19,8 @@ def get_descendant_attrs(obj: Any, filter_fun: Callable, recursive: bool) -> Gen
         attr = getattr(obj, name)
         if filter_fun(attr=attr, name=name):
             yield name, attr
-        else:
-            yield from get_descendant_attrs(attr, filter_fun, recursive)
+        elif recursive:
+            yield from get_descendant_attrs(attr, filter_fun, True)
 
 
 def get_class_attrs(obj: Any, filter_fun: Callable | None = None) -> dict:
