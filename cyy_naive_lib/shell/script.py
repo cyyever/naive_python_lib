@@ -1,3 +1,5 @@
+from typing import Any
+
 from .shell import Shell
 
 
@@ -60,10 +62,16 @@ class Script:
             return self._wrap_content_in_strict_mode(env_part, content_part)
         return env_part + self.line_seperator + content_part
 
-    def exec(self, throw: bool = True, extra_output_files: None | list = None) -> tuple:
+    def exec(
+        self,
+        throw: bool = True,
+        extra_output_files: None | list[str] = None,
+        **exec_kwargs
+    ) -> tuple[Any, int]:
         output, exit_code = Shell.exec(
             command_line=self._get_exec_command_line(),
             extra_output_files=extra_output_files,
+            **exec_kwargs
         )
         if throw and exit_code != 0:
             raise RuntimeError("failed to execute script")
