@@ -5,7 +5,7 @@ import zipfile
 
 from cyy_naive_lib.fs.tempdir import TempDir
 from cyy_naive_lib.log import get_logger
-from cyy_naive_lib.shell_factory import exec_cmd
+from cyy_naive_lib.shell import exec_cmd
 
 from .file_source import FileSource
 
