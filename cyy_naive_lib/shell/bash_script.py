@@ -5,10 +5,11 @@ class BashScript(Script):
     def get_suffix(self) -> str:
         return "sh"
 
-    def _get_exec_command_line(self) -> list:
-        with open("script.sh", "w", encoding="utf8") as f:
+    def _get_exec_command_line(self) -> dict:
+        script_name = self._get_temp_script_name()
+        with open(script_name, "w", encoding="utf8") as f:
             f.write(self.get_complete_content())
-            return ["bash", "script.sh"]
+            return {"cmd": ["bash", script_name], "script_name": script_name}
 
     def _wrap_content_in_strict_mode(self, env_part: str, content_part: str) -> str:
         return (
