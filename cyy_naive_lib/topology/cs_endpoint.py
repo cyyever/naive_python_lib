@@ -5,8 +5,6 @@ from .endpoint import Endpoint
 
 
 class ServerEndpoint(Endpoint):
-    _topology: CentralTopology
-
     @property
     def worker_num(self):
         return self._topology.worker_num
@@ -34,8 +32,6 @@ class ServerEndpoint(Endpoint):
 
 
 class ClientEndpoint(Endpoint):
-    _topology: CentralTopology
-
     def __init__(self, topology: CentralTopology, worker_id: int):
         super().__init__(topology=topology)
         self.__worker_id: int = worker_id
