@@ -1,11 +1,14 @@
+import copy
 import logging
 import logging.handlers
 import os
 import threading
-from multiprocessing import Queue
+from multiprocessing import Manager, Queue
 from typing import Any
 
 from colorlog import ColoredFormatter
+
+__logger_lock = Manager().RLock()
 
 
 def __set_default_formatter(handler: logging.Handler, with_color: bool = True) -> None:
@@ -46,9 +49,10 @@ def __worker(
             return
         except EOFError:
             return
+        except OSError:
+            return
 
 
-__logger_lock = threading.RLock()
 __colored_logger: logging.Logger = logging.getLogger("colored_logger")
 if not __colored_logger.handlers:
     __colored_logger.setLevel(logging.DEBUG)
@@ -90,6 +94,15 @@ def add_file_handler(filename: str) -> logging.Handler:
         return handler
 
 
+def reset_file_handler(filename: str) -> logging.Handler:
+    filename = os.path.normpath(os.path.abspath(filename))
+    with __logger_lock:
+        for handler in copy.copy(__colored_logger.handlers):
+            if isinstance(handler, logging.FileHandler):
+                __colored_logger.removeHandler(handler)
+    return add_file_handler(filename=filename)
+
+
 def set_level(level: Any) -> None:
     with __logger_lock:
         __stub_colored_logger.setLevel(level)
@@ -105,6 +118,7 @@ def get_logger_setting() -> dict:
     setting: dict = {}
     with __logger_lock:
         setting["level"] = __stub_colored_logger.level
+        setting["lock"] = __logger_lock
         setting["handlers"] = []
         for handler in __colored_logger.handlers:
             handler_dict: dict = {"formatter": handler.formatter}
@@ -120,6 +134,7 @@ def get_logger_setting() -> dict:
 
 
 def apply_logger_setting(setting: dict) -> None:
+    __logger_lock = setting["lock"]
     with __logger_lock:
         set_level(setting["level"])
         for handler_info in setting["handlers"]:
