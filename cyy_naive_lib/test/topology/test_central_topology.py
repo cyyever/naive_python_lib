@@ -5,3 +5,6 @@ def test_process_task_queue():
     topology = ProcessPipeCentralTopology(worker_num=3)
     topology.send_to_worker(worker_id=1, data="abc")
     assert topology.get_from_server(worker_id=1) == "abc"
+    topology = ProcessPipeCentralTopology(worker_num=3)
+    topology.send_to_worker(worker_id=1, data="abc")
+    assert topology.get_from_server(worker_id=1) == "abc"

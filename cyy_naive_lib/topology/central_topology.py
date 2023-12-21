@@ -51,7 +51,7 @@ class ProcessPipeCentralTopology(CentralTopology):
         return self.__pipes[worker_id][0].recv()
 
     def send_to_worker(self, worker_id: int, data: Any) -> None:
-        return self.__pipes[worker_id][0].send(data)
+        self.__pipes[worker_id][0].send(data)
 
     def has_data_from_worker(self, worker_id: int) -> bool:
         assert 0 <= worker_id < self.worker_num
@@ -75,3 +75,48 @@ class ProcessPipeCentralTopology(CentralTopology):
 
     def close_worker_channel(self, worker_id: int) -> None:
         self.__pipes[worker_id][0].close()
+
+
+class ProcessQueueCentralTopology(CentralTopology):
+    def __init__(
+        self, *args, mp_context: ProcessContext | None = None, **kwargs
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.__queues: dict = {}
+        if mp_context is None:
+            mp_context = ProcessContext()
+        self.__context = mp_context
+        for worker_id in range(self.worker_num):
+            self.__queues[worker_id] = [
+                self.__context.create_queue(),
+                self.__context.create_queue(),
+            ]
+
+    def get_from_worker(self, worker_id: int) -> Any:
+        assert 0 <= worker_id < self.worker_num
+        return self.__queues[worker_id][1].get()
+
+    def has_data_from_worker(self, worker_id: int) -> bool:
+        assert 0 <= worker_id < self.worker_num
+        return not self.__queues[worker_id][1].empty()
+
+    def send_to_worker(self, worker_id: int, data: Any) -> None:
+        self.__queues[worker_id][0].put(data)
+
+    def get_from_server(self, worker_id: int) -> Any:
+        assert 0 <= worker_id < self.worker_num
+        return self.__queues[worker_id][0].get()
+
+    def has_data_from_server(self, worker_id: int) -> bool:
+        assert 0 <= worker_id < self.worker_num
+        return not self.__queues[worker_id][0].empty()
+
+    def send_to_server(self, worker_id: int, data: Any) -> None:
+        assert 0 <= worker_id < self.worker_num
+        self.__queues[worker_id][1].put(data)
+
+    def close_server_channel(self) -> None:
+        pass
+
+    def close_worker_channel(self, worker_id: int) -> None:
+        self.__queues.pop(worker_id)
