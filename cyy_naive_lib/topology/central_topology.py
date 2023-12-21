@@ -8,10 +8,10 @@ class CentralTopology(Topology):
     def __init__(self, worker_num):
         self.worker_num = worker_num
 
-    def get_from_server(self, worker_id: int):
+    def get_from_server(self, worker_id: int) -> Any:
         raise NotImplementedError()
 
-    def get_from_worker(self, worker_id: int):
+    def get_from_worker(self, worker_id: int) -> Any:
         raise NotImplementedError()
 
     def has_data_from_server(self, worker_id: int) -> bool:
@@ -20,16 +20,16 @@ class CentralTopology(Topology):
     def has_data_from_worker(self, worker_id: int) -> bool:
         raise NotImplementedError()
 
-    def send_to_server(self, worker_id: int, data):
+    def send_to_server(self, worker_id: int, data) -> None:
         raise NotImplementedError()
 
-    def send_to_worker(self, worker_id: int, data):
+    def send_to_worker(self, worker_id: int, data) -> None:
         raise NotImplementedError()
 
-    def wait_close(self):
+    def close_server_channel(self) -> None:
         raise NotImplementedError()
 
-    def close(self):
+    def close_worker_channel(self, worker_id: int) -> None:
         raise NotImplementedError()
 
 
@@ -69,10 +69,9 @@ class ProcessPipeCentralTopology(CentralTopology):
         assert 0 <= worker_id < self.worker_num
         return self.__pipes[worker_id][1].send(data)
 
-    def wait_close(self) -> None:
-        return
-
-    def close(self) -> None:
+    def close_server_channel(self) -> None:
         for p in self.__pipes.values():
-            p[0].close()
             p[1].close()
+
+    def close_worker_channel(self, worker_id: int) -> None:
+        self.__pipes[worker_id][0].close()
