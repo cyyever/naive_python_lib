@@ -73,4 +73,6 @@ class ProcessPipeCentralTopology(CentralTopology):
         return
 
     def close(self) -> None:
-        return
+        for p in self.__pipes.values():
+            p[0].close()
+            p[1].close()
