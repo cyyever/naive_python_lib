@@ -18,3 +18,10 @@ classifiers = [
 
 [project.urls]
 Repository = "https://github.com/cyyever/naive_python_lib"
+
+[tool.pyright]
+include = ["cyy_naive_lib/src"]
+defineConstant = { DEBUG = true }
+
+reportMissingImports = true
+reportMissingTypeStubs = false
