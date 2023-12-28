@@ -1,14 +1,13 @@
+import contextlib
 import copy
 import logging
 import logging.handlers
 import os
 import threading
-from multiprocessing import Manager, Queue
+from multiprocessing import Manager, Queue, process
 from typing import Any
 
 from colorlog import ColoredFormatter
-
-__logger_lock = Manager().RLock()
 
 
 def __set_default_formatter(handler: logging.Handler, with_color: bool = True) -> None:
@@ -43,7 +42,7 @@ def __worker(
             record = queue.get()
             if record is None:
                 return
-            with logger_lock:
+            with logger_lock if __logger_lock is not None else contextlib.nullcontext():
                 logger.handle(record)
         except ValueError:
             return
@@ -53,6 +52,11 @@ def __worker(
             return
 
 
+__logger_lock = None
+
+if not getattr(process.current_process(), "_inheriting", False):
+    __logger_lock = Manager().RLock()
+
 __colored_logger: logging.Logger = logging.getLogger("colored_logger")
 if not __colored_logger.handlers:
     __colored_logger.setLevel(logging.DEBUG)
@@ -60,7 +64,6 @@ if not __colored_logger.handlers:
     __set_default_formatter(__handler, with_color=True)
     __colored_logger.addHandler(__handler)
     __colored_logger.propagate = False
-
 
 __stub_colored_logger = logging.getLogger("colored_multiprocess_logger")
 if not __stub_colored_logger.handlers:
@@ -78,7 +81,7 @@ if not __stub_colored_logger.handlers:
 
 def add_file_handler(filename: str) -> logging.Handler:
     filename = os.path.normpath(os.path.abspath(filename))
-    with __logger_lock:
+    with __logger_lock if __logger_lock is not None else contextlib.nullcontext():
         for handler in __colored_logger.handlers:
             if (
                 isinstance(handler, logging.FileHandler)
@@ -96,7 +99,7 @@ def add_file_handler(filename: str) -> logging.Handler:
 
 def reset_file_handler(filename: str) -> logging.Handler:
     filename = os.path.normpath(os.path.abspath(filename))
-    with __logger_lock:
+    with __logger_lock if __logger_lock is not None else contextlib.nullcontext():
         for handler in copy.copy(__colored_logger.handlers):
             if isinstance(handler, logging.FileHandler):
                 __colored_logger.removeHandler(handler)
@@ -104,7 +107,7 @@ def reset_file_handler(filename: str) -> logging.Handler:
 
 
 def set_level(level: Any) -> None:
-    with __logger_lock:
+    with __logger_lock if __logger_lock is not None else contextlib.nullcontext():
         __stub_colored_logger.setLevel(level)
 
 
@@ -116,7 +119,7 @@ def set_level(level: Any) -> None:
 
 def get_logger_setting() -> dict:
     setting: dict = {}
-    with __logger_lock:
+    with __logger_lock if __logger_lock is not None else contextlib.nullcontext():
         setting["level"] = __stub_colored_logger.level
         setting["lock"] = __logger_lock
         setting["handlers"] = []
