@@ -20,7 +20,7 @@ classifiers = [
 Repository = "https://github.com/cyyever/naive_python_lib"
 
 [tool.pyright]
-include = ["cyy_naive_lib/src"]
+include = ["cyy_naive_lib"]
 defineConstant = { DEBUG = true }
 
 reportMissingImports = true
