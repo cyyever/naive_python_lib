@@ -1,12 +1,11 @@
-#!/usr/bin/env python3
 import os
 import shutil
 import zipfile
 
-from cyy_naive_lib.fs.tempdir import TempDir
 from cyy_naive_lib.log import get_logger
-from cyy_naive_lib.shell import exec_cmd
 
+from ..fs.tempdir import TempDir
+from ..shell import exec_cmd
 from .file_source import FileSource
 
 

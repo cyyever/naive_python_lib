@@ -1,16 +1,13 @@
 import time
 import traceback
-from typing import Callable, Tuple
-from typing import List
+from typing import Callable, List, Tuple
+
 from cyy_naive_lib.log import get_logger
 
 
-def retry_operation(operation: Callable,
-                    retry_times: int,
-                    retry_sleep_time: float,
-                    *args,
-                    **kwargs) -> Tuple[bool,
-                                       None]:
+def retry_operation(
+    operation: Callable, retry_times: int, retry_sleep_time: float, *args, **kwargs
+) -> Tuple[bool, None]:
     for _ in range(retry_times):
         try:
             res = operation(*args, **kwargs)

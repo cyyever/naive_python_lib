@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import re
 
 from .script import Script
@@ -31,7 +30,7 @@ class PowerShellScript(Script):
         return "ps1"
 
     def _get_exec_command_line(self):
-        with open("script.ps1", "w") as f:
+        with open("script.ps1", "w", encoding="utf8") as f:
             f.write(self.get_complete_content())
             return ["pwsh", "-NoProfile", "-File", "script.ps1"]
 

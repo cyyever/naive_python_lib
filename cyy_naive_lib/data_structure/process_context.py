@@ -1,8 +1,7 @@
 import multiprocessing
 from typing import Any
 
-from system_info import get_operating_system
-
+from ..system_info import get_operating_system
 from .mp_context import MultiProcessingContext
 
 

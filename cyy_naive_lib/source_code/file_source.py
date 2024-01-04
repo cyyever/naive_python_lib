@@ -1,12 +1,11 @@
-#!/usr/bin/env python3
 import os
 import shutil
 
 import requests
-from cyy_naive_lib.algorithm.hash import file_hash
 from cyy_naive_lib.log import get_logger
 from tqdm import tqdm
 
+from ..algorithm.hash import file_hash
 from .source import Source
 
 

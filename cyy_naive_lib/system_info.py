@@ -3,7 +3,7 @@ import platform
 import subprocess
 from shutil import which
 
-from cyy_naive_lib.util import readlines
+from .util import readlines
 
 __operating_system = None
 
