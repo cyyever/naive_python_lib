@@ -35,14 +35,14 @@ def __set_default_formatter(handler: logging.Handler, with_color: bool = True) -
 
 
 def __worker(
-    queue: Queue, logger: logging.Logger, logger_lock: threading.RLock
+    qu: Queue, logger: logging.Logger, logger_lock: threading._RLock | None
 ) -> None:
     while True:
         try:
-            record = queue.get()
+            record = qu.get()
             if record is None:
                 return
-            with logger_lock if __logger_lock is not None else contextlib.nullcontext():
+            with logger_lock if logger_lock is not None else contextlib.nullcontext():
                 logger.handle(record)
         except ValueError:
             return
@@ -52,7 +52,7 @@ def __worker(
             return
 
 
-__logger_lock = None
+__logger_lock: threading._RLock | None = None
 
 if not getattr(process.current_process(), "_inheriting", False):
     __logger_lock = Manager().RLock()
@@ -72,11 +72,9 @@ if not __stub_colored_logger.handlers:
     __stub_colored_logger.addHandler(logging.handlers.QueueHandler(q))
     __stub_colored_logger.propagate = False
     __background_thd = threading.Thread(
-        target=__worker, args=(q, __colored_logger, __logger_lock)
+        target=__worker, args=(q, __colored_logger, __logger_lock), daemon=True
     )
     __background_thd.start()
-    threading._register_atexit(__background_thd.join, None)
-    threading._register_atexit(q.put_nowait, None)
 
 
 def add_file_handler(filename: str) -> logging.Handler:
