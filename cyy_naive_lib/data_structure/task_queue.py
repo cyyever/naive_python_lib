@@ -242,21 +242,16 @@ class TaskQueue:
             target: Worker = BatchWorker()
         else:
             target = Worker()
-
+        creator=self.__mp_ctx.create_worker
         if use_thread:
-            self.__workers[worker_id] = self.__mp_ctx.create_thread(
-                name=f"worker {worker_id}",
-                target=target,
-                args=(),
-                kwargs=self._get_task_kwargs(worker_id),
-            )
-        else:
-            self.__workers[worker_id] = self.__mp_ctx.create_worker(
-                name=f"worker {worker_id}",
-                target=target,
-                args=(),
-                kwargs=self._get_task_kwargs(worker_id),
-            )
+            creator=self.__mp_ctx.create_thread
+
+        self.__workers[worker_id] =creator(
+            name=f"worker {worker_id}",
+            target=target,
+            args=(),
+            kwargs=self._get_task_kwargs(worker_id),
+        )
         self.__workers[worker_id].start()
 
     def join(self) -> None:
