@@ -32,7 +32,10 @@ class PowerShellScript(Script):
     def _get_exec_command_line(self):
         with open("script.ps1", "w", encoding="utf8") as f:
             f.write(self.get_complete_content())
-            return ["pwsh", "-NoProfile", "-File", "script.ps1"]
+            return {
+                "cmd": ["pwsh", "-NoProfile", "-File", "script.ps1"],
+                "script_name": "script.ps1",
+            }
 
     def _export(self, key: str, value: str):
         if value.startswith("(") and value.endswith(")"):
