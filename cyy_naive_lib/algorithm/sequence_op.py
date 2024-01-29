@@ -23,7 +23,7 @@ def flatten_list(seq: list) -> list:
     return res
 
 
-def search_sublists(l, sublists) -> dict:
+def search_sublists(l: list, sublists: list[list]) -> dict:
     assert sublists
     lookup_table: dict = {}
     for sub_list in sublists:
