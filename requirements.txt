@@ -4,5 +4,5 @@ FileLock-git
 requests
 tqdm
 gevent
-wmi
-pywin32
+wmi  ; sys_platform == 'win32'
+pywin32  ; sys_platform == 'win32'
