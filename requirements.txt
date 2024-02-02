@@ -4,3 +4,5 @@ FileLock-git
 requests
 tqdm
 gevent
+wmi
+pywin32
