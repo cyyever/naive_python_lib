@@ -9,9 +9,9 @@ class ProcessContext(MultiProcessingContext):
     def __init__(self, ctx: Any = multiprocessing) -> None:
         if hasattr(ctx, "get_context"):
             match get_operating_system():
-                case "freebsd" :
+                case "freebsd":
                     ctx = ctx.get_context("fork")
-                case "windows"|"macos":
+                case "windows" | "macos":
                     ctx = ctx.get_context("spawn")
         self.__underlying_ctx = ctx
 
