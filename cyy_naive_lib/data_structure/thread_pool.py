@@ -9,5 +9,5 @@ class ThreadPool(ExecutorPool):
         super().__init__(concurrent.futures.ThreadPoolExecutor())
         self.__stop_event = threading.Event()
 
-    def repeated_exec(self, *args, **kwargs) -> None:
-        super()._repeated_exec(stop_event=self.__stop_event, *args, **kwargs)
+    def _repeated_exec(self, *args, **kwargs) -> None:
+        super()._repeated_exec(self.__stop_event, *args, **kwargs)
