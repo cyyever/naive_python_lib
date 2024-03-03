@@ -3,17 +3,19 @@ import concurrent
 import concurrent.futures
 import inspect
 import traceback
-from typing import Callable, List
+from typing import Any, Callable, List
 
 from cyy_naive_lib.log import get_logger
 
 
 class ExecutorPool(concurrent.futures._base.Executor):
-    def __init__(self, executor: concurrent.futures._base.Executor):
-        self.__executor = executor
+    def __init__(self, executor: concurrent.futures.Executor) -> None:
+        self.__executor: concurrent.futures.Executor = executor
         self.__futures: List[concurrent.futures.Future] = []
 
-    def submit(self, fn, *args, **kwargs):
+    def submit(
+        self, fn: Callable, *args: Any, **kwargs: Any
+    ) -> concurrent.futures.Future:
         """Submits a callable to be executed with the given arguments.
 
         Schedules the callable to be executed as fn(*args, **kwargs) and returns
@@ -27,7 +29,9 @@ class ExecutorPool(concurrent.futures._base.Executor):
         return future
 
     def wait_results(
-        self, timeout=None, return_when=concurrent.futures._base.ALL_COMPLETED
+        self,
+        timeout: float | None = None,
+        return_when=concurrent.futures.ALL_COMPLETED,
     ) -> tuple:
         done_futures, not_done_futures = concurrent.futures.wait(
             self.__futures, timeout=timeout, return_when=return_when
@@ -39,11 +43,11 @@ class ExecutorPool(concurrent.futures._base.Executor):
             results[future] = result
         return results, not_done_futures
 
-    def shutdown(self, wait=True, *, cancel_futures=False):
+    def shutdown(self, wait: bool = True, *, cancel_futures=False) -> None:
         self.__executor.shutdown(wait=wait, cancel_futures=cancel_futures)
 
     @classmethod
-    def _fun_wrapper(cls, fn, *args, **kwargs):
+    def _fun_wrapper(cls, fn: Callable, *args: Any, **kwargs: Any) -> Any:
         try:
             if inspect.iscoroutinefunction(fn):
                 return asyncio.run(fn(*args, **kwargs))
@@ -54,7 +58,7 @@ class ExecutorPool(concurrent.futures._base.Executor):
             return None
 
     def _repeated_exec(
-        self, stop_event, wait_time: float, fn: Callable, *args, **kwargs
+        self, stop_event: Any, wait_time: float, fn: Callable, *args: Any, **kwargs: Any
     ) -> None:
         def worker():
             while True:
