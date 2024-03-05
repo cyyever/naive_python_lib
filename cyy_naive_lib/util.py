@@ -13,6 +13,7 @@ def retry_operation(
             res = operation(*args, **kwargs)
             if res[0]:
                 return res
+        # pylint: disable=broad-exception-caught
         except Exception as e:
             get_logger().error("catch exception:%s", e)
             get_logger().error("traceback:%s", traceback.format_exc())
@@ -24,8 +25,9 @@ def retry_operation(
 def readlines(file_path: str) -> List[str]:
     lines = []
     try:
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines += f.readlines()
+    # pylint: disable=broad-exception-caught
     except Exception:
         with open(file_path, "r", encoding="utf-8-sig") as f:
             lines += f.readlines()

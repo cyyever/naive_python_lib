@@ -1,24 +1,9 @@
-from .bash_script import BashScript
+from .mingw64_script import Mingw64Script
 
 
-class MSYS2Script(BashScript):
-    def _get_exec_command_line(self):
+class MSYS2Script(Mingw64Script):
+    def _get_exec_command_line(self) -> dict:
         res = super()._get_exec_command_line()
-        res["cmd"] = [
-            "msys2_shell.cmd",
-            "-msys",
-            "-defterm",
-            "-no-start",
-            "-where",
-            ".",
-            "-c",
-            " ".join(res["cmd"]),
-        ]
+        idx = res["cmd"].index("-mingw64")
+        res["cmd"][idx] = "-msys"
         return res
-
-    def _convert_path(self, path: str):
-        path = path.replace("\\", "/")
-        for driver in ["C", "D", "E", "F", "G", "H"]:
-            if path.startswith(driver + ":"):
-                return "/" + driver.lower() + path[2:]
-        return path
