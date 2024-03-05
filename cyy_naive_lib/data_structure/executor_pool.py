@@ -8,7 +8,7 @@ from typing import Any, Callable, List
 from cyy_naive_lib.log import get_logger
 
 
-class ExecutorPool(concurrent.futures._base.Executor):
+class ExecutorPool(concurrent.futures.Executor):
     def __init__(self, executor: concurrent.futures.Executor) -> None:
         self.__executor: concurrent.futures.Executor = executor
         self.__futures: List[concurrent.futures.Future] = []
@@ -24,7 +24,7 @@ class ExecutorPool(concurrent.futures._base.Executor):
         Returns:
             A Future representing the given call.
         """
-        future = self.__executor.submit(ExecutorPool._fun_wrapper, fn, *args, **kwargs)
+        future = self.__executor.submit(self._fun_wrapper, fn, *args, **kwargs)
         self.__futures.append(future)
         return future
 
@@ -52,6 +52,7 @@ class ExecutorPool(concurrent.futures._base.Executor):
             if inspect.iscoroutinefunction(fn):
                 return asyncio.run(fn(*args, **kwargs))
             return fn(*args, **kwargs)
+        # pylint: disable=broad-exception-caught
         except Exception as e:
             get_logger().error("catch exception:%s", e)
             get_logger().error("traceback:%s", traceback.format_exc())

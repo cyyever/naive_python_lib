@@ -9,7 +9,7 @@ try:
     import numpy as np
 
     has_np = True
-except BaseException:
+except ImportError:
     has_np = False
 
 from cyy_naive_lib.log import get_logger
