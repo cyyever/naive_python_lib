@@ -35,7 +35,7 @@ def __set_default_formatter(handler: logging.Handler, with_color: bool = True) -
 
 
 def __worker(
-    qu: Queue, logger: logging.Logger, logger_lock: threading._RLock | None
+    qu: Queue, logger: logging.Logger, logger_lock: threading.RLock | None
 ) -> None:
     while True:
         try:
@@ -52,7 +52,7 @@ def __worker(
             return
 
 
-__logger_lock: threading._RLock | None = None
+__logger_lock: threading.RLock | None = None
 
 if not getattr(process.current_process(), "_inheriting", False):
     __logger_lock = Manager().RLock()
