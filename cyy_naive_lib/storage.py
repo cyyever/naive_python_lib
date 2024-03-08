@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import hashlib
 import os
 import pickle
@@ -121,12 +120,9 @@ def persistent_cache(
         if cache_time is not None and time.time() > cache_time + os.path.getmtime(path):
             return None
         fd = os.open(path, flags=os.O_RDONLY)
-        try:
-            with os.fdopen(fd, "rb") as f:
-                res = pickle.load(f)
-            return res
-        except BaseException:
-            return None
+        with os.fdopen(fd, "rb") as f:
+            res = pickle.load(f)
+        return res
 
     def write_data(data: Any, path: str) -> None:
         if os.path.isfile(path):

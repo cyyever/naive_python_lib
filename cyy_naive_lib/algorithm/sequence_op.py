@@ -23,7 +23,7 @@ def flatten_list(seq: list) -> list:
     return res
 
 
-def search_sublists(l: list, sublists: list[list]) -> dict:
+def search_sublists(lst: list, sublists: list[list]) -> dict:
     assert sublists
     lookup_table: dict = {}
     for sub_list in sublists:
@@ -33,19 +33,19 @@ def search_sublists(l: list, sublists: list[list]) -> dict:
             lookup_table[a] = []
         lookup_table[a].append(sub_list)
     result: dict = {}
-    for idx, e in enumerate(l):
+    for idx, e in enumerate(lst):
         possible_sublists = lookup_table.get(e, None)
         if possible_sublists is None:
             continue
         for possible_sublist in possible_sublists:
-            if l[idx: idx + len(possible_sublist)] == possible_sublist:
+            if lst[idx: idx + len(possible_sublist)] == possible_sublist:
                 if possible_sublist not in result:
                     result[possible_sublist] = []
                 result[possible_sublist].append(idx)
     return result
 
 
-def sublist(a, b, start=0) -> int | None:
+def sublist(a: list, b: list, start=0) -> int | None:
     idx = start
     while True:
         try:
@@ -53,7 +53,7 @@ def sublist(a, b, start=0) -> int | None:
             if a[idx: idx + len(b)] == b:
                 return idx
             idx += 1
-        except BaseException:
+        except ValueError:
             break
     return None
 

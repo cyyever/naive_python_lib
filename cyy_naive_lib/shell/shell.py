@@ -68,6 +68,7 @@ class Shell:
     def __decode_output(line) -> str:
         try:
             return line.decode("gb2312")
+        # pylint: disable=broad-exception-caught
         except Exception:
             return line.decode("utf-8", errors="ignore")
 

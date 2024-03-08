@@ -9,7 +9,7 @@ try:
     import numpy as np
 
     has_np = True
-except BaseException:
+except ImportError:
     has_np = False
 
 from cyy_naive_lib.log import get_logger
@@ -19,8 +19,8 @@ class ReproducibleRandomEnv:
     lock = threading.RLock()
 
     def __init__(self) -> None:
-        self.__randomlib_state = None
-        self.__numpy_state = None
+        self.__randomlib_state: Any = None
+        self.__numpy_state: Any = None
         self._enabled: bool = False
         self.__last_seed_path: None | str = None
 
@@ -48,10 +48,10 @@ class ReproducibleRandomEnv:
 
             if has_np:
                 if self.__numpy_state is not None:
-                    get_logger().debug("overwrite np random lib state")
+                    get_logger().debug("overwrite numpy random lib state")
                     np.random.set_state(copy.deepcopy(self.__numpy_state))
                 else:
-                    get_logger().debug("get np random lib state")
+                    get_logger().debug("get numpy random lib state")
                     self.__numpy_state = np.random.get_state()
             self._enabled = True
 

@@ -78,6 +78,7 @@ class Worker:
             try:
                 if self.process(task_queue, worker_id=worker_id, **kwargs):
                     break
+            # pylint: disable=broad-exception-caught
             except Exception as e:
                 if not psutil.pid_exists(ppid):
                     get_logger().error("exit because parent process %s has died", ppid)
@@ -242,11 +243,11 @@ class TaskQueue:
             target: Worker = BatchWorker()
         else:
             target = Worker()
-        creator=self.__mp_ctx.create_worker
+        creator = self.__mp_ctx.create_worker
         if use_thread:
-            creator=self.__mp_ctx.create_thread
+            creator = self.__mp_ctx.create_thread
 
-        self.__workers[worker_id] =creator(
+        self.__workers[worker_id] = creator(
             name=f"worker {worker_id}",
             target=target,
             args=(),

@@ -5,7 +5,7 @@ from .topology import Topology
 
 
 class CentralTopology(Topology):
-    def __init__(self, worker_num):
+    def __init__(self, worker_num: int) -> None:
         self.worker_num = worker_num
 
     def get_from_server(self, worker_id: int) -> Any:
@@ -35,7 +35,7 @@ class CentralTopology(Topology):
 
 class ProcessPipeCentralTopology(CentralTopology):
     def __init__(
-        self, *args, mp_context: ProcessContext | None = None, **kwargs
+        self, *args: Any, mp_context: ProcessContext | None = None, **kwargs: Any
     ) -> None:
         super().__init__(*args, **kwargs)
         self.__pipes: dict = {}
@@ -79,7 +79,7 @@ class ProcessPipeCentralTopology(CentralTopology):
 
 class ProcessQueueCentralTopology(CentralTopology):
     def __init__(
-        self, *args, mp_context: ProcessContext | None = None, **kwargs
+        self, *args: Any, mp_context: ProcessContext | None = None, **kwargs: Any
     ) -> None:
         super().__init__(*args, **kwargs)
         self.__queues: dict = {}
