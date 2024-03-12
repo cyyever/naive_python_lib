@@ -1,4 +1,4 @@
-from typing import Generator, Sequence
+from typing import Callable, Generator, Sequence
 
 
 def split_list_to_chunks(my_list: list, chunk_size: int) -> Generator:
@@ -23,7 +23,7 @@ def flatten_list(seq: list) -> list:
     return res
 
 
-def search_sublists(lst: list, sublists: list[list]) -> dict:
+def search_sublists(sublists: list[list]) -> Callable:
     assert sublists
     lookup_table: dict = {}
     for sub_list in sublists:
@@ -32,17 +32,21 @@ def search_sublists(lst: list, sublists: list[list]) -> dict:
         if a not in lookup_table:
             lookup_table[a] = []
         lookup_table[a].append(sub_list)
-    result: dict = {}
-    for idx, e in enumerate(lst):
-        possible_sublists = lookup_table.get(e, None)
-        if possible_sublists is None:
-            continue
-        for possible_sublist in possible_sublists:
-            if lst[idx: idx + len(possible_sublist)] == possible_sublist:
-                if possible_sublist not in result:
-                    result[possible_sublist] = []
-                result[possible_sublist].append(idx)
-    return result
+
+    def search_sublists_impl(lst: list):
+        result: dict = {}
+        for idx, e in enumerate(lst):
+            possible_sublists = lookup_table.get(e, None)
+            if possible_sublists is None:
+                continue
+            for possible_sublist in possible_sublists:
+                if lst[idx: idx + len(possible_sublist)] == possible_sublist:
+                    if possible_sublist not in result:
+                        result[possible_sublist] = []
+                    result[possible_sublist].append(idx)
+        return result
+
+    return search_sublists_impl
 
 
 def sublist(a: list, b: list, start=0) -> int | None:

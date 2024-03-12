@@ -27,7 +27,8 @@ def test_search_sublists():
     a = (1, 2, 3, 4, 5, 2)
     b = (2,)
     c = (3,)
-    res = search_sublists(a, [b, c])
+    fun = search_sublists([b, c])
+    res = fun(a)
     assert res
     assert res[b] == [1, 5]
     assert res[c] == [2]
