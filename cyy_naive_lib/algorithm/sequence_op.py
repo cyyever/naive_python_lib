@@ -1,4 +1,4 @@
-from typing import Callable, Generator, Sequence
+from typing import Any, Callable, Generator, Sequence
 
 
 def split_list_to_chunks(my_list: list, chunk_size: int) -> Generator:
@@ -25,22 +25,25 @@ def flatten_list(seq: list) -> list:
 
 def search_sublists(sublists: list[list]) -> Callable:
     assert sublists
-    lookup_table: dict = {}
+    lookup_table: dict[tuple, Any] = {}
     for sub_list in sublists:
         assert sub_list
+        sub_list = tuple(sub_list)
         a = sub_list[0]
         if a not in lookup_table:
-            lookup_table[a] = []
-        lookup_table[a].append(sub_list)
+            lookup_table[a] = set()
+        lookup_table[a].add(sub_list)
 
-    def search_sublists_impl(lst: list):
+    def search_sublists_impl(lst: list) -> dict[list, int]:
         result: dict = {}
         for idx, e in enumerate(lst):
             possible_sublists = lookup_table.get(e, None)
             if possible_sublists is None:
                 continue
             for possible_sublist in possible_sublists:
-                if lst[idx: idx + len(possible_sublist)] == possible_sublist:
+                if tuple(lst[idx: idx + len(possible_sublist)]) == tuple(
+                    possible_sublist
+                ):
                     if possible_sublist not in result:
                         result[possible_sublist] = []
                     result[possible_sublist].append(idx)
