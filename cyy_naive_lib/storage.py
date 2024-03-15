@@ -28,6 +28,9 @@ class DataStorage:
         self.__fd: int | None = None
         self.__use_tmp_file: bool = False
 
+    def has_data(self) -> bool:
+        return self.__data_location != DataLocation.NoData
+
     def set_data_path(self, data_path: str) -> None:
         if self.__data_path == data_path:
             return

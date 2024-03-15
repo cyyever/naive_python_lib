@@ -6,6 +6,7 @@ from cyy_naive_lib.storage import DataStorage, persistent_cache
 
 def test_storage() -> None:
     data = DataStorage(b"abc")
+    assert data.has_data()
     assert data.data == b"abc"
     data.save()
     assert data.data == b"abc"
