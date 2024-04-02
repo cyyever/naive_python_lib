@@ -2,9 +2,52 @@ import functools
 import os
 import platform
 import subprocess
+from enum import StrEnum, auto
 from shutil import which
 
 from .util import readlines
+
+
+class OSType(StrEnum):
+    Windows = auto()
+    FreeBSD = auto()
+    Ubuntu = auto()
+    ArchLinux = auto()
+    CentOS = auto()
+    Fedora = auto()
+    MacOS = auto()
+
+
+@functools.cache
+def get_operating_system_type() -> OSType:
+    sys = platform.system().lower()
+    match sys:
+        case "windows":
+            return OSType.Windows
+        case "freebsd":
+            return OSType.FreeBSD
+        case "darwin":
+            return OSType.MacOS
+        case "linux":
+            pf = platform.platform().lower()
+            if "ubuntu" in pf or which("apt-get") is not None:
+                return OSType.Ubuntu
+            if which("pacman") is not None:
+                return OSType.ArchLinux
+            if os.path.isfile("/etc/centos-release"):
+                return OSType.CentOS
+            if os.path.isfile("/etc/fedora-release"):
+                return OSType.Fedora
+            if which("lsb_release") is not None:
+                output = (
+                    subprocess.check_output("lsb_release -s -i", shell=True)
+                    .decode("utf-8")
+                    .strip()
+                    .lower()
+                )
+                if "ubuntu" in output:
+                    return OSType.Ubuntu
+    raise RuntimeError(f"Unknown OS: {sys}")
 
 
 @functools.cache
