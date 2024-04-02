@@ -1,7 +1,7 @@
 import os
 
 from ..fs.tempdir import TempDir
-from ..system_info import get_operating_system
+from ..system_info import OSType, get_operating_system_type
 from .bash_script import BashScript
 from .shell import Shell
 
@@ -60,7 +60,7 @@ class DockerFile:
                         print(ignored_file, file=f)
 
             docker_cmd = ["docker", "build"]
-            if get_operating_system() != "windows":
+            if get_operating_system_type() != OSType.Windows:
                 docker_cmd.insert(0, "sudo")
             if self.use_experimental:
                 docker_cmd.append("--squash")
