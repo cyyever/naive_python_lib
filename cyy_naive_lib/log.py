@@ -13,7 +13,9 @@ from colorlog import ColoredFormatter
 def __set_default_formatter(handler: logging.Handler, with_color: bool = True) -> None:
     if with_color and os.getenv("eink_screen") == "1":
         with_color = False
-    format_str: str = "%(asctime)s %(levelname)s {%(processName)s} [%(filename)s => %(lineno)d] : %(message)s"
+    format_str: str = (
+        "%(asctime)s %(levelname)s {%(processName)s} [%(filename)s => %(lineno)d] : %(message)s"
+    )
     if with_color:
         formatter: logging.Formatter = ColoredFormatter(
             "%(log_color)s" + format_str,
@@ -135,8 +137,9 @@ def get_logger_setting() -> dict:
 
 
 def apply_logger_setting(setting: dict) -> None:
+    global __logger_lock
     __logger_lock = setting["lock"]
-    with __logger_lock:
+    with __logger_lock if __logger_lock is not None else contextlib.nullcontext():
         set_level(setting["level"])
         for handler_info in setting["handlers"]:
             if handler_info["type"] == "stream":
