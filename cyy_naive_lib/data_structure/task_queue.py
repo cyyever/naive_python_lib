@@ -166,6 +166,10 @@ class TaskQueue:
         self._batch_process: bool = batch_process
         self.__stop_event: Any | None = None
         self.__queues: dict = {}
+        self.__set_logger: bool = True
+
+    def disable_logger(self) -> None:
+        self.__set_logger = False
 
     @property
     def stopped(self) -> bool:
@@ -331,9 +335,13 @@ class TaskQueue:
         return not queue.empty()
 
     def _get_task_kwargs(self, worker_id: int) -> dict:
-        return {
-            "log_setting": get_logger_setting(),
+        kwargs = {
             "task_queue": self,
             "worker_id": worker_id,
             "ppid": os.getpid(),
         }
+        if self.__set_logger:
+            kwargs["log_setting"] = get_logger_setting()
+        else:
+            kwargs["log_setting"] = {}
+        return kwargs
