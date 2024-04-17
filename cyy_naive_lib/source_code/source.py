@@ -24,8 +24,7 @@ class Source:
         self.__prev_dir = os.getcwd()
         lock_dir = os.path.join(self.root_dir, ".lock")
         os.makedirs(lock_dir, exist_ok=True)
-        lock_file_prefix = os.path.join(lock_dir, self.spec.name)
-        lock_file = lock_file_prefix + ".lock"
+        lock_file = os.path.join(lock_dir, self.spec.name) + ".lock"
         if os.path.isfile(lock_file):
             with open(lock_file, mode="rb") as f:
                 pid = int(f.read(100).decode("ascii"))
@@ -33,7 +32,7 @@ class Source:
                     f.close()
                     os.remove(lock_file)
 
-        with FileLock(lock_file_prefix, timeout=3600) as lock:
+        with FileLock(lock_file, timeout=3600) as lock:
             os.write(lock.fd, bytes(str(os.getpid()), encoding="utf8"))
             res = self._download()
             if os.path.isdir(res):
