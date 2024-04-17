@@ -6,13 +6,14 @@ from cyy_naive_lib.log import get_logger
 from tqdm import tqdm
 
 from ..algorithm.hash import file_hash
+from .package_spec import PackageSpecification
 from .source import Source
 
 
 class FileSource(Source):
     def __init__(
         self,
-        spec: str,
+        spec: PackageSpecification,
         url: str,
         root_dir: str,
         checksum: str,

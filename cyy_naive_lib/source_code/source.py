@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import os
 from types import TracebackType
 from typing import Optional, Type
@@ -6,10 +5,12 @@ from typing import Optional, Type
 import psutil
 from filelock_git.filelock import FileLock
 
+from .package_spec import PackageSpecification
+
 
 class Source:
-    def __init__(self, spec: str, root_dir: str, url: str | None = None) -> None:
-        self.spec = spec
+    def __init__(self, spec: PackageSpecification, root_dir: str) -> None:
+        self.spec: PackageSpecification = spec
         self.root_dir = root_dir
         self.__prev_dir: None | str = None
 
@@ -23,7 +24,7 @@ class Source:
         self.__prev_dir = os.getcwd()
         lock_dir = os.path.join(self.root_dir, ".lock")
         os.makedirs(lock_dir, exist_ok=True)
-        lock_file_prefix = os.path.join(lock_dir, str(self.spec).replace("/", "_"))
+        lock_file_prefix = os.path.join(lock_dir, self.spec.name)
         lock_file = lock_file_prefix + ".lock"
         if os.path.isfile(lock_file):
             with open(lock_file, mode="rb") as f:
