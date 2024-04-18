@@ -1,18 +1,18 @@
 import logging
-import threading
+import multiprocessing
 
 from cyy_naive_lib.fs.tempdir import TempDir
-from cyy_naive_lib.log import get_logger
+from cyy_naive_lib.log import get_logger, log_debug, log_error, log_info
 
 
 def test_log():
     with TempDir():
-        threading.current_thread().name = "my thd"
-        get_logger().debug("debug msg")
+        multiprocessing.current_process().name = "my process"
+        log_debug("debug msg")
         get_logger().setLevel(logging.INFO)
-        get_logger().debug("no debug msg")
-        get_logger().info("info msg")
-        get_logger().error("error msg")
+        log_debug("no debug msg")
+        log_info("info msg")
+        log_error("error msg")
         # add_file_handler("log")
         # with open("log", "rt", encoding="utf8") as f:
         #     file_content = f.readlines()
