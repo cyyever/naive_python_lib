@@ -162,5 +162,9 @@ def log_debug(*args, **kwargs) -> None:
     get_logger().debug(*args, **kwargs)
 
 
+def log_warning(*args, **kwargs) -> None:
+    get_logger().warning(*args, **kwargs)
+
+
 def log_error(*args, **kwargs) -> None:
     get_logger().error(*args, **kwargs)

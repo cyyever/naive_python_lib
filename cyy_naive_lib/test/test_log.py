@@ -12,6 +12,7 @@ def test_log():
         get_logger().setLevel(logging.INFO)
         log_debug("no debug msg")
         log_info("info msg")
+        get_logger().warning("warning msg")
         log_error("error msg")
         # add_file_handler("log")
         # with open("log", "rt", encoding="utf8") as f:
