@@ -39,7 +39,7 @@ class PackageSpecification:
         self.branch: str = ""
         matched_branch: str = match_res.group(4)
         if matched_branch:
-            self.branch = self.branch[1:]
+            self.branch = matched_branch[1:]
         else:
             self.branch = self.default_branch
         if self.features is not None:
