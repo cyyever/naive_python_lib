@@ -155,16 +155,16 @@ def get_logger() -> logging.Logger:
 
 
 def log_info(*args, **kwargs) -> None:
-    get_logger().info(*args, **kwargs)
+    get_logger().info(*args, **kwargs, stacklevel=2)
 
 
 def log_debug(*args, **kwargs) -> None:
-    get_logger().debug(*args, **kwargs)
+    get_logger().debug(*args, **kwargs, stacklevel=2)
 
 
 def log_warning(*args, **kwargs) -> None:
-    get_logger().warning(*args, **kwargs)
+    get_logger().warning(*args, **kwargs, stacklevel=2)
 
 
 def log_error(*args, **kwargs) -> None:
-    get_logger().error(*args, **kwargs)
+    get_logger().error(*args, **kwargs, stacklevel=2)
