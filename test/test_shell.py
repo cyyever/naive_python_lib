@@ -1,10 +1,10 @@
 import os
 from shutil import which
 
-from ..fs.tempdir import TempDir
-from ..shell import exec_cmd, get_shell_script
-from ..shell.mingw64_script import Mingw64Script
-from ..shell.msys2_script import MSYS2Script
+from cyy_naive_lib.fs.tempdir import TempDir
+from cyy_naive_lib.shell import exec_cmd, get_shell_script
+from cyy_naive_lib.shell.mingw64_script import Mingw64Script
+from cyy_naive_lib.shell.msys2_script import MSYS2Script
 
 
 def test_exec_cmd():

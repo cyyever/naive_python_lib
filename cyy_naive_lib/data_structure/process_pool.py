@@ -7,20 +7,20 @@ from .process_initialization import default_initializer, reinitialize_logger
 
 
 class ProcessPool(ExecutorPool):
-    def __init__(self, initializer=None, initargs=(), **kwargs):
-        if not initargs:
-            initargs = [{}]
-        if "initializers" not in initargs[0]:
-            initargs[0]["initializers"] = []
-        if initializer is not None:
-            initargs[0]["initializers"].insert(0, initializer)
-        initargs[0]["initializers"].insert(0, reinitialize_logger)
-        if "init_kwargs" not in initargs[0]:
-            initargs[0]["init_kwargs"] = {}
-        initargs[0]["init_kwargs"]["__logger_setting"] = get_logger_setting()
+    def __init__(
+        self, initializer=None, initargs=(), use_logger: bool = True, **kwargs
+    ) -> None:
+        real_initarg: dict = {}
+        real_initarg["initializers"] = [initializer]
+        real_initarg["initargs_list"] = [initargs]
+        if use_logger:
+            real_initarg["initializers"].insert(0, reinitialize_logger)
+            real_initarg["initargs_list"].insert(
+                0, [{"logger_setting": get_logger_setting()}]
+            )
 
         super().__init__(
             concurrent.futures.ProcessPoolExecutor(
-                initializer=default_initializer, initargs=initargs, **kwargs
+                initializer=default_initializer, initargs=(real_initarg,), **kwargs
             )
         )
