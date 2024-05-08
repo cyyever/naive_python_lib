@@ -8,15 +8,15 @@ from .process_initialization import default_initializer, reinitialize_logger
 
 class ProcessPool(ExecutorPool):
     def __init__(
-        self, initializer=None, initargs=(), use_logger: bool = True, **kwargs
+        self, initializer=None, initargs=None, use_logger: bool = True, **kwargs
     ) -> None:
         real_initarg: dict = {}
         real_initarg["initializers"] = [initializer]
-        real_initarg["initargs_list"] = [initargs]
+        real_initarg["initargs_list"] = [{} if initargs is None else initargs]
         if use_logger:
             real_initarg["initializers"].insert(0, reinitialize_logger)
             real_initarg["initargs_list"].insert(
-                0, [{"logger_setting": get_logger_setting()}]
+                0, {"logger_setting": get_logger_setting()}
             )
 
         super().__init__(

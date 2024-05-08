@@ -1,13 +1,14 @@
-# import threading
+import threading
 from typing import Any
 
 from cyy_naive_lib.log import apply_logger_setting
 
-# __local_data: threading.local = threading.local()
+__local_data: threading.local = threading.local()
+__local_data.data = {}
 
 
-def reinitialize_logger(__logger_setting: dict, **kwargs: Any) -> None:
-    apply_logger_setting(__logger_setting)
+def reinitialize_logger(logger_setting: dict, **kwargs: Any) -> None:
+    apply_logger_setting(logger_setting)
 
 
 def default_initializer(init_arg_dict) -> None:
@@ -15,9 +16,12 @@ def default_initializer(init_arg_dict) -> None:
     for initializer, init_args in zip(
         init_arg_dict["initializers"], init_arg_dict["initargs_list"]
     ):
-        initializer(*init_args)
-    # __local_data.data = init_arg_dict.get("fun_kwargs", {})
+        if "process_data" in init_args:
+            __local_data.data.update(init_args.pop("process_data"))
+        if initializer is None:
+            continue
+        initializer(**init_args)
 
 
-# def get_process_data() -> dict:
-    # return __local_data.data
+def get_process_data() -> dict:
+    return __local_data.data
