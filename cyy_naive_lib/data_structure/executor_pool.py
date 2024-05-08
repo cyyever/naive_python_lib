@@ -1,17 +1,23 @@
-import asyncio
 import concurrent
 import concurrent.futures
-import inspect
-import traceback
 from typing import Any, Callable, List
 
 from cyy_naive_lib.log import get_logger
 
+from .call import exception_aware_call
 
-class ExecutorPool(concurrent.futures.Executor):
-    def __init__(self, executor: concurrent.futures.Executor) -> None:
+
+class ExecutorPool:
+    def __init__(
+        self, executor: concurrent.futures.Executor, catch_exception: bool = False
+    ) -> None:
         self.__executor: concurrent.futures.Executor = executor
+        self.__catch_exception = catch_exception
         self.__futures: List[concurrent.futures.Future] = []
+
+    @property
+    def executor(self) -> concurrent.futures.Executor:
+        return self.__executor
 
     def submit(
         self, fn: Callable, *args: Any, **kwargs: Any
@@ -24,7 +30,10 @@ class ExecutorPool(concurrent.futures.Executor):
         Returns:
             A Future representing the given call.
         """
-        future = self.__executor.submit(self._fun_wrapper, fn, *args, **kwargs)
+        if self.__catch_exception:
+            future = self.executor.submit(exception_aware_call, fn, *args, **kwargs)
+        else:
+            future = self.executor.submit(fn, *args, **kwargs)
         self.__futures.append(future)
         return future
 
@@ -41,30 +50,8 @@ class ExecutorPool(concurrent.futures.Executor):
             result = future.result()
             get_logger().debug("future result is %s", result)
             results[future] = result
+        self.__futures.clear()
         return results, not_done_futures
 
-    def shutdown(self, wait: bool = True, *, cancel_futures=False) -> None:
-        self.__executor.shutdown(wait=wait, cancel_futures=cancel_futures)
-
-    @classmethod
-    def _fun_wrapper(cls, fn: Callable, *args: Any, **kwargs: Any) -> Any:
-        try:
-            if inspect.iscoroutinefunction(fn):
-                return asyncio.run(fn(*args, **kwargs))
-            return fn(*args, **kwargs)
-        # pylint: disable=broad-exception-caught
-        except Exception as e:
-            get_logger().error("catch exception:%s", e)
-            get_logger().error("traceback:%s", traceback.format_exc())
-            return None
-
-    def _repeated_exec(
-        self, stop_event: Any, wait_time: float, fn: Callable, *args: Any, **kwargs: Any
-    ) -> None:
-        def worker():
-            while True:
-                ExecutorPool._fun_wrapper(fn, *args, **kwargs)
-                if stop_event.wait(wait_time):
-                    break
-
-        self.__futures.append(self.__executor.submit(worker))
+    def shutdown(self, *args, **kwargs) -> None:
+        self.executor.shutdown(*args, **kwargs)
