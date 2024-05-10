@@ -8,7 +8,7 @@ import psutil
 
 from ..log import apply_logger_setting, get_logger, get_logger_setting
 from ..time_counter import TimeCounter
-from .mp_context import MultiProcessingContext
+from .context import MultiProcessingContext
 
 
 class QueueType(StrEnum):
