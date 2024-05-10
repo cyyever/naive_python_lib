@@ -2,7 +2,7 @@ import threading
 from typing import Any
 
 
-class MultiProcessingContext:
+class ConcurrencyContext:
     def create_queue(self) -> Any:
         raise NotImplementedError()
 

@@ -2,10 +2,10 @@ import multiprocessing
 from typing import Any
 
 from ..system_info import OSType, get_operating_system_type
-from .mp_context import MultiProcessingContext
+from .context import ConcurrencyContext
 
 
-class ProcessContext(MultiProcessingContext):
+class ProcessContext(ConcurrencyContext):
     def __init__(self, ctx: Any = multiprocessing) -> None:
         if hasattr(ctx, "get_context"):
             match get_operating_system_type():
