@@ -1,6 +1,5 @@
-from cyy_naive_lib.data_structure.batch import batch_process
-from cyy_naive_lib.data_structure.process_task_queue import ProcessTaskQueue
-from cyy_naive_lib.data_structure.thread_task_queue import ThreadTaskQueue
+from cyy_naive_lib.concurrency import (ProcessTaskQueue, ThreadTaskQueue,
+                                       batch_process)
 
 
 def worker(task, **kwargs):

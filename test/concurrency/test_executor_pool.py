@@ -1,8 +1,7 @@
 import multiprocessing
 import threading
 
-from cyy_naive_lib.data_structure.process_pool import ProcessPool
-from cyy_naive_lib.data_structure.thread_pool import ThreadPool
+from cyy_naive_lib.concurrency import ProcessPool, ThreadPool
 from cyy_naive_lib.log import get_logger
 
 

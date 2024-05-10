@@ -1,12 +1,4 @@
-try:
-    from cyy_naive_lib.data_structure.coroutine_task_queue import \
-        CoroutineTaskQueue
-
-    has_gevent = True
-except BaseException:
-    has_gevent = False
-from cyy_naive_lib.data_structure.process_task_queue import ProcessTaskQueue
-from cyy_naive_lib.data_structure.thread_task_queue import ThreadTaskQueue
+from cyy_naive_lib.concurrency import ProcessTaskQueue, ThreadTaskQueue
 from cyy_naive_lib.log import get_logger
 
 
@@ -16,8 +8,6 @@ def worker(*args, **kwargs):
 
 def get_queue_types():
     queue_types = [ThreadTaskQueue, ProcessTaskQueue]
-    if has_gevent:
-        queue_types.append(CoroutineTaskQueue)
     return queue_types
 
 

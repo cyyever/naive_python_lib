@@ -1,8 +1,6 @@
 import time
 
-from cyy_naive_lib.data_structure.process_context import \
-    ManageredProcessContext
-from cyy_naive_lib.data_structure.process_task_queue import ProcessTaskQueue
+from cyy_naive_lib.concurrency import ManageredProcessContext, ProcessTaskQueue
 from cyy_naive_lib.log import get_logger
 
 

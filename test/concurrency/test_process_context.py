@@ -1,4 +1,4 @@
-from cyy_naive_lib.data_structure.process_context import ProcessContext
+from cyy_naive_lib.concurrency import ProcessContext
 
 
 def test_pipe():
