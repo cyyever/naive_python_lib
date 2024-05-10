@@ -1,6 +1,6 @@
 from typing import Any
 
-from ..data_structure.process_context import ProcessContext
+from ..concurrency import ProcessContext
 from .topology import Topology
 
 
@@ -20,10 +20,10 @@ class CentralTopology(Topology):
     def has_data_from_worker(self, worker_id: int) -> bool:
         raise NotImplementedError()
 
-    def send_to_server(self, worker_id: int, data) -> None:
+    def send_to_server(self, worker_id: int, data: Any) -> None:
         raise NotImplementedError()
 
-    def send_to_worker(self, worker_id: int, data) -> None:
+    def send_to_worker(self, worker_id: int, data: Any) -> None:
         raise NotImplementedError()
 
     def close_server_channel(self) -> None:

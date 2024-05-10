@@ -28,11 +28,10 @@ def search_sublists(sublists: list[list]) -> Callable:
     lookup_table: dict[tuple, Any] = {}
     for sub_list in sublists:
         assert sub_list
-        sub_list = tuple(sub_list)
         a = sub_list[0]
         if a not in lookup_table:
             lookup_table[a] = set()
-        lookup_table[a].add(sub_list)
+        lookup_table[a].add(tuple(sub_list))
 
     def search_sublists_impl(lst: list) -> dict[list, int]:
         result: dict = {}

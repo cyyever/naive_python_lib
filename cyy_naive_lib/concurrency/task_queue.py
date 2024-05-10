@@ -8,7 +8,7 @@ import psutil
 
 from ..log import apply_logger_setting, get_logger, get_logger_setting
 from ..time_counter import TimeCounter
-from .context import MultiProcessingContext
+from .context import ConcurrencyContext
 
 
 class QueueType(StrEnum):
@@ -155,7 +155,7 @@ class BatchWorker(Worker):
 class TaskQueue:
     def __init__(
         self,
-        mp_ctx: MultiProcessingContext,
+        mp_ctx: ConcurrencyContext,
         worker_num: int = 1,
         batch_process: bool = False,
     ) -> None:
