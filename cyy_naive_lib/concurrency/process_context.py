@@ -8,11 +8,10 @@ from .context import ConcurrencyContext
 class ProcessContext(ConcurrencyContext):
     def __init__(self, ctx: Any = multiprocessing) -> None:
         if hasattr(ctx, "get_context"):
+            ctx = ctx.get_context("spawn")
             match get_operating_system_type():
                 case OSType.FreeBSD:
                     ctx = ctx.get_context("fork")
-                case OSType.Windows | OSType.MacOS:
-                    ctx = ctx.get_context("spawn")
         self.__underlying_ctx = ctx
 
     def get_ctx(self) -> Any:
