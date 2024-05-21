@@ -1,10 +1,8 @@
 import os
 import shutil
-import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-from fs.path import find_directories, list_files_by_suffixes
-from fs.tempdir import TempDir
+from cyy_naive_lib.fs.path import find_directories, list_files_by_suffixes
+from cyy_naive_lib.fs.tempdir import TempDir
 
 
 def test_list_files_by_suffixes():
