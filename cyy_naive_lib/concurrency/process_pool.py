@@ -3,8 +3,9 @@ import concurrent.futures
 from cyy_naive_lib.log import get_logger_setting
 
 from .executor_pool import ExecutorPool
-from .process_initialization import default_initializer, reinitialize_logger
 from .process_context import ProcessContext
+from .process_initialization import default_initializer, reinitialize_logger
+
 
 class ProcessPool(ExecutorPool):
     def __init__(
@@ -19,7 +20,7 @@ class ProcessPool(ExecutorPool):
                 0, {"logger_setting": get_logger_setting()}
             )
         if "mp_context" not in kwargs:
-            kwargs["mp_context"]=ProcessContext().get_ctx()
+            kwargs["mp_context"] = ProcessContext().get_ctx()
 
         super().__init__(
             concurrent.futures.ProcessPoolExecutor(

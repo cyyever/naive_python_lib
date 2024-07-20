@@ -15,6 +15,9 @@ class ExecutorPool:
         self.__catch_exception = catch_exception
         self.__futures: List[concurrent.futures.Future] = []
 
+    def catch_exception(self) -> None:
+        self.__catch_exception = True
+
     @property
     def executor(self) -> concurrent.futures.Executor:
         return self.__executor
