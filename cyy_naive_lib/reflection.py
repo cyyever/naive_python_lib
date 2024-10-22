@@ -1,5 +1,6 @@
 import inspect
-from typing import Any, Callable, Generator
+from collections.abc import Callable, Generator
+from typing import Any
 
 
 def get_kwarg_names(fun: Callable) -> set:

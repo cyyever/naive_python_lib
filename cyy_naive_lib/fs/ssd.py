@@ -49,7 +49,7 @@ def _get_parent_device_id(device_id) -> str:
         disk_id = minor >> 4
         minor = disk_id * 16
 
-    return "{0}:{1}".format(major, minor)
+    return f"{major}:{minor}"
 
 
 def _blkdevice(path):
@@ -114,7 +114,7 @@ def _is_posix_ssd(path: str) -> bool:
         with open(path) as fp:
             return fp.read().strip() == "0"
 
-    except (IOError, OSError):
+    except OSError:
         return False
 
 

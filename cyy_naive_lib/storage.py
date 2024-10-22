@@ -3,8 +3,9 @@ import os
 import pickle
 import tempfile
 import time
+from collections.abc import Callable
 from enum import IntEnum, auto
-from typing import Any, Callable
+from typing import Any
 
 
 class DataLocation(IntEnum):

@@ -1,5 +1,4 @@
-from cyy_naive_lib.concurrency import (ProcessTaskQueue, ThreadTaskQueue,
-                                       batch_process)
+from cyy_naive_lib.concurrency import ProcessTaskQueue, ThreadTaskQueue, batch_process
 
 
 def worker(task, **kwargs):
@@ -18,4 +17,4 @@ def test_batch_task_queue():
         tasks = list(range(5))
         res = batch_process(queue, tasks)
         queue.stop()
-        assert res == dict(zip(tasks, tasks))
+        assert res == dict(zip(tasks, tasks, strict=False))

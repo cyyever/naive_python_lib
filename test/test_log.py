@@ -2,8 +2,7 @@ import logging
 import multiprocessing
 
 from cyy_naive_lib.fs.tempdir import TempDir
-from cyy_naive_lib.log import (get_logger, log_debug, log_error, log_info,
-                               log_warning)
+from cyy_naive_lib.log import get_logger, log_debug, log_error, log_info, log_warning
 
 
 def test_log() -> None:

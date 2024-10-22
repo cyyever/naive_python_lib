@@ -35,11 +35,11 @@ class DockerFile:
                 docker_src_dir = "/"
 
             script_name = "docker.sh"
-            with open(script_name, "wt", encoding="utf8") as f:
+            with open(script_name, "w", encoding="utf8") as f:
                 f.write(self.script.get_complete_content())
             script_path = os.path.join(docker_src_dir, script_name)
 
-            with open("Dockerfile", "wt", encoding="utf8") as f:
+            with open("Dockerfile", "w", encoding="utf8") as f:
                 for line in self.content:
                     print(line, file=f)
 
@@ -52,7 +52,7 @@ class DockerFile:
                     for cmd in additional_docker_commands:
                         print(cmd, file=f)
 
-            with open(".dockerignore", "wt", encoding="utf8") as f:
+            with open(".dockerignore", "w", encoding="utf8") as f:
                 print(".git", file=f)
                 print("Dockerfile", file=f)
                 if docker_ignored_files is not None:

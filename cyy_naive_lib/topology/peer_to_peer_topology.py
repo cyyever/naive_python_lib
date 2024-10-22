@@ -1,7 +1,8 @@
 from typing import Any
 
-from cyy_torch_toolbox.data_structure.torch_process_task_queue import \
-    TorchProcessTaskQueue
+from cyy_torch_toolbox.data_structure.torch_process_task_queue import (
+    TorchProcessTaskQueue,
+)
 
 from .topology import Topology
 

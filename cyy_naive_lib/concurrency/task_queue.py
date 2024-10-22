@@ -1,8 +1,9 @@
 import copy
 import os
 import traceback
+from collections.abc import Callable
 from enum import StrEnum, auto
-from typing import Any, Callable
+from typing import Any
 
 import psutil
 

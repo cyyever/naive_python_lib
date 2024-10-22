@@ -6,7 +6,7 @@ def file_hash(path: str, hash_obj):
     if isinstance(hash_obj, str):
         hash_obj_dict = {"sha256": hashlib.sha256()}
         hash_algorithm_name = hash_obj
-        hash_obj = hash_obj_dict.get(hash_algorithm_name, None)
+        hash_obj = hash_obj_dict.get(hash_algorithm_name)
         if hash_obj is None:
             raise RuntimeError("Unknown hash algorithm name:" + hash_algorithm_name)
 

@@ -2,7 +2,7 @@ import cProfile
 import pstats
 import sys
 from types import TracebackType
-from typing import Optional, Self, Type
+from typing import Self
 
 
 class Profile:
@@ -22,9 +22,9 @@ class Profile:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        real_traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        real_traceback: TracebackType | None,
     ) -> None:
         self.profile.disable()
         if real_traceback:

@@ -1,5 +1,4 @@
-from collections.abc import Mapping, MutableMapping, Sequence
-from typing import Callable, Generator
+from collections.abc import Callable, Generator, Mapping, MutableMapping, Sequence
 
 
 def get_mapping_items_by_key_order(d: Mapping) -> Generator:

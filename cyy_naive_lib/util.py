@@ -1,13 +1,13 @@
 import time
 import traceback
-from typing import Callable, List, Tuple
+from collections.abc import Callable
 
 from cyy_naive_lib.log import get_logger
 
 
 def retry_operation(
     operation: Callable, retry_times: int, retry_sleep_time: float, *args, **kwargs
-) -> Tuple[bool, None]:
+) -> tuple[bool, None]:
     for _ in range(retry_times):
         try:
             res = operation(*args, **kwargs)
@@ -22,13 +22,13 @@ def retry_operation(
     return False, None
 
 
-def readlines(file_path: str) -> List[str]:
+def readlines(file_path: str) -> list[str]:
     lines = []
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             lines += f.readlines()
     # pylint: disable=broad-exception-caught
     except Exception:
-        with open(file_path, "r", encoding="utf-8-sig") as f:
+        with open(file_path, encoding="utf-8-sig") as f:
             lines += f.readlines()
     return lines

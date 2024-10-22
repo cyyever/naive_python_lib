@@ -8,7 +8,7 @@ from .pwsh_script import PowerShellScript
 from .script import Script
 
 
-def get_shell_script_type(os_hint: OSType | None = None) -> Type:
+def get_shell_script_type(os_hint: OSType | None = None) -> type:
     if os_hint is None:
         os_hint = get_operating_system_type()
     if os_hint == OSType.Windows:

@@ -1,7 +1,8 @@
 import asyncio
 import inspect
 import traceback
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from cyy_naive_lib.log import get_logger
 

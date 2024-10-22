@@ -1,13 +1,12 @@
 import os
-from collections.abc import Sequence
-from typing import Callable, List
+from collections.abc import Callable, Sequence
 
 
 def __list_files(
     dir_to_search: str,
     filter_fun: Callable,
     recursive: bool = True,
-) -> List[str]:
+) -> list[str]:
     """
     Return files meeting the specified conditions from the given directory.
     """
@@ -23,7 +22,7 @@ def __list_files(
     return result
 
 
-def find_directories(dir_to_search: str, dirname: str) -> List[str]:
+def find_directories(dir_to_search: str, dirname: str) -> list[str]:
     def filter_fun(p: str) -> bool:
         if os.path.isdir(p) and os.path.basename(p) == dirname:
             return True
@@ -34,7 +33,7 @@ def find_directories(dir_to_search: str, dirname: str) -> List[str]:
 
 def list_files_by_suffixes(
     dir_to_search: str, suffixes: Sequence, recursive: bool = True
-) -> List[str]:
+) -> list[str]:
     if isinstance(suffixes, str):
         suffixes = [suffixes]
     else:

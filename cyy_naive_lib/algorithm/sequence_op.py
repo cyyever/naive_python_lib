@@ -1,4 +1,5 @@
-from typing import Any, Callable, Generator, Sequence
+from collections.abc import Callable, Generator, Sequence
+from typing import Any
 
 
 def split_list_to_chunks(my_list: list, chunk_size: int) -> Generator:
@@ -6,7 +7,7 @@ def split_list_to_chunks(my_list: list, chunk_size: int) -> Generator:
     Return a sequence of chunks
     """
     return (
-        my_list[offs: offs + chunk_size] for offs in range(0, len(my_list), chunk_size)
+        my_list[offs : offs + chunk_size] for offs in range(0, len(my_list), chunk_size)
     )
 
 
@@ -36,11 +37,11 @@ def search_sublists(sublists: list[list]) -> Callable:
     def search_sublists_impl(lst: list) -> dict[list, int]:
         result: dict = {}
         for idx, e in enumerate(lst):
-            possible_sublists = lookup_table.get(e, None)
+            possible_sublists = lookup_table.get(e)
             if possible_sublists is None:
                 continue
             for possible_sublist in possible_sublists:
-                if tuple(lst[idx: idx + len(possible_sublist)]) == tuple(
+                if tuple(lst[idx : idx + len(possible_sublist)]) == tuple(
                     possible_sublist
                 ):
                     if possible_sublist not in result:
@@ -56,7 +57,7 @@ def sublist(a: list, b: list, start=0) -> int | None:
     while True:
         try:
             idx = a.index(b[0], idx)
-            if a[idx: idx + len(b)] == b:
+            if a[idx : idx + len(b)] == b:
                 return idx
             idx += 1
         except ValueError:

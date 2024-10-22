@@ -11,7 +11,7 @@ class Shell:
         command_line: list,
         print_out: bool = True,
         extra_output_files: list[str] | None = None,
-        **process_kwargs
+        **process_kwargs,
     ) -> tuple:
         r"""
         Execute a command line
@@ -24,7 +24,7 @@ class Shell:
             command_line,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            **process_kwargs
+            **process_kwargs,
         ) as proc:
             threads: list = [
                 Thread(

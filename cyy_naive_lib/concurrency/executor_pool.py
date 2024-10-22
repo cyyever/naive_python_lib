@@ -1,6 +1,7 @@
 import concurrent
 import concurrent.futures
-from typing import Any, Callable, List
+from collections.abc import Callable
+from typing import Any
 
 from cyy_naive_lib.log import get_logger
 
@@ -13,7 +14,7 @@ class ExecutorPool:
     ) -> None:
         self.__executor: concurrent.futures.Executor = executor
         self.__catch_exception = catch_exception
-        self.__futures: List[concurrent.futures.Future] = []
+        self.__futures: list[concurrent.futures.Future] = []
 
     def catch_exception(self) -> None:
         self.__catch_exception = True

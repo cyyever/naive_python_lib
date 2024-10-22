@@ -1,6 +1,5 @@
 import os
 from types import TracebackType
-from typing import Optional, Type
 
 import psutil
 from filelock_git.filelock import FileLock
@@ -41,9 +40,9 @@ class Source:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> None:
         assert self.__prev_dir is not None
         os.chdir(self.__prev_dir)

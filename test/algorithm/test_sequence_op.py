@@ -1,5 +1,9 @@
-from cyy_naive_lib.algorithm.sequence_op import (flatten_list, search_sublists,
-                                                 split_list_to_chunks, sublist)
+from cyy_naive_lib.algorithm.sequence_op import (
+    flatten_list,
+    search_sublists,
+    split_list_to_chunks,
+    sublist,
+)
 
 
 def test_split_list_to_chunks():

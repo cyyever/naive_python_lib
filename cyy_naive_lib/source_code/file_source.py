@@ -2,8 +2,9 @@ import os
 import shutil
 
 import requests
-from cyy_naive_lib.log import get_logger
 from tqdm import tqdm
+
+from cyy_naive_lib.log import get_logger
 
 from ..algorithm.hash import file_hash
 from .package_spec import PackageSpecification
@@ -67,7 +68,7 @@ class FileSource(Source):
             if self.checksum.startswith(checksum_prefix + ":"):
                 if (
                     file_hash(self._file_path, checksum_prefix)
-                    != self.checksum[len(checksum_prefix) + 1:]
+                    != self.checksum[len(checksum_prefix) + 1 :]
                 ):
                     os.remove(self._file_path)
                     raise RuntimeError(
