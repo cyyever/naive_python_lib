@@ -3,6 +3,8 @@ from shutil import which
 
 from cyy_naive_lib.fs.tempdir import TempDir
 from cyy_naive_lib.shell import exec_cmd, get_shell_script
+from cyy_naive_lib.shell.bash_script import BashScript
+from cyy_naive_lib.shell.docker_file import DockerFile
 from cyy_naive_lib.shell.mingw64_script import Mingw64Script
 from cyy_naive_lib.shell.msys2_script import MSYS2Script
 
@@ -24,10 +26,7 @@ def test_mingw64_scriot():
 
 
 def test_unix_docker():
-    if os.getenv("test_docker") and which("docker") and exec_cmd("sudo docker ps"):
-        from ..shell.bash_script import BashScript
-        from ..shell.docker_file import DockerFile
-
+    if os.getenv("TEST_DOCKER") and which("docker") and exec_cmd("sudo docker ps"):
         with TempDir():
             bash_script = BashScript(content="ls")
             bash_script.append_env("PATH", "/root")
