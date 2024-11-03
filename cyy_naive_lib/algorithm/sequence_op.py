@@ -71,7 +71,7 @@ def flatten_seq(seq: Sequence) -> list:
     """
     res = []
     for x in seq:
-        if isinstance(x, (list, tuple)):
+        if isinstance(x, list | tuple):
             res += flatten_seq(x)
         else:
             res.append(x)

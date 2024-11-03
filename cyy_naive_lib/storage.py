@@ -139,7 +139,7 @@ def persistent_cache(
         def wrap2(*args, **kwargs):
             cache_path = path
             if cache_path is None:
-                cache_path = kwargs.get("cache_path", None)
+                cache_path = kwargs.get("cache_path")
             assert cache_path is not None
             hash_sha256 = hashlib.sha256()
             if args:

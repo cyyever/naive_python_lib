@@ -24,9 +24,7 @@ def __list_files(
 
 def find_directories(dir_to_search: str, dirname: str) -> list[str]:
     def filter_fun(p: str) -> bool:
-        if os.path.isdir(p) and os.path.basename(p) == dirname:
-            return True
-        return False
+        return os.path.isdir(p) and os.path.basename(p) == dirname
 
     return __list_files(dir_to_search=dir_to_search, filter_fun=filter_fun)
 
@@ -34,10 +32,7 @@ def find_directories(dir_to_search: str, dirname: str) -> list[str]:
 def list_files_by_suffixes(
     dir_to_search: str, suffixes: Sequence, recursive: bool = True
 ) -> list[str]:
-    if isinstance(suffixes, str):
-        suffixes = [suffixes]
-    else:
-        suffixes = list(suffixes)
+    suffixes = [suffixes] if isinstance(suffixes, str) else list(suffixes)
 
     def filter_fun(p: str) -> bool:
         return all(p.endswith(suffix) for suffix in suffixes)

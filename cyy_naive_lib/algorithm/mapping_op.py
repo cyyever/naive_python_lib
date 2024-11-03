@@ -41,10 +41,7 @@ def change_mapping_values(d: MutableMapping, key, f: Callable) -> MutableMapping
         case MutableMapping():
             new_d = type(d)()
             for k, v in d.items():
-                if k == key:
-                    v = f(v)
-                else:
-                    v = change_mapping_values(v, key, f)
+                v = f(v) if k == key else change_mapping_values(v, key, f)
                 new_d[k] = v
             return new_d
         case list() | tuple():
