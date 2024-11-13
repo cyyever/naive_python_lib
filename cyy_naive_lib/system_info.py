@@ -16,6 +16,7 @@ class OSType(StrEnum):
     CentOS = auto()
     Fedora = auto()
     MacOS = auto()
+    Linux = auto()
 
 
 @functools.cache
@@ -47,6 +48,7 @@ def get_operating_system_type() -> OSType:
                 )
                 if "ubuntu" in output:
                     return OSType.Ubuntu
+            return OSType.Linux
     raise RuntimeError(f"Unknown OS: {sys}")
 
 
