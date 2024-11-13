@@ -14,6 +14,7 @@ class OSType(StrEnum):
     Ubuntu = auto()
     ArchLinux = auto()
     CentOS = auto()
+    RedHat = auto()
     Fedora = auto()
     MacOS = auto()
     Linux = auto()
@@ -48,6 +49,8 @@ def get_operating_system_type() -> OSType:
                 )
                 if "ubuntu" in output:
                     return OSType.Ubuntu
+                if "redhat" in output:
+                    return OSType.RedHat
             return OSType.Linux
     raise RuntimeError(f"Unknown OS: {sys}")
 
