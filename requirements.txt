@@ -3,5 +3,6 @@ psutil
 FileLock-git
 requests
 tqdm
+looseversion
 wmi  ; sys_platform == 'win32'
 pywin32  ; sys_platform == 'win32'
