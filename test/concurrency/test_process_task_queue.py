@@ -1,12 +1,12 @@
 import time
 
 from cyy_naive_lib.concurrency import ManageredProcessContext, ProcessTaskQueue
-from cyy_naive_lib.log import get_logger
+from cyy_naive_lib.log import log_info
 
 
 def hello(task, **kwargs):
     assert task == ()
-    get_logger().info("call from other process")
+    log_info("call from other process")
     return "abc"
 
 
@@ -16,10 +16,12 @@ def test_process_task_queue():
     queue.add_task(())
     time.sleep(1)
     assert queue.has_data()
-    assert queue.get_data()[0] == "abc"
+    data = queue.get_data()
+    assert data is not None and data[0] == "abc"
     queue.stop()
     queue = ProcessTaskQueue(worker_num=8, mp_ctx=ManageredProcessContext())
     queue.start(worker_fun=hello)
     queue.add_task(())
-    assert queue.get_data()[0] == "abc"
+    data = queue.get_data()
+    assert data is not None and data[0] == "abc"
     queue.stop()

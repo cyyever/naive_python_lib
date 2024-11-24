@@ -12,7 +12,7 @@ try:
 except ImportError:
     has_np = False
 
-from cyy_naive_lib.log import get_logger
+from cyy_naive_lib.log import log_warning, log_debug
 
 
 class ReproducibleRandomEnv:
@@ -35,28 +35,28 @@ class ReproducibleRandomEnv:
     def enable(self) -> None:
         with self.lock:
             if self._enabled:
-                get_logger().warning("%s use reproducible env", id(self))
+                log_warning("%s use reproducible env", id(self))
             else:
-                get_logger().warning("%s initialize and use reproducible env", id(self))
+                log_warning("%s initialize and use reproducible env", id(self))
 
             if self.__randomlib_state is not None:
-                get_logger().debug("overwrite random lib state")
+                log_debug("overwrite random lib state")
                 random.setstate(self.__randomlib_state)
             else:
-                get_logger().debug("get random lib state")
+                log_debug("get random lib state")
                 self.__randomlib_state = random.getstate()
 
             if has_np:
                 if self.__numpy_state is not None:
-                    get_logger().debug("overwrite numpy random lib state")
+                    log_debug("overwrite numpy random lib state")
                     np.random.set_state(copy.deepcopy(self.__numpy_state))
                 else:
-                    get_logger().debug("get numpy random lib state")
+                    log_debug("get numpy random lib state")
                     self.__numpy_state = np.random.get_state()
             self._enabled = True
 
     def disable(self) -> None:
-        get_logger().warning("disable reproducible env")
+        log_warning("disable reproducible env")
         with self.lock:
             self._enabled = False
 
@@ -77,7 +77,7 @@ class ReproducibleRandomEnv:
 
     def save(self, seed_dir: str) -> Any:
         seed_path = os.path.join(seed_dir, "random_seed.pk")
-        get_logger().warning("%s save reproducible env to %s", id(self), seed_path)
+        log_warning("%s save reproducible env to %s", id(self), seed_path)
         with self.lock:
             assert self._enabled
             os.makedirs(seed_dir, exist_ok=True)
@@ -99,7 +99,7 @@ class ReproducibleRandomEnv:
         with self.lock:
             assert not self._enabled
             with open(path, "rb") as f:
-                get_logger().warning("%s load reproducible env from %s", id(self), path)
+                log_warning("%s load reproducible env from %s", id(self), path)
                 self.load_state(pickle.load(f))
 
     def load_last_seed(self) -> None:

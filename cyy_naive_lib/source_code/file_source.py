@@ -4,7 +4,7 @@ import shutil
 import requests
 from tqdm import tqdm
 
-from cyy_naive_lib.log import get_logger
+from cyy_naive_lib.log import log_debug
 
 from ..algorithm.hash import file_hash
 from .package_spec import PackageSpecification
@@ -38,7 +38,7 @@ class FileSource(Source):
             if self.url.startswith("file://"):
                 shutil.copyfile(self.url.replace("file://", ""), self._file_path)
             else:
-                get_logger().debug("downloading %s", self.file_name)
+                log_debug("downloading %s", self.file_name)
 
                 response = requests.get(self.url, stream=True, timeout=60)
                 with open(self._file_path, "wb") as f:

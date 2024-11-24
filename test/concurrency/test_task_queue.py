@@ -1,9 +1,9 @@
 from cyy_naive_lib.concurrency import ProcessTaskQueue, ThreadTaskQueue
-from cyy_naive_lib.log import get_logger
+from cyy_naive_lib.log import log_warning
 
 
 def worker(*args, **kwargs):
-    get_logger().warning("hello world")
+    log_warning("hello world")
 
 
 def get_queue_types():

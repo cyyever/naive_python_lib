@@ -2,7 +2,7 @@ import time
 import traceback
 from collections.abc import Callable
 
-from cyy_naive_lib.log import get_logger
+from cyy_naive_lib.log import log_error
 
 
 def retry_operation(
@@ -15,9 +15,9 @@ def retry_operation(
                 return res
         # pylint: disable=broad-exception-caught
         except Exception as e:
-            get_logger().error("catch exception:%s", e)
-            get_logger().error("traceback:%s", traceback.format_exc())
-        get_logger().error("operation failed,retry after %s seconds", retry_sleep_time)
+            log_error("catch exception:%s", e)
+            log_error("traceback:%s", traceback.format_exc())
+        log_error("operation failed,retry after %s seconds", retry_sleep_time)
         time.sleep(retry_sleep_time)
     return False, None
 

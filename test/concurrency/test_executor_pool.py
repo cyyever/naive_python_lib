@@ -2,15 +2,15 @@ import multiprocessing
 import threading
 
 from cyy_naive_lib.concurrency import ProcessPool, ThreadPool
-from cyy_naive_lib.log import get_logger
+from cyy_naive_lib.log import log_warning
 
 
 def thd_fun():
-    get_logger().warning("thread is %s", threading.current_thread())
+    log_warning("thread is %s", threading.current_thread())
 
 
 def process_fun():
-    get_logger().warning("process is %s", multiprocessing.current_process())
+    log_warning("process is %s", multiprocessing.current_process())
 
 
 def test_thread_pool():
@@ -19,7 +19,7 @@ def test_thread_pool():
     pool.shutdown()
 
 
-def test_process_pool():
+def test_process_pool() -> None:
     pool: ProcessPool = ProcessPool()
     pool.submit(process_fun)
     pool.shutdown()

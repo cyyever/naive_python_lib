@@ -7,7 +7,7 @@ from typing import Any
 
 import psutil
 
-from ..log import apply_logger_setting, get_logger, get_logger_setting
+from ..log import apply_logger_setting, log_error, get_logger_setting
 from ..time_counter import TimeCounter
 from .context import ConcurrencyContext
 
@@ -82,11 +82,11 @@ class Worker:
             # pylint: disable=broad-exception-caught
             except Exception as e:
                 if not psutil.pid_exists(ppid):
-                    get_logger().error("exit because parent process %s has died", ppid)
+                    log_error("exit because parent process %s has died", ppid)
                     return
-                get_logger().error("catch exception:%s", e)
-                get_logger().error("traceback:%s", traceback.format_exc())
-                get_logger().error("end worker on exception")
+                log_error("catch exception:%s", e)
+                log_error("traceback:%s", traceback.format_exc())
+                log_error("end worker on exception")
                 return
         task_queue.clear_data(task_queue.get_worker_queue_name(worker_id))
 

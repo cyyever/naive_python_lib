@@ -2,7 +2,7 @@ import os
 import shutil
 import zipfile
 
-from cyy_naive_lib.log import get_logger
+from cyy_naive_lib.log import log_debug
 
 from ..fs.tempdir import TempDir
 from ..shell import exec_cmd
@@ -33,7 +33,7 @@ class TarballSource(FileSource):
         if os.path.isdir(self.tarball_dir):
             shutil.rmtree(self.tarball_dir)
         os.makedirs(self.tarball_dir)
-        get_logger().debug("extracting %s", self.file_name)
+        log_debug("extracting %s", self.file_name)
         try:
             with TempDir():
                 if self.suffix == ".zip":

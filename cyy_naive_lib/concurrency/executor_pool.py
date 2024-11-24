@@ -3,7 +3,7 @@ import concurrent.futures
 from collections.abc import Callable
 from typing import Any
 
-from cyy_naive_lib.log import get_logger
+from cyy_naive_lib.log import log_debug
 
 from .call import exception_aware_call
 
@@ -52,7 +52,7 @@ class ExecutorPool:
         results: dict = {}
         for future in done_futures:
             result = future.result()
-            get_logger().debug("future result is %s", result)
+            log_debug("future result is %s", result)
             results[future] = result
         self.__futures.clear()
         return results, not_done_futures

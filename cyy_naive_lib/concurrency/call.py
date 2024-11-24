@@ -4,7 +4,7 @@ import traceback
 from collections.abc import Callable
 from typing import Any
 
-from cyy_naive_lib.log import get_logger
+from cyy_naive_lib.log import log_error
 
 
 def exception_aware_call(fn: Callable, *args: Any, **kwargs: Any) -> Any:
@@ -14,6 +14,6 @@ def exception_aware_call(fn: Callable, *args: Any, **kwargs: Any) -> Any:
         return fn(*args, **kwargs)
     # pylint: disable=broad-exception-caught
     except Exception as e:
-        get_logger().error("catch exception:%s", e)
-        get_logger().error("traceback:%s", traceback.format_exc())
+        log_error("catch exception:%s", e)
+        log_error("traceback:%s", traceback.format_exc())
     return None

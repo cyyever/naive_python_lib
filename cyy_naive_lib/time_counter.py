@@ -1,7 +1,7 @@
 import time
 import traceback
 
-from cyy_naive_lib.log import get_logger
+from cyy_naive_lib.log import log_debug, log_info
 
 
 class TimeCounter:
@@ -28,7 +28,7 @@ class TimeCounter:
         used_ms = self.elapsed_milliseconds()
         with_block = traceback.extract_stack(limit=2)[0]
 
-        logging_func = get_logger().debug if self.__debug_logging else get_logger().info
+        logging_func = log_debug if self.__debug_logging else log_info
         logging_func(
             "%s [%s => %d] uses %s ms",
             self.__log_prefix if self.__log_prefix is not None else "",
