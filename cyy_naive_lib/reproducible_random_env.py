@@ -12,7 +12,7 @@ try:
 except ImportError:
     has_np = False
 
-from cyy_naive_lib.log import log_warning, log_debug
+from cyy_naive_lib.log import log_debug, log_warning
 
 
 class ReproducibleRandomEnv:
