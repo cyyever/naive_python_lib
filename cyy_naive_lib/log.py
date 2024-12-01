@@ -109,10 +109,10 @@ def set_level(level: Any) -> None:
         __stub_colored_logger.setLevel(level)
 
 
-# def set_formatter(formatter) -> None:
-#     with __logger_lock:
-#         for handler in __colored_logger.handlers:
-#             handler.setFormatter(formatter)
+def set_formatter(formatter) -> None:
+    with __logger_lock if __logger_lock is not None else contextlib.nullcontext():
+        for handler in __colored_logger.handlers:
+            handler.setFormatter(formatter)
 
 
 def get_logger_setting() -> dict:
