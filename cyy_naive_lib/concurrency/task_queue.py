@@ -169,6 +169,10 @@ class TaskQueue:
         self.__queues: dict = {}
         self.__set_logger: bool = True
 
+    @property
+    def mp_ctx(self) -> ConcurrencyContext:
+        return self.__mp_ctx
+
     def disable_logger(self) -> None:
         self.__set_logger = False
 
@@ -197,10 +201,10 @@ class TaskQueue:
 
     def add_queue(self, name: str, queue_type: QueueType) -> None:
         assert name not in self.__queues
-        if queue_type == QueueType.Pipe and self.__mp_ctx.support_pipe():
-            self.__queues[name] = (self.__mp_ctx.create_pipe(), QueueType.Pipe)
+        if queue_type == QueueType.Pipe and self.mp_ctx.support_pipe():
+            self.__queues[name] = (self.mp_ctx.create_pipe(), QueueType.Pipe)
         else:
-            self.__queues[name] = (self.__mp_ctx.create_queue(), QueueType.Queue)
+            self.__queues[name] = (self.mp_ctx.create_queue(), QueueType.Queue)
 
     def __get_queue(self, name: str) -> tuple:
         return self.__queues[name]
@@ -214,7 +218,7 @@ class TaskQueue:
         assert self.__worker_num > 0
         assert self.__worker_fun is not None
         if self.__stop_event is None:
-            self.__stop_event = self.__mp_ctx.create_event()
+            self.__stop_event = self.mp_ctx.create_event()
         if not self.__queues:
             self.__queues = {}
         if "__task" not in self.__queues:
@@ -223,6 +227,7 @@ class TaskQueue:
             self.add_queue("__result", queue_type=QueueType.Queue)
 
         if not self.__workers:
+            assert self.__stop_event is not None
             self.__stop_event.clear()
             self.__workers = {}
         for _ in range(len(self.__workers), self.__worker_num):
@@ -248,9 +253,9 @@ class TaskQueue:
             target: Worker = BatchWorker()
         else:
             target = Worker()
-        creator = self.__mp_ctx.create_worker
+        creator = self.mp_ctx.create_worker
         if use_thread:
-            creator = self.__mp_ctx.create_thread
+            creator = self.mp_ctx.create_thread
 
         self.__workers[worker_id] = creator(
             name=f"worker {worker_id}",
