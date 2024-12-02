@@ -1,15 +1,26 @@
 import concurrent.futures
+from collections.abc import Callable
+from typing import Any
 
 from cyy_naive_lib.log import get_logger_setting
 
 from .executor_pool import ExecutorPool
 from .process_context import ProcessContext
-from .process_initialization import default_initializer, reinitialize_logger
+from .process_initialization import (
+    default_initializer,
+    get_process_data,
+    reinitialize_logger,
+)
 
 
 class ProcessPool(ExecutorPool):
     def __init__(
-        self, initializer=None, initargs=None, use_logger: bool = True, **kwargs
+        self,
+        initializer=None,
+        initargs=None,
+        use_logger: bool = True,
+        pass_process_data: bool = False,
+        **kwargs,
     ) -> None:
         real_initarg: dict = {}
         real_initarg["initializers"] = [initializer]
@@ -27,3 +38,12 @@ class ProcessPool(ExecutorPool):
                 initializer=default_initializer, initargs=(real_initarg,), **kwargs
             )
         )
+        self.__pass_process_data = pass_process_data
+
+    def submit(
+        self, fn: Callable, *args: Any, **kwargs: Any
+    ) -> concurrent.futures.Future:
+        if self.__pass_process_data:
+            return super().submit(fn, *args, **kwargs, **get_process_data())
+
+        return super().submit(fn, *args, **kwargs)
