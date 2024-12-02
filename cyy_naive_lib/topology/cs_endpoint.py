@@ -34,14 +34,12 @@ class ServerEndpoint(Endpoint):
             self.send(worker_id=worker_id, data=data)
 
     def close(self) -> None:
-        assert isinstance(self._topology, CentralTopology)
-        self._topology.close_server_channel()
+        self.topology.close_server_channel()
 
 
 class ClientEndpoint(Endpoint):
     def __init__(self, topology: CentralTopology, worker_id: int) -> None:
         super().__init__(topology=topology)
-        assert isinstance(self._topology, CentralTopology)
         self.__worker_id: int = worker_id
 
     @property
