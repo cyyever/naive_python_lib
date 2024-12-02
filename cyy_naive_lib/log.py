@@ -50,6 +50,8 @@ def __worker(
             return
         except OSError:
             return
+        except TypeError:
+            return
 
 
 __logger_lock: threading._RLock | None = None
