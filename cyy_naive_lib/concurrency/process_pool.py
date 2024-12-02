@@ -21,6 +21,7 @@ class ProcessPool(ExecutorPool):
         initargs=None,
         use_logger: bool = True,
         pass_process_data: bool = False,
+        max_tasks_per_child: int | None = 1,
         **kwargs,
     ) -> None:
         real_initarg: dict = {}
@@ -36,7 +37,10 @@ class ProcessPool(ExecutorPool):
 
         super().__init__(
             concurrent.futures.ProcessPoolExecutor(
-                initializer=default_initializer, initargs=(real_initarg,), **kwargs
+                initializer=default_initializer,
+                initargs=(real_initarg,),
+                **kwargs,
+                max_tasks_per_child=max_tasks_per_child,
             )
         )
         self.__pass_process_data = pass_process_data
