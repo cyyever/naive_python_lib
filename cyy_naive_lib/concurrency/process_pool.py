@@ -1,4 +1,5 @@
 import concurrent.futures
+import functools
 from collections.abc import Callable
 from typing import Any
 
@@ -40,10 +41,18 @@ class ProcessPool(ExecutorPool):
         )
         self.__pass_process_data = pass_process_data
 
+    @classmethod
+    def wrap_fun(cls, fn: Callable, *args: Any, **kwargs: Any) -> Any:
+        return fn(*args, **kwargs, **get_process_data())
+
     def submit(
         self, fn: Callable, *args: Any, **kwargs: Any
     ) -> concurrent.futures.Future:
         if self.__pass_process_data:
-            return super().submit(fn, *args, **kwargs, **get_process_data())
+            return super().submit(
+                functools.partial(self.wrap_fun, fn),
+                *args,
+                **kwargs,
+            )
 
         return super().submit(fn, *args, **kwargs)
