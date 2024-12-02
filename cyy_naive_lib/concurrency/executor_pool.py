@@ -45,9 +45,9 @@ class ExecutorPool:
         self,
         timeout: float | None = None,
         return_when=concurrent.futures.ALL_COMPLETED,
-    ) -> tuple[dict, bool]:
+    ) -> tuple[dict, int]:
         if not self.__futures:
-            return {}, False
+            return {}, 0
         done_futures, not_done_futures = concurrent.futures.wait(
             self.__futures, timeout=timeout, return_when=return_when
         )
@@ -59,7 +59,7 @@ class ExecutorPool:
         self.__futures.clear()
         if not_done_futures:
             self.__futures = list(not_done_futures)
-        return results, bool(self.__futures)
+        return results, len(self.__futures)
 
     def shutdown(self, *args, **kwargs) -> None:
         self.executor.shutdown(*args, **kwargs)
