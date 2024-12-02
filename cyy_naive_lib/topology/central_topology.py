@@ -72,10 +72,8 @@ class ProcessPipeCentralTopology(CentralTopology):
     def close_server_channel(self) -> None:
         for p in self.__pipes.values():
             p[0].close()
-            p[1].close()
 
     def close_worker_channel(self, worker_id: int) -> None:
-        self.__pipes[worker_id][0].close()
         self.__pipes[worker_id][1].close()
 
 
