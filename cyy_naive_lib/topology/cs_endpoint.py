@@ -24,14 +24,24 @@ class ServerEndpoint(Endpoint):
     def send(self, worker_id: int, data: Any) -> None:
         self.topology.send_to_worker(worker_id=worker_id, data=data)
 
-    def broadcast(self, data: Any, worker_ids: None | Iterable = None) -> None:
+    def __construct_worker_ids(
+        self, worker_ids: None | Iterable[int] = None
+    ) -> set[int]:
         all_worker_ids = set(range(self.worker_num))
         if worker_ids is None:
-            worker_ids = all_worker_ids
-        else:
-            worker_ids = set(worker_ids).intersection(all_worker_ids)
-        for worker_id in worker_ids:
+            return all_worker_ids
+        return set(worker_ids).intersection(all_worker_ids)
+
+    def broadcast(self, data: Any, worker_ids: None | Iterable[int] = None) -> None:
+        for worker_id in self.__construct_worker_ids(worker_ids=worker_ids):
             self.send(worker_id=worker_id, data=data)
+
+    def poll(self, worker_ids: None | Iterable[int] = None) -> dict[int, Any]:
+        res = {}
+        for worker_id in self.__construct_worker_ids(worker_ids=worker_ids):
+            if self.has_data(worker_id=worker_id):
+                res[worker_id] = self.get(worker_id=worker_id)
+        return res
 
     def close(self) -> None:
         self.topology.close_server_channel()
