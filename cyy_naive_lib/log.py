@@ -1,4 +1,5 @@
 import atexit
+import contextlib
 import logging
 import logging.handlers
 import os
@@ -120,7 +121,13 @@ if not getattr(process.current_process(), "_inheriting", False):
         target=__worker, args=(__message_queue, __colored_logger), daemon=True
     )
     __background_thd.start()
-    atexit.register(__message_queue.put, {"cyy_logger_exit": True})
+
+    @atexit.register
+    def shutdown():
+        with contextlib.suppress(BaseException):
+            __message_queue.put({"cyy_logger_exit": True})
+
+
 __filenames = set()
 
 

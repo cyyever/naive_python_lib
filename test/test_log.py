@@ -1,6 +1,7 @@
 import logging
 import multiprocessing
 
+from cyy_naive_lib.concurrency import ProcessPool
 from cyy_naive_lib.fs.tempdir import TempDir
 from cyy_naive_lib.log import (
     add_file_handler,
@@ -10,7 +11,6 @@ from cyy_naive_lib.log import (
     log_warning,
     set_level,
 )
-from cyy_naive_lib.concurrency import ProcessPool
 
 
 def __test_log() -> None:
