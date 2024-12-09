@@ -7,7 +7,7 @@ class Decorator:
         self._object = obj
 
     def __copy__(self) -> Self:
-        return type(self)(obj=copy.copy(self._object))
+        return type(self)(copy.copy(self._object))
 
     def __getattr__(self, name):
         if "object" in name:
