@@ -9,23 +9,22 @@ from colorlog import ColoredFormatter
 
 
 def __add_file_handler_impl(
-    filename: str, formatter: None | logging.Formatter = None
+    logger: logging.Logger, filename: str, formatter: None | logging.Formatter = None
 ) -> logging.Handler:
-    with __logger_lock:
-        for handler in __colored_logger.handlers:
-            if (
-                isinstance(handler, logging.FileHandler)
-                and handler.baseFilename == filename
-            ):
-                return handler
-        log_dir = os.path.dirname(filename)
-        if log_dir:
-            os.makedirs(log_dir, exist_ok=True)
-        handler = logging.FileHandler(filename, mode="wt", encoding="utf8", delay=True)
-        __colored_logger.addHandler(handler)
-        if formatter is not None:
-            __set_default_formatter(handler, with_color=False)
-        return handler
+    for handler in logger.handlers:
+        if (
+            isinstance(handler, logging.FileHandler)
+            and handler.baseFilename == filename
+        ):
+            return handler
+    log_dir = os.path.dirname(filename)
+    if log_dir:
+        os.makedirs(log_dir, exist_ok=True)
+    handler = logging.FileHandler(filename, mode="wt", encoding="utf8")
+    logger.addHandler(handler)
+    if formatter is not None:
+        __set_default_formatter(handler, with_color=False)
+    return handler
 
 
 def __set_default_formatter(handler: logging.Handler, with_color: bool = True) -> None:
@@ -73,9 +72,11 @@ def __worker(qu: Queue, logger: logging.Logger) -> None:
                         formatter = None
                         if logger.handlers:
                             formatter = logger.handlers[0].formatter
-                        __add_file_handler_impl(filename, formatter)
+                        __add_file_handler_impl(logger, filename, formatter)
                 case _:
                     logger.handle(record)
+                    for hander in logger.handlers:
+                        hander.flush()
         except ValueError:
             return
         except EOFError:
@@ -102,8 +103,7 @@ def initialize_proxy_logger() -> None:
 
 
 if not getattr(process.current_process(), "_inheriting", False):
-    manager = Manager()
-    __message_queue = manager.Queue()
+    __message_queue = Manager().Queue()
     initialize_proxy_logger()
 
     __colored_logger: logging.Logger = logging.getLogger("colored_logger")
@@ -154,12 +154,11 @@ def apply_logger_setting(setting: dict) -> None:
     global __message_queue
     __message_queue = setting["message_queue"]
     initialize_proxy_logger()
-    __formatter = setting.pop("logger_formatter")
+    __formatter = setting.pop("logger_formatter", None)
     if __formatter is not None:
         set_formatter(formatter=__formatter)
-    with __logger_lock:
-        for filename in setting["filenames"]:
-            add_file_handler(filename=filename)
+    for filename in setting["filenames"]:
+        add_file_handler(filename=filename)
 
 
 def __get_logger() -> logging.Logger:
