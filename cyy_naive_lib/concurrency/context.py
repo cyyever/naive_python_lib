@@ -6,6 +6,9 @@ class ConcurrencyContext:
     def create_queue(self) -> Any:
         raise NotImplementedError()
 
+    def in_thread(self) -> bool:
+        return False
+
     def support_pipe(self) -> bool:
         return False
 

@@ -44,8 +44,5 @@ class ManageredProcessContext(ProcessContext):
             self.managers[underlying_ctx] = underlying_ctx.Manager()
         return self.managers[underlying_ctx]
 
-    def support_pipe(self) -> bool:
-        return False
-
-    def create_worker(self, *args, **kwargs) -> Any:
+    def create_worker(self, *args: Any, **kwargs: Any) -> Any:
         return super().get_ctx().Process(*args, **kwargs)

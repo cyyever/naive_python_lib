@@ -1,6 +1,5 @@
 import queue
 import threading
-from typing import Any
 
 from .context import ConcurrencyContext
 
@@ -9,8 +8,8 @@ class ThreadContext(ConcurrencyContext):
     def create_queue(self) -> queue.Queue:
         return queue.Queue()
 
-    def create_pipe(self) -> Any:
-        raise NotImplementedError()
+    def in_thread(self) -> bool:
+        return True
 
     def create_event(self) -> threading.Event:
         return threading.Event()
