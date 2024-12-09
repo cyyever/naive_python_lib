@@ -4,10 +4,12 @@ import logging
 import logging.handlers
 import os
 import threading
-from multiprocessing import Manager, Queue, process
+from multiprocessing import Queue, process
 from typing import Any
 
 from colorlog import ColoredFormatter
+
+from .concurrency.process_context import ManageredProcessContext
 
 
 def __set_default_formatter(handler: logging.Handler, with_color: bool = True) -> None:
@@ -54,10 +56,11 @@ def __worker(
             return
 
 
+__concurrent_context = None
 __logger_lock: threading._RLock | None = None
-
 if not getattr(process.current_process(), "_inheriting", False):
-    __logger_lock = Manager().RLock()
+    __concurrent_context = ManageredProcessContext()
+    __logger_lock = __concurrent_context.get_ctx().RLock()
 
 __colored_logger: logging.Logger = logging.getLogger("colored_logger")
 if not __colored_logger.handlers:
@@ -70,7 +73,8 @@ if not __colored_logger.handlers:
 __stub_colored_logger = logging.getLogger("colored_multiprocess_logger")
 if not __stub_colored_logger.handlers:
     __stub_colored_logger.setLevel(logging.INFO)
-    q: Queue = Queue()
+    assert __concurrent_context is not None
+    q = __concurrent_context.create_queue()
     __stub_colored_logger.addHandler(logging.handlers.QueueHandler(q))
     __stub_colored_logger.propagate = False
     __background_thd = threading.Thread(
