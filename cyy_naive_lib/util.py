@@ -1,5 +1,3 @@
-
-
 def readlines(file_path: str) -> list[str]:
     lines = []
     try:

@@ -1,8 +1,9 @@
+import atexit
 import logging
 import logging.handlers
 import os
 import threading
-from multiprocessing import Manager, Queue, process
+from multiprocessing import Manager, Process, Queue, process
 from typing import Any
 
 from colorlog import ColoredFormatter
@@ -59,6 +60,8 @@ def __worker(qu: Queue, logger: logging.Logger) -> None:
                 return
             match record:
                 case dict():
+                    if "cyy_logger_exit" in record:
+                        return
                     level = record.pop("logger_level", None)
                     if level is not None:
                         for handler in logger.handlers:
@@ -113,12 +116,11 @@ if not getattr(process.current_process(), "_inheriting", False):
     __set_default_formatter(__handler, with_color=True)
     __colored_logger.addHandler(__handler)
     __colored_logger.propagate = False
-    __background_thd = threading.Thread(
-        target=__worker,
-        args=(__message_queue, __colored_logger),
-        daemon=True,
+    __background_thd = Process(
+        target=__worker, args=(__message_queue, __colored_logger), daemon=True
     )
     __background_thd.start()
+    atexit.register(__message_queue.put, {"cyy_logger_exit": True})
 __filenames = set()
 
 
