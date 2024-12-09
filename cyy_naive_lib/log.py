@@ -124,7 +124,10 @@ def get_logger_setting() -> dict:
         setting["lock"] = __logger_lock
         setting["handlers"] = []
         for handler in __colored_logger.handlers:
-            handler_dict: dict = {"formatter": handler.formatter}
+            handler_dict: dict = {
+                "formatter": handler.formatter,
+                "level": handler.level,
+            }
             if isinstance(handler, logging.FileHandler):
                 handler_dict["type"] = "file"
                 handler_dict["filename"] = handler.baseFilename
@@ -150,6 +153,7 @@ def apply_logger_setting(setting: dict) -> None:
             else:
                 raise NotImplementedError()
             handler.setFormatter(handler_info["formatter"])
+            handler.setLevel(handler_info["level"])
 
 
 def __get_logger() -> logging.Logger:
