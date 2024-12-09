@@ -1,15 +1,31 @@
-import contextlib
-import copy
 import logging
 import logging.handlers
 import os
 import threading
-from multiprocessing import Queue, process
+from multiprocessing import Manager, Queue, process
 from typing import Any
 
 from colorlog import ColoredFormatter
 
-from .concurrency.process_context import ManageredProcessContext
+
+def __add_file_handler_impl(
+    filename: str, formatter: None | logging.Formatter = None
+) -> logging.Handler:
+    with __logger_lock:
+        for handler in __colored_logger.handlers:
+            if (
+                isinstance(handler, logging.FileHandler)
+                and handler.baseFilename == filename
+            ):
+                return handler
+        log_dir = os.path.dirname(filename)
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
+        handler = logging.FileHandler(filename, mode="wt", encoding="utf8", delay=True)
+        __colored_logger.addHandler(handler)
+        if formatter is not None:
+            __set_default_formatter(handler, with_color=False)
+        return handler
 
 
 def __set_default_formatter(handler: logging.Handler, with_color: bool = True) -> None:
@@ -36,16 +52,30 @@ def __set_default_formatter(handler: logging.Handler, with_color: bool = True) -
     handler.setFormatter(formatter)
 
 
-def __worker(
-    qu: Queue, logger: logging.Logger, logger_lock: threading._RLock | None
-) -> None:
+def __worker(qu: Queue, logger: logging.Logger) -> None:
     while True:
         try:
             record = qu.get()
             if record is None:
                 return
-            with logger_lock if logger_lock is not None else contextlib.nullcontext():
-                logger.handle(record)
+            match record:
+                case dict():
+                    level = record.pop("logger_level", None)
+                    if level is not None:
+                        for handler in logger.handlers:
+                            handler.setLevel(level)
+                    formatter = record.pop("logger_formatter", None)
+                    if formatter is not None:
+                        for handler in logger.handlers:
+                            handler.setFormatter(formatter)
+                    filename = record.pop("filename", None)
+                    if filename is not None:
+                        formatter = None
+                        if logger.handlers:
+                            formatter = logger.handlers[0].formatter
+                        __add_file_handler_impl(filename, formatter)
+                case _:
+                    logger.handle(record)
         except ValueError:
             return
         except EOFError:
@@ -56,112 +86,85 @@ def __worker(
             return
 
 
-__concurrent_context = None
-__logger_lock: threading._RLock | None = None
-if not getattr(process.current_process(), "_inheriting", False):
-    __concurrent_context = ManageredProcessContext()
-    __logger_lock = __concurrent_context.get_ctx().RLock()
+__logger_lock = threading.RLock()
+__message_queue: Any = None
 
-__colored_logger: logging.Logger = logging.getLogger("colored_logger")
-if not __colored_logger.handlers:
+__proxy_logger: logging.Logger | None = None
+
+
+def initialize_proxy_logger() -> None:
+    global __proxy_logger
+    __proxy_logger = logging.getLogger("proxy_logger")
+    assert not __proxy_logger.handlers
+    __proxy_logger.setLevel(logging.INFO)
+    __proxy_logger.addHandler(logging.handlers.QueueHandler(__message_queue))
+    __proxy_logger.propagate = False
+
+
+if not getattr(process.current_process(), "_inheriting", False):
+    manager = Manager()
+    __message_queue = manager.Queue()
+    initialize_proxy_logger()
+
+    __colored_logger: logging.Logger = logging.getLogger("colored_logger")
+    assert not __colored_logger.handlers
     __colored_logger.setLevel(logging.DEBUG)
     __handler = logging.StreamHandler()
     __set_default_formatter(__handler, with_color=True)
     __colored_logger.addHandler(__handler)
     __colored_logger.propagate = False
-
-__stub_colored_logger = logging.getLogger("colored_multiprocess_logger")
-if not __stub_colored_logger.handlers:
-    __stub_colored_logger.setLevel(logging.INFO)
-    assert __concurrent_context is not None
-    q = __concurrent_context.create_queue()
-    __stub_colored_logger.addHandler(logging.handlers.QueueHandler(q))
-    __stub_colored_logger.propagate = False
     __background_thd = threading.Thread(
-        target=__worker, args=(q, __colored_logger, __logger_lock), daemon=True
+        target=__worker,
+        args=(__message_queue, __colored_logger),
+        daemon=True,
     )
     __background_thd.start()
+__filenames = set()
 
 
-def add_file_handler(filename: str) -> logging.Handler:
-    filename = os.path.normpath(os.path.abspath(filename))
-    with __logger_lock if __logger_lock is not None else contextlib.nullcontext():
-        for handler in __colored_logger.handlers:
-            if (
-                isinstance(handler, logging.FileHandler)
-                and handler.baseFilename == filename
-            ):
-                return handler
-        log_dir = os.path.dirname(filename)
-        if log_dir:
-            os.makedirs(log_dir, exist_ok=True)
-        handler = logging.FileHandler(filename, mode="wt", encoding="utf8", delay=True)
-        __colored_logger.addHandler(handler)
-        __set_default_formatter(handler, with_color=False)
-        return handler
-
-
-def reset_file_handler(filename: str) -> logging.Handler:
-    filename = os.path.normpath(os.path.abspath(filename))
-    with __logger_lock if __logger_lock is not None else contextlib.nullcontext():
-        for handler in copy.copy(__colored_logger.handlers):
-            if isinstance(handler, logging.FileHandler):
-                __colored_logger.removeHandler(handler)
-    return add_file_handler(filename=filename)
+def add_file_handler(filename: str) -> None:
+    with __logger_lock:
+        filename = os.path.normpath(os.path.abspath(filename))
+        __filenames.add(filename)
+        __message_queue.put({"filename": filename})
 
 
 def set_level(level: Any) -> None:
-    with __logger_lock if __logger_lock is not None else contextlib.nullcontext():
-        __stub_colored_logger.setLevel(level)
+    __message_queue.put({"logger_level": level})
 
 
-def set_formatter(formatter) -> None:
-    with __logger_lock if __logger_lock is not None else contextlib.nullcontext():
-        for handler in __colored_logger.handlers:
-            handler.setFormatter(formatter)
+__formatter = None
+
+
+def set_formatter(formatter: logging.Formatter) -> None:
+    global __formatter
+    __formatter = formatter
+    __message_queue.put({"logger_formatter": __formatter})
 
 
 def get_logger_setting() -> dict:
-    setting: dict = {}
-    with __logger_lock if __logger_lock is not None else contextlib.nullcontext():
-        setting["level"] = __stub_colored_logger.level
-        setting["lock"] = __logger_lock
-        setting["handlers"] = []
-        for handler in __colored_logger.handlers:
-            handler_dict: dict = {
-                "formatter": handler.formatter,
-                "level": handler.level,
-            }
-            if isinstance(handler, logging.FileHandler):
-                handler_dict["type"] = "file"
-                handler_dict["filename"] = handler.baseFilename
-            elif isinstance(handler, logging.StreamHandler):
-                handler_dict["type"] = "stream"
-            else:
-                raise NotImplementedError()
-            setting["handlers"].append(handler_dict)
+    assert __message_queue is not None
+    setting = {"message_queue": __message_queue, "filenames": __filenames}
+    if __formatter is not None:
+        setting["logger_formatter"] = __formatter
     return setting
 
 
 def apply_logger_setting(setting: dict) -> None:
-    global __logger_lock
-    __logger_lock = setting["lock"]
-    with __logger_lock if __logger_lock is not None else contextlib.nullcontext():
-        set_level(setting["level"])
-        for handler_info in setting["handlers"]:
-            if handler_info["type"] == "stream":
-                handler = __colored_logger.handlers[0]
-                assert isinstance(handler, logging.StreamHandler)
-            elif handler_info["type"] == "file":
-                handler = add_file_handler(handler_info["filename"])
-            else:
-                raise NotImplementedError()
-            handler.setFormatter(handler_info["formatter"])
-            handler.setLevel(handler_info["level"])
+    global __message_queue
+    __message_queue = setting["message_queue"]
+    initialize_proxy_logger()
+    __formatter = setting.pop("logger_formatter")
+    if __formatter is not None:
+        set_formatter(formatter=__formatter)
+    with __logger_lock:
+        for filename in setting["filenames"]:
+            add_file_handler(filename=filename)
 
 
 def __get_logger() -> logging.Logger:
-    return __stub_colored_logger
+    assert __proxy_logger is not None
+    return __proxy_logger
 
 
 def log_info(*args, **kwargs) -> None:
