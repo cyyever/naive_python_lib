@@ -144,7 +144,11 @@ def set_formatter(formatter: logging.Formatter) -> None:
 
 def get_logger_setting() -> dict:
     assert __message_queue is not None
-    setting = {"message_queue": __message_queue, "filenames": __filenames}
+    setting = {
+        "message_queue": __message_queue,
+        "filenames": __filenames,
+        "pid": os.getpid(),
+    }
     if __formatter is not None:
         setting["logger_formatter"] = __formatter
     return setting
@@ -152,6 +156,8 @@ def get_logger_setting() -> dict:
 
 def apply_logger_setting(setting: dict) -> None:
     global __message_queue
+    if os.getpid() == setting["pid"]:
+        return
     __message_queue = setting["message_queue"]
     initialize_proxy_logger()
     __formatter = setting.pop("logger_formatter", None)
