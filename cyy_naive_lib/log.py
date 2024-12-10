@@ -10,50 +10,58 @@ from typing import Any
 from colorlog import ColoredFormatter
 
 
-def __add_file_handler_impl(
-    logger: logging.Logger, filename: str, formatter: None | logging.Formatter = None
-) -> logging.Handler:
-    for handler in logger.handlers:
-        if (
-            isinstance(handler, logging.FileHandler)
-            and handler.baseFilename == filename
-        ):
-            return handler
-    log_dir = os.path.dirname(filename)
-    if log_dir:
-        os.makedirs(log_dir, exist_ok=True)
-    handler = logging.FileHandler(filename, mode="wt", encoding="utf8")
-    logger.addHandler(handler)
-    if formatter is not None:
-        __set_default_formatter(handler, with_color=False)
-    return handler
+def __worker(qu: Queue, main_pid) -> None:
+    logger: logging.Logger = logging.getLogger("colored_logger")
+    assert not logger.handlers
+    logger.setLevel(logging.DEBUG)
+    __handler = logging.StreamHandler()
 
+    def set_formatter(handler: logging.Handler, with_color: bool = True) -> None:
+        if with_color and os.getenv("EINK_SCREEN") == "1":
+            with_color = False
+        format_str: str = "%(asctime)s %(levelname)s {%(processName)s} [%(filename)s => %(lineno)d] : %(message)s"
+        if with_color:
+            formatter: logging.Formatter = ColoredFormatter(
+                "%(log_color)s" + format_str,
+                log_colors={
+                    "DEBUG": "green",
+                    "WARNING": "yellow",
+                    "ERROR": "red",
+                    "CRITICAL": "bold_red",
+                },
+                style="%",
+            )
+        else:
+            formatter = logging.Formatter(
+                format_str,
+                style="%",
+            )
 
-def __set_default_formatter(handler: logging.Handler, with_color: bool = True) -> None:
-    if with_color and os.getenv("EINK_SCREEN") == "1":
-        with_color = False
-    format_str: str = "%(asctime)s %(levelname)s {%(processName)s} [%(filename)s => %(lineno)d] : %(message)s"
-    if with_color:
-        formatter: logging.Formatter = ColoredFormatter(
-            "%(log_color)s" + format_str,
-            log_colors={
-                "DEBUG": "green",
-                "WARNING": "yellow",
-                "ERROR": "red",
-                "CRITICAL": "bold_red",
-            },
-            style="%",
-        )
-    else:
-        formatter = logging.Formatter(
-            format_str,
-            style="%",
-        )
+        handler.setFormatter(formatter)
 
-    handler.setFormatter(formatter)
+    set_formatter(__handler, with_color=True)
+    logger.addHandler(__handler)
+    logger.propagate = False
 
+    def add_file_handler_impl(
+        filename: str,
+        formatter: None | logging.Formatter = None,
+    ) -> logging.Handler:
+        for handler in logger.handlers:
+            if (
+                isinstance(handler, logging.FileHandler)
+                and handler.baseFilename == filename
+            ):
+                return handler
+        log_dir = os.path.dirname(filename)
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
+        handler = logging.FileHandler(filename, mode="wt", encoding="utf8")
+        logger.addHandler(handler)
+        if formatter is not None:
+            set_formatter(handler, with_color=False)
+        return handler
 
-def __worker(qu: Queue, logger: logging.Logger) -> None:
     while True:
         try:
             record = qu.get()
@@ -61,7 +69,7 @@ def __worker(qu: Queue, logger: logging.Logger) -> None:
                 return
             match record:
                 case dict():
-                    if "cyy_logger_exit" in record:
+                    if record.get("cyy_logger_exit", None) == main_pid:
                         return
                     level = record.pop("logger_level", None)
                     if level is not None:
@@ -76,7 +84,7 @@ def __worker(qu: Queue, logger: logging.Logger) -> None:
                         formatter = None
                         if logger.handlers:
                             formatter = logger.handlers[0].formatter
-                        __add_file_handler_impl(logger, filename, formatter)
+                        add_file_handler_impl(filename=filename, formatter=formatter)
                 case _:
                     logger.handle(record)
                     for hander in logger.handlers:
@@ -110,22 +118,15 @@ if not getattr(process.current_process(), "_inheriting", False):
     __message_queue = Manager().Queue()
     initialize_proxy_logger()
 
-    __colored_logger: logging.Logger = logging.getLogger("colored_logger")
-    assert not __colored_logger.handlers
-    __colored_logger.setLevel(logging.DEBUG)
-    __handler = logging.StreamHandler()
-    __set_default_formatter(__handler, with_color=True)
-    __colored_logger.addHandler(__handler)
-    __colored_logger.propagate = False
     __background_thd = Process(
-        target=__worker, args=(__message_queue, __colored_logger), daemon=True
+        target=__worker, args=(__message_queue, os.getpid()), daemon=True
     )
     __background_thd.start()
 
     @atexit.register
     def shutdown():
         with contextlib.suppress(BaseException):
-            __message_queue.put({"cyy_logger_exit": True})
+            __message_queue.put({"cyy_logger_exit": os.getpid()})
 
 
 __filenames = set()
