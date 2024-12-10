@@ -147,12 +147,14 @@ def set_multiprocessing_ctx(ctx: Any) -> None:
 
 def add_file_handler(filename: str) -> None:
     with __logger_lock:
+        __initialize_logger()
         filename = os.path.normpath(os.path.abspath(filename))
         __filenames.add(filename)
         __message_queue.put({"filename": filename})
 
 
 def set_level(level: Any) -> None:
+    __initialize_logger()
     __message_queue.put({"logger_level": level})
 
 
@@ -162,6 +164,7 @@ __formatter = None
 def set_formatter(formatter: logging.Formatter) -> None:
     global __formatter
     __formatter = formatter
+    __initialize_logger()
     __message_queue.put({"logger_formatter": __formatter})
 
 
