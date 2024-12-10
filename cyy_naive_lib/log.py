@@ -16,7 +16,9 @@ def __worker(qu: Queue, main_pid) -> None:
     logger.setLevel(logging.DEBUG)
     __handler = logging.StreamHandler()
 
-    def set_formatter(handler: logging.Handler, with_color: bool = True) -> None:
+    def set_default_formatter(
+        handler: logging.Handler, with_color: bool = True
+    ) -> None:
         if with_color and os.getenv("EINK_SCREEN") == "1":
             with_color = False
         format_str: str = "%(asctime)s %(levelname)s {%(processName)s} [%(filename)s => %(lineno)d] : %(message)s"
@@ -39,7 +41,7 @@ def __worker(qu: Queue, main_pid) -> None:
 
         handler.setFormatter(formatter)
 
-    set_formatter(__handler, with_color=True)
+    set_default_formatter(__handler, with_color=True)
     logger.addHandler(__handler)
     logger.propagate = False
 
@@ -59,7 +61,7 @@ def __worker(qu: Queue, main_pid) -> None:
         handler = logging.FileHandler(filename, mode="wt", encoding="utf8")
         logger.addHandler(handler)
         if formatter is not None:
-            set_formatter(handler, with_color=False)
+            set_default_formatter(handler, with_color=False)
         return handler
 
     while True:
