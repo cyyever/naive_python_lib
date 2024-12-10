@@ -4,7 +4,9 @@ import logging
 import logging.handlers
 import os
 import threading
-from multiprocessing import Manager, Process, Queue
+import multiprocessing
+
+from multiprocessing import Queue
 from typing import Any
 
 from colorlog import ColoredFormatter
@@ -102,6 +104,7 @@ def __worker(qu: Queue, main_pid) -> None:
 
 
 __logger_lock = threading.RLock()
+__multiprocessing_ctx = multiprocessing
 __message_queue: Any = None
 
 __proxy_logger: logging.Logger | None = None
@@ -123,10 +126,10 @@ def __initialize_logger() -> None:
     global __message_queue
     if __message_queue is not None:
         return
-    __message_queue = Manager().Queue()
+    __message_queue = __multiprocessing_ctx.Manager().Queue()
     __initialize_proxy_logger()
 
-    __background_thd = Process(
+    __background_thd = __multiprocessing_ctx.Process(
         target=__worker, args=(__message_queue, os.getpid()), daemon=True
     )
     __background_thd.start()
@@ -135,6 +138,11 @@ def __initialize_logger() -> None:
     def shutdown() -> None:
         with contextlib.suppress(BaseException):
             __message_queue.put({"cyy_logger_exit": os.getpid()})
+
+
+def set_multiprocessing_ctx(ctx: Any) -> None:
+    global __multiprocessing_ctx
+    __multiprocessing_ctx = ctx
 
 
 def add_file_handler(filename: str) -> None:
