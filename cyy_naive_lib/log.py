@@ -4,7 +4,7 @@ import logging
 import logging.handlers
 import os
 import threading
-from multiprocessing import Manager, Process, Queue, process
+from multiprocessing import Manager, Process, Queue
 from typing import Any
 
 from colorlog import ColoredFormatter
@@ -107,7 +107,7 @@ __message_queue: Any = None
 __proxy_logger: logging.Logger | None = None
 
 
-def initialize_proxy_logger() -> None:
+def __initialize_proxy_logger() -> None:
     global __proxy_logger
     __proxy_logger = logging.getLogger("proxy_logger")
     assert not __proxy_logger.handlers
@@ -116,9 +116,15 @@ def initialize_proxy_logger() -> None:
     __proxy_logger.propagate = False
 
 
-if not getattr(process.current_process(), "_inheriting", False):
+__filenames = set()
+
+
+def __initialize_logger() -> None:
+    global __message_queue
+    if __message_queue is not None:
+        return
     __message_queue = Manager().Queue()
-    initialize_proxy_logger()
+    __initialize_proxy_logger()
 
     __background_thd = Process(
         target=__worker, args=(__message_queue, os.getpid()), daemon=True
@@ -126,12 +132,9 @@ if not getattr(process.current_process(), "_inheriting", False):
     __background_thd.start()
 
     @atexit.register
-    def shutdown():
+    def shutdown() -> None:
         with contextlib.suppress(BaseException):
             __message_queue.put({"cyy_logger_exit": os.getpid()})
-
-
-__filenames = set()
 
 
 def add_file_handler(filename: str) -> None:
@@ -155,7 +158,8 @@ def set_formatter(formatter: logging.Formatter) -> None:
 
 
 def get_logger_setting() -> dict:
-    assert __message_queue is not None
+    if __message_queue is None:
+        return {}
     setting = {
         "message_queue": __message_queue,
         "filenames": __filenames,
@@ -168,10 +172,12 @@ def get_logger_setting() -> dict:
 
 def apply_logger_setting(setting: dict) -> None:
     global __message_queue
+    if not setting:
+        return
     if os.getpid() == setting["pid"]:
         return
     __message_queue = setting["message_queue"]
-    initialize_proxy_logger()
+    __initialize_proxy_logger()
     __formatter = setting.pop("logger_formatter", None)
     if __formatter is not None:
         set_formatter(formatter=__formatter)
@@ -180,6 +186,7 @@ def apply_logger_setting(setting: dict) -> None:
 
 
 def __get_logger() -> logging.Logger:
+    __initialize_logger()
     assert __proxy_logger is not None
     return __proxy_logger
 
