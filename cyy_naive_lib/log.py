@@ -38,45 +38,40 @@ class LoggerEnv:
                 logging.handlers.QueueHandler(cls.__message_queue)
             )
             cls.__proxy_logger.propagate = False
-            cls.apply_logger_setting()
+            cls.__apply_logger_setting()
             return cls.__proxy_logger
+
+    @classmethod
+    def __apply_logger_setting(cls) -> None:
+        if cls.__message_queue is None:
+            return
+        if cls.__logger_level is not None:
+            cls.__message_queue.put({"logger_level": cls.__logger_level})
+
+        if cls.__formatter is not None:
+            cls.__message_queue.put({"logger_formatter": cls.__formatter})
+
+        for filename in cls.__filenames:
+            cls.__message_queue.put({"filename": filename})
 
     @classmethod
     def set_formatter(cls, formatter: logging.Formatter) -> None:
         with cls.__logger_lock:
             cls.__formatter = formatter
+            cls.__apply_logger_setting()
 
     @classmethod
     def set_level(cls, level: Any) -> None:
         with cls.__logger_lock:
             cls.__logger_level = level
-
-    @classmethod
-    def __initialize_logger(cls) -> None:
-        with cls.__logger_lock:
-            if cls.__message_queue is not None:
-                return
-            cls.__message_queue = cls.__multiprocessing_ctx.Manager().Queue()
-            cls.initialize_proxy_logger()
-
-            background_thd = cls.__multiprocessing_ctx.Process(
-                target=cls.__worker,
-                args=(cls.__message_queue, os.getpid()),
-                daemon=True,
-            )
-            background_thd.start()
-
-            @atexit.register
-            def shutdown() -> None:
-                with contextlib.suppress(BaseException):
-                    if cls.__message_queue is not None:
-                        cls.__message_queue.put({"cyy_logger_exit": os.getpid()})
+            cls.__apply_logger_setting()
 
     @classmethod
     def add_file_handler(cls, filename: str) -> None:
         filename = os.path.normpath(os.path.abspath(filename))
         with cls.__logger_lock:
             cls.__filenames.add(filename)
+            cls.__apply_logger_setting()
 
     @classmethod
     def get_logger_setting(cls) -> dict:
@@ -106,16 +101,29 @@ class LoggerEnv:
                 cls.__formatter = setting["logger_formatter"]
             if "logger_level" in setting:
                 cls.__logger_level = setting["logger_level"]
-            cls.__filenames.update(*setting["filenames"])
-        assert cls.__message_queue is not None
-        if cls.__logger_level is not None:
-            cls.__message_queue.put({"logger_level": cls.__logger_level})
+            cls.__filenames.update(setting["filenames"])
+        cls.__apply_logger_setting()
 
-        if cls.__formatter is not None:
-            cls.__message_queue.put({"logger_formatter": cls.__formatter})
+    @classmethod
+    def __initialize_logger(cls) -> None:
+        with cls.__logger_lock:
+            if cls.__message_queue is not None:
+                return
+            cls.__message_queue = cls.__multiprocessing_ctx.Manager().Queue()
+            cls.initialize_proxy_logger()
 
-        for filename in cls.__filenames:
-            cls.__message_queue.put({"filename": filename})
+            background_thd = cls.__multiprocessing_ctx.Process(
+                target=cls.__worker,
+                args=(cls.__message_queue, os.getpid()),
+                daemon=True,
+            )
+            background_thd.start()
+
+            @atexit.register
+            def shutdown() -> None:
+                with contextlib.suppress(BaseException):
+                    if cls.__message_queue is not None:
+                        cls.__message_queue.put({"cyy_logger_exit": os.getpid()})
 
     @classmethod
     def __worker(cls, qu: Queue, main_pid: int) -> None:
