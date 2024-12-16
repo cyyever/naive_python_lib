@@ -111,7 +111,7 @@ def _is_posix_ssd(path: str) -> bool:
                 path = f"/sys/block/{block[:-2]}/queue/rotational"
                 break
     try:
-        with open(path) as fp:
+        with open(path, encoding="ascii") as fp:
             return fp.read().strip() == "0"
 
     except OSError:

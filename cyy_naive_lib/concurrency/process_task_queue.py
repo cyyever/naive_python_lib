@@ -5,5 +5,7 @@ from .task_queue import TaskQueue
 
 
 class ProcessTaskQueue(TaskQueue):
-    def __init__(self, mp_ctx=ProcessContext(), **kwargs: Any):
-        super().__init__(mp_ctx=mp_ctx, **kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        if "mp_ctx" not in kwargs:
+            kwargs["mp_ctx"] = ProcessContext()
+        super().__init__(**kwargs)

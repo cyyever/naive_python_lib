@@ -1,4 +1,4 @@
-from typing import Any, Type
+from typing import Any
 
 from ..system_info import OSType, get_operating_system_type
 from .bash_script import BashScript
@@ -24,6 +24,5 @@ def exec_cmd(
     cmd: str,
     os_hint: OSType | None = None,
     throw: bool = True,
-    workdir: str | None = None,
 ) -> tuple[Any, int]:
-    return get_shell_script(cmd, os_hint=os_hint).exec(throw=False)
+    return get_shell_script(cmd, os_hint=os_hint).exec(throw=throw)
