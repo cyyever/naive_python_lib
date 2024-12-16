@@ -11,7 +11,7 @@ from typing import Any
 from colorlog import ColoredFormatter
 
 
-class LoggerEnv:
+class __LoggerEnv:
     __logger_lock = threading.RLock()
     __multiprocessing_ctx: Any = multiprocessing
     __message_queue: Any = None
@@ -32,7 +32,8 @@ class LoggerEnv:
                 return cls.__proxy_logger
             cls.__initialize_logger()
             cls.__proxy_logger = logging.getLogger("proxy_logger")
-            assert not cls.__proxy_logger.handlers
+            if cls.__proxy_logger.handlers:
+                return cls.__proxy_logger
             cls.__proxy_logger.setLevel(logging.INFO)
             cls.__proxy_logger.addHandler(
                 logging.handlers.QueueHandler(cls.__message_queue)
@@ -113,7 +114,7 @@ class LoggerEnv:
             cls.initialize_proxy_logger()
 
             background_thd = cls.__multiprocessing_ctx.Process(
-                target=cls.__worker,
+                target=cls._worker,
                 args=(cls.__message_queue, os.getpid()),
                 daemon=True,
             )
@@ -126,7 +127,7 @@ class LoggerEnv:
                         cls.__message_queue.put({"cyy_logger_exit": os.getpid()})
 
     @classmethod
-    def __worker(cls, qu: Queue, main_pid: int) -> None:
+    def _worker(cls, qu: Queue, main_pid: int) -> None:
         logger: logging.Logger = logging.getLogger("colored_logger")
         assert not logger.handlers
         logger.setLevel(logging.DEBUG)
@@ -220,7 +221,7 @@ class LoggerEnv:
 
 
 def set_multiprocessing_ctx(ctx: Any) -> None:
-    LoggerEnv.set_multiprocessing_ctx(ctx)
+    __LoggerEnv.set_multiprocessing_ctx(ctx)
 
 
 def add_file(filename: str) -> None:
@@ -228,36 +229,36 @@ def add_file(filename: str) -> None:
 
 
 def add_file_handler(filename: str) -> None:
-    LoggerEnv.add_file_handler(filename)
+    __LoggerEnv.add_file_handler(filename)
 
 
 def set_level(level: Any) -> None:
-    LoggerEnv.set_level(level)
+    __LoggerEnv.set_level(level)
 
 
 def set_formatter(formatter: logging.Formatter) -> None:
-    LoggerEnv.set_formatter(formatter)
+    __LoggerEnv.set_formatter(formatter)
 
 
 def get_logger_setting() -> dict:
-    return LoggerEnv().get_logger_setting()
+    return __LoggerEnv.get_logger_setting()
 
 
 def apply_logger_setting(setting: dict) -> None:
-    LoggerEnv().apply_logger_setting(setting)
+    __LoggerEnv.apply_logger_setting(setting)
 
 
 def log_info(*args, **kwargs) -> None:
-    LoggerEnv().initialize_proxy_logger().info(*args, **kwargs, stacklevel=2)
+    __LoggerEnv.initialize_proxy_logger().info(*args, **kwargs, stacklevel=2)
 
 
 def log_debug(*args, **kwargs) -> None:
-    LoggerEnv().initialize_proxy_logger().debug(*args, **kwargs, stacklevel=2)
+    __LoggerEnv.initialize_proxy_logger().debug(*args, **kwargs, stacklevel=2)
 
 
 def log_warning(*args, **kwargs) -> None:
-    LoggerEnv().initialize_proxy_logger().warning(*args, **kwargs, stacklevel=2)
+    __LoggerEnv.initialize_proxy_logger().warning(*args, **kwargs, stacklevel=2)
 
 
 def log_error(*args, **kwargs) -> None:
-    LoggerEnv().initialize_proxy_logger().error(*args, **kwargs, stacklevel=2)
+    __LoggerEnv.initialize_proxy_logger().error(*args, **kwargs, stacklevel=2)
