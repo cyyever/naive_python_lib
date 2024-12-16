@@ -2,217 +2,254 @@ import atexit
 import contextlib
 import logging
 import logging.handlers
+import multiprocessing
 import os
 import threading
-import multiprocessing
-
 from multiprocessing import Queue
 from typing import Any
 
 from colorlog import ColoredFormatter
 
 
-def __worker(qu: Queue, main_pid) -> None:
-    logger: logging.Logger = logging.getLogger("colored_logger")
-    assert not logger.handlers
-    logger.setLevel(logging.DEBUG)
-    __handler = logging.StreamHandler()
+class LoggerEnv:
+    __logger_lock = threading.RLock()
+    __multiprocessing_ctx: Any = multiprocessing
+    __message_queue: Any = None
+    __proxy_logger: logging.Logger | None = None
+    __filenames: set[str] = set()
+    __formatter: None | Any = None
+    __logger_level: Any | None = None
 
-    def set_default_formatter(
-        handler: logging.Handler, with_color: bool = True
-    ) -> None:
-        if with_color and os.getenv("EINK_SCREEN") == "1":
-            with_color = False
-        format_str: str = "%(asctime)s %(levelname)s {%(processName)s} [%(filename)s => %(lineno)d] : %(message)s"
-        if with_color:
-            formatter: logging.Formatter = ColoredFormatter(
-                "%(log_color)s" + format_str,
-                log_colors={
-                    "DEBUG": "green",
-                    "WARNING": "yellow",
-                    "ERROR": "red",
-                    "CRITICAL": "bold_red",
-                },
-                style="%",
+    @classmethod
+    def set_multiprocessing_ctx(cls, ctx: Any) -> None:
+        with cls.__logger_lock:
+            cls.__multiprocessing_ctx = ctx
+
+    @classmethod
+    def initialize_proxy_logger(cls) -> logging.Logger:
+        with cls.__logger_lock:
+            if cls.__proxy_logger is not None:
+                return cls.__proxy_logger
+            cls.__initialize_logger()
+            cls.__proxy_logger = logging.getLogger("proxy_logger")
+            assert not cls.__proxy_logger.handlers
+            cls.__proxy_logger.setLevel(logging.INFO)
+            cls.__proxy_logger.addHandler(
+                logging.handlers.QueueHandler(cls.__message_queue)
             )
-        else:
-            formatter = logging.Formatter(
-                format_str,
-                style="%",
-            )
+            cls.__proxy_logger.propagate = False
+            cls.apply_logger_setting()
+            return cls.__proxy_logger
 
-        handler.setFormatter(formatter)
+    @classmethod
+    def set_formatter(cls, formatter: logging.Formatter) -> None:
+        with cls.__logger_lock:
+            cls.__formatter = formatter
 
-    set_default_formatter(__handler, with_color=True)
-    logger.addHandler(__handler)
-    logger.propagate = False
+    @classmethod
+    def set_level(cls, level: Any) -> None:
+        with cls.__logger_lock:
+            cls.__logger_level = level
 
-    def add_file_handler_impl(
-        filename: str,
-        formatter: None | logging.Formatter = None,
-    ) -> logging.Handler:
-        for handler in logger.handlers:
-            if (
-                isinstance(handler, logging.FileHandler)
-                and handler.baseFilename == filename
-            ):
-                return handler
-        log_dir = os.path.dirname(filename)
-        if log_dir:
-            os.makedirs(log_dir, exist_ok=True)
-        handler = logging.FileHandler(filename, mode="wt", encoding="utf8")
-        logger.addHandler(handler)
-        if formatter is not None:
-            set_default_formatter(handler, with_color=False)
-        return handler
-
-    while True:
-        try:
-            record = qu.get()
-            if record is None:
+    @classmethod
+    def __initialize_logger(cls) -> None:
+        with cls.__logger_lock:
+            if cls.__message_queue is not None:
                 return
-            match record:
-                case dict():
-                    if record.get("cyy_logger_exit", None) == main_pid:
-                        return
-                    level = record.pop("logger_level", None)
-                    if level is not None:
-                        for handler in logger.handlers:
-                            handler.setLevel(level)
-                    formatter = record.pop("logger_formatter", None)
-                    if formatter is not None:
-                        for handler in logger.handlers:
-                            handler.setFormatter(formatter)
-                    filename = record.pop("filename", None)
-                    if filename is not None:
-                        formatter = None
-                        if logger.handlers:
-                            formatter = logger.handlers[0].formatter
-                        add_file_handler_impl(filename=filename, formatter=formatter)
-                case _:
-                    logger.handle(record)
-                    for hander in logger.handlers:
-                        hander.flush()
-        except ValueError:
-            return
-        except EOFError:
-            return
-        except OSError:
-            return
-        except TypeError:
-            return
+            cls.__message_queue = cls.__multiprocessing_ctx.Manager().Queue()
+            cls.initialize_proxy_logger()
 
+            background_thd = cls.__multiprocessing_ctx.Process(
+                target=cls.__worker,
+                args=(cls.__message_queue, os.getpid()),
+                daemon=True,
+            )
+            background_thd.start()
 
-__logger_lock = threading.RLock()
-__multiprocessing_ctx = multiprocessing
-__message_queue: Any = None
+            @atexit.register
+            def shutdown() -> None:
+                with contextlib.suppress(BaseException):
+                    if cls.__message_queue is not None:
+                        cls.__message_queue.put({"cyy_logger_exit": os.getpid()})
 
-__proxy_logger: logging.Logger | None = None
+    @classmethod
+    def add_file_handler(cls, filename: str) -> None:
+        filename = os.path.normpath(os.path.abspath(filename))
+        with cls.__logger_lock:
+            cls.__filenames.add(filename)
 
+    @classmethod
+    def get_logger_setting(cls) -> dict:
+        if cls.__message_queue is None:
+            return {}
+        setting = {
+            "message_queue": cls.__message_queue,
+            "filenames": cls.__filenames,
+            "pid": os.getpid(),
+        }
+        if cls.__formatter is not None:
+            setting["logger_formatter"] = cls.__formatter
+        if cls.__logger_level is not None:
+            setting["logger_level"] = cls.__logger_level
+        return setting
 
-def __initialize_proxy_logger() -> None:
-    global __proxy_logger
-    __proxy_logger = logging.getLogger("proxy_logger")
-    assert not __proxy_logger.handlers
-    __proxy_logger.setLevel(logging.INFO)
-    __proxy_logger.addHandler(logging.handlers.QueueHandler(__message_queue))
-    __proxy_logger.propagate = False
+    @classmethod
+    def apply_logger_setting(cls, setting: dict | None = None) -> None:
+        if setting is not None:
+            if not setting:
+                return
+            if os.getpid() == setting["pid"]:
+                return
+            assert cls.__message_queue is None
+            cls.__message_queue = setting["message_queue"]
+            if "logger_formatter" in setting:
+                cls.__formatter = setting["logger_formatter"]
+            if "logger_level" in setting:
+                cls.__logger_level = setting["logger_level"]
+            cls.__filenames.update(*setting["filenames"])
+        assert cls.__message_queue is not None
+        if cls.__logger_level is not None:
+            cls.__message_queue.put({"logger_level": cls.__logger_level})
 
+        if cls.__formatter is not None:
+            cls.__message_queue.put({"logger_formatter": cls.__formatter})
 
-__filenames = set()
+        for filename in cls.__filenames:
+            cls.__message_queue.put({"filename": filename})
 
+    @classmethod
+    def __worker(cls, qu: Queue, main_pid: int) -> None:
+        logger: logging.Logger = logging.getLogger("colored_logger")
+        assert not logger.handlers
+        logger.setLevel(logging.DEBUG)
+        __handler = logging.StreamHandler()
 
-def __initialize_logger() -> None:
-    global __message_queue
-    if __message_queue is not None:
-        return
-    __message_queue = __multiprocessing_ctx.Manager().Queue()
-    __initialize_proxy_logger()
+        def set_default_formatter(
+            handler: logging.Handler, with_color: bool = True
+        ) -> None:
+            if with_color and os.getenv("EINK_SCREEN") == "1":
+                with_color = False
+            format_str: str = "%(asctime)s %(levelname)s {%(processName)s} [%(filename)s => %(lineno)d] : %(message)s"
+            if with_color:
+                formatter: logging.Formatter = ColoredFormatter(
+                    "%(log_color)s" + format_str,
+                    log_colors={
+                        "DEBUG": "green",
+                        "WARNING": "yellow",
+                        "ERROR": "red",
+                        "CRITICAL": "bold_red",
+                    },
+                    style="%",
+                )
+            else:
+                formatter = logging.Formatter(
+                    format_str,
+                    style="%",
+                )
 
-    __background_thd = __multiprocessing_ctx.Process(
-        target=__worker, args=(__message_queue, os.getpid()), daemon=True
-    )
-    __background_thd.start()
+            handler.setFormatter(formatter)
 
-    @atexit.register
-    def shutdown() -> None:
-        with contextlib.suppress(BaseException):
-            __message_queue.put({"cyy_logger_exit": os.getpid()})
+        set_default_formatter(__handler, with_color=True)
+        logger.addHandler(__handler)
+        logger.propagate = False
+
+        def add_file_handler_impl(
+            filename: str,
+            formatter: None | logging.Formatter = None,
+        ) -> logging.Handler:
+            for handler in logger.handlers:
+                if (
+                    isinstance(handler, logging.FileHandler)
+                    and handler.baseFilename == filename
+                ):
+                    return handler
+            log_dir = os.path.dirname(filename)
+            if log_dir:
+                os.makedirs(log_dir, exist_ok=True)
+            handler = logging.FileHandler(filename, mode="wt", encoding="utf8")
+            logger.addHandler(handler)
+            if formatter is not None:
+                set_default_formatter(handler, with_color=False)
+            return handler
+
+        while True:
+            try:
+                record = qu.get()
+                if record is None:
+                    return
+                match record:
+                    case dict():
+                        if record.get("cyy_logger_exit", None) == main_pid:
+                            return
+                        level = record.pop("logger_level", None)
+                        if level is not None:
+                            for handler in logger.handlers:
+                                handler.setLevel(level)
+                        formatter = record.pop("logger_formatter", None)
+                        if formatter is not None:
+                            for handler in logger.handlers:
+                                handler.setFormatter(formatter)
+                        filename = record.pop("filename", None)
+                        if filename is not None:
+                            formatter = None
+                            if logger.handlers:
+                                formatter = logger.handlers[0].formatter
+                            add_file_handler_impl(
+                                filename=filename, formatter=formatter
+                            )
+                    case _:
+                        logger.handle(record)
+                        for hander in logger.handlers:
+                            hander.flush()
+            except ValueError:
+                return
+            except EOFError:
+                return
+            except OSError:
+                return
+            except TypeError:
+                return
 
 
 def set_multiprocessing_ctx(ctx: Any) -> None:
-    global __multiprocessing_ctx
-    __multiprocessing_ctx = ctx
+    LoggerEnv.set_multiprocessing_ctx(ctx)
+
+
+def add_file(filename: str) -> None:
+    add_file_handler(filename)
 
 
 def add_file_handler(filename: str) -> None:
-    with __logger_lock:
-        __initialize_logger()
-        filename = os.path.normpath(os.path.abspath(filename))
-        __filenames.add(filename)
-        __message_queue.put({"filename": filename})
+    LoggerEnv.add_file_handler(filename)
 
 
 def set_level(level: Any) -> None:
-    __initialize_logger()
-    __message_queue.put({"logger_level": level})
-
-
-__formatter = None
+    LoggerEnv.set_level(level)
 
 
 def set_formatter(formatter: logging.Formatter) -> None:
-    global __formatter
-    __formatter = formatter
-    __initialize_logger()
-    __message_queue.put({"logger_formatter": __formatter})
+    LoggerEnv.set_formatter(formatter)
 
 
 def get_logger_setting() -> dict:
-    if __message_queue is None:
-        return {}
-    setting = {
-        "message_queue": __message_queue,
-        "filenames": __filenames,
-        "pid": os.getpid(),
-    }
-    if __formatter is not None:
-        setting["logger_formatter"] = __formatter
-    return setting
+    return LoggerEnv().get_logger_setting()
 
 
 def apply_logger_setting(setting: dict) -> None:
-    global __message_queue
-    if not setting:
-        return
-    if os.getpid() == setting["pid"]:
-        return
-    __message_queue = setting["message_queue"]
-    __initialize_proxy_logger()
-    __formatter = setting.pop("logger_formatter", None)
-    if __formatter is not None:
-        set_formatter(formatter=__formatter)
-    for filename in setting["filenames"]:
-        add_file_handler(filename=filename)
-
-
-def __get_logger() -> logging.Logger:
-    __initialize_logger()
-    assert __proxy_logger is not None
-    return __proxy_logger
+    LoggerEnv().apply_logger_setting(setting)
 
 
 def log_info(*args, **kwargs) -> None:
-    __get_logger().info(*args, **kwargs, stacklevel=2)
+    LoggerEnv().initialize_proxy_logger().info(*args, **kwargs, stacklevel=2)
 
 
 def log_debug(*args, **kwargs) -> None:
-    __get_logger().debug(*args, **kwargs, stacklevel=2)
+    LoggerEnv().initialize_proxy_logger().debug(*args, **kwargs, stacklevel=2)
 
 
 def log_warning(*args, **kwargs) -> None:
-    __get_logger().warning(*args, **kwargs, stacklevel=2)
+    LoggerEnv().initialize_proxy_logger().warning(*args, **kwargs, stacklevel=2)
 
 
 def log_error(*args, **kwargs) -> None:
-    __get_logger().error(*args, **kwargs, stacklevel=2)
+    LoggerEnv().initialize_proxy_logger().error(*args, **kwargs, stacklevel=2)
