@@ -83,12 +83,12 @@ def _is_nt_ssd(path):
         c = wmi.WMI()
         phy_to_part = "Win32_DiskDriveToDiskPartition"
         log_to_part = "Win32_LogicalDiskToPartition"
-        index = dict(
-            (log_disk.Caption, phy_disk.Index)
+        index = {
+            log_disk.Caption: phy_disk.Index
             for phy_disk in c.Win32_DiskDrive()
             for partition in phy_disk.associators(phy_to_part)
             for log_disk in partition.associators(log_to_part)
-        )
+        }
 
         c = wmi.WMI(moniker="//./ROOT/Microsoft/Windows/Storage")
         flag = bool(c.MSFT_PhysicalDisk(DeviceId=str(index[drive]), MediaType=4))
