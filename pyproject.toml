@@ -15,19 +15,18 @@ classifiers = [
   "Programming Language :: Python"
 ]
 
-dynamic = ["dependencies"]
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+dependencies = [
+"colorlog",
+"psutil",
+"FileLock-git",
+"requests",
+"tqdm",
+"looseversion",
+]
+
 
 [project.urls]
 Repository = "https://github.com/cyyever/naive_python_lib"
-
-[tool.pyright]
-include = ["cyy_naive_lib"]
-defineConstant = { DEBUG = true }
-
-reportMissingImports = true
-reportMissingTypeStubs = false
 
 [tool.ruff]
 target-version = "py312"

@@ -75,6 +75,13 @@ class __LoggerEnv:
             cls.__apply_logger_setting()
 
     @classmethod
+    def remove_file_handler(cls, filename: str) -> None:
+        filename = os.path.normpath(os.path.abspath(filename))
+        with cls.__logger_lock:
+            cls.__filenames.remove(filename)
+            cls.__message_queue.put({"removed_filename": filename})
+
+    @classmethod
     def get_logger_setting(cls) -> dict:
         if cls.__message_queue is None:
             return {}
@@ -206,6 +213,14 @@ class __LoggerEnv:
                             add_file_handler_impl(
                                 filename=filename, formatter=formatter
                             )
+                        removed_filename = record.pop("removed_filename", None)
+                        if removed_filename is not None:
+                            for handler in logger.handlers:
+                                if (
+                                    isinstance(handler, logging.FileHandler)
+                                    and handler.baseFilename == removed_filename
+                                ):
+                                    logger.removeHandler(handler)
                     case _:
                         logger.handle(record)
                         for hander in logger.handlers:
@@ -225,6 +240,10 @@ def set_multiprocessing_ctx(ctx: Any) -> None:
 
 
 def add_file(filename: str) -> None:
+    add_file_handler(filename)
+
+
+def remove_file_handler(filename: str) -> None:
     add_file_handler(filename)
 
 

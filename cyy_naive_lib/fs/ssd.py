@@ -2,7 +2,7 @@
 import os
 import sys
 from glob import glob
-from os.path import basename, dirname, expanduser, realpath, splitdrive
+from os.path import basename, dirname, expanduser, realpath
 
 
 def _fullpath(path):
@@ -65,35 +65,7 @@ def _blkdevice(path):
 
 
 def _is_nt_ssd(path):
-    import win32file
-
-    flag = False
-
-    path = _fullpath(path)
-    drive = splitdrive(path)[0].upper()
-
-    drivetype = win32file.GetDriveType(drive)
-
-    if drivetype == win32file.DRIVE_RAMDISK:
-        flag = True
-
-    elif drivetype in (win32file.DRIVE_FIXED, win32file.DRIVE_REMOVABLE):
-        import wmi
-
-        c = wmi.WMI()
-        phy_to_part = "Win32_DiskDriveToDiskPartition"
-        log_to_part = "Win32_LogicalDiskToPartition"
-        index = {
-            log_disk.Caption: phy_disk.Index
-            for phy_disk in c.Win32_DiskDrive()
-            for partition in phy_disk.associators(phy_to_part)
-            for log_disk in partition.associators(log_to_part)
-        }
-
-        c = wmi.WMI(moniker="//./ROOT/Microsoft/Windows/Storage")
-        flag = bool(c.MSFT_PhysicalDisk(DeviceId=str(index[drive]), MediaType=4))
-
-    return flag
+    return True
 
 
 def _is_osx_ssd(path) -> bool:
