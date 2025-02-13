@@ -49,7 +49,7 @@ class FileSource(Source):
                         )
                     for chunk in tqdm(
                         response.iter_content(chunk_size=1024 * 1024),
-                        total=int(int(total_length) / (1024 * 1024)),
+                        total=float(total_length) / (1024 * 1024),
                         unit="mb",
                     ):
                         if chunk:

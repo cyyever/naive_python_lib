@@ -16,12 +16,12 @@ classifiers = [
 ]
 
 dependencies = [
-"colorlog",
-"psutil",
-"FileLock-git",
-"requests",
-"tqdm",
-"looseversion",
+  "colorlog",
+  "psutil",
+  "FileLock-git",
+  "requests",
+  "tqdm",
+  "looseversion",
 ]
 
 
