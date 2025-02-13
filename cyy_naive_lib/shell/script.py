@@ -1,5 +1,6 @@
 import os
-from typing import Any
+from collections.abc import Iterable
+from typing import Any, TextIO
 
 from .shell import Shell
 
@@ -34,22 +35,18 @@ class Script:
     def _convert_path(self, path: str) -> str:
         return path
 
-    def prepend_content(self, content: str | list) -> None:
-        if isinstance(content, list):
-            self.content = content + self.content
-        elif isinstance(content, str):
+    def prepend_content(self, content: str | Iterable) -> None:
+        if isinstance(content, str):
             self.content = content.splitlines() + self.content
         else:
-            raise RuntimeError("unsupported content type")
+            self.content = list(content) + self.content
         self.__remove_newline()
 
-    def append_content(self, content: str | list) -> None:
-        if isinstance(content, list):
-            self.content += content
-        elif isinstance(content, str):
+    def append_content(self, content: str | Iterable) -> None:
+        if isinstance(content, str):
             self.content += content.splitlines()
         else:
-            raise RuntimeError("unsupported content type")
+            self.content += list(content)
         self.__remove_newline()
 
     def get_suffix(self) -> str:
@@ -73,7 +70,7 @@ class Script:
     def exec(
         self,
         throw: bool = True,
-        extra_output_files: None | list[str] = None,
+        extra_output_files: None | list[TextIO] = None,
         **exec_kwargs,
     ) -> tuple[Any, int]:
         res = self._get_exec_command_line()

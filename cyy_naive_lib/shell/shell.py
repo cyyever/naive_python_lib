@@ -2,6 +2,7 @@ import subprocess
 import sys
 from threading import Thread
 from time import sleep
+from typing import TextIO
 
 
 class Shell:
@@ -10,7 +11,7 @@ class Shell:
         cls,
         command_line: list,
         print_out: bool = True,
-        extra_output_files: list[str] | None = None,
+        extra_output_files: list[TextIO] | None = None,
         **process_kwargs,
     ) -> tuple:
         r"""
