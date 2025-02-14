@@ -11,6 +11,12 @@ from typing import Any
 from colorlog import ColoredFormatter
 
 
+def set_logger_level(logger: logging.Logger, level: int) -> None:
+    logger.setLevel(level)
+    for handler in logger.handlers:
+        handler.setLevel(level)
+
+
 class __LoggerEnv:
     __logger_lock = threading.RLock()
     __multiprocessing_ctx: Any = multiprocessing
@@ -18,7 +24,7 @@ class __LoggerEnv:
     __proxy_logger: logging.Logger | None = None
     __filenames: set[str] = set()
     __formatter: None | Any = None
-    __logger_level: Any | None = None
+    __logger_level: int | None = None
 
     @classmethod
     def set_multiprocessing_ctx(cls, ctx: Any) -> None:
@@ -34,12 +40,12 @@ class __LoggerEnv:
             cls.__proxy_logger = logging.getLogger("proxy_logger")
             if cls.__proxy_logger.handlers:
                 return cls.__proxy_logger
-            cls.__proxy_logger.setLevel(logging.INFO)
             cls.__proxy_logger.addHandler(
                 logging.handlers.QueueHandler(cls.__message_queue)
             )
             cls.__proxy_logger.propagate = False
             cls.__apply_logger_setting()
+            set_logger_level(cls.__proxy_logger, logging.DEBUG)
             return cls.__proxy_logger
 
     @classmethod
@@ -137,7 +143,6 @@ class __LoggerEnv:
     def _worker(cls, qu: Queue, main_pid: int) -> None:
         logger: logging.Logger = logging.getLogger("colored_logger")
         assert not logger.handlers
-        logger.setLevel(logging.DEBUG)
         __handler = logging.StreamHandler()
 
         def set_default_formatter(
@@ -167,6 +172,7 @@ class __LoggerEnv:
 
         set_default_formatter(__handler, with_color=True)
         logger.addHandler(__handler)
+        set_logger_level(logger, logging.DEBUG)
         logger.propagate = False
 
         def add_file_handler_impl(
@@ -199,8 +205,7 @@ class __LoggerEnv:
                             return
                         level = record.pop("logger_level", None)
                         if level is not None:
-                            for handler in logger.handlers:
-                                handler.setLevel(level)
+                            set_logger_level(logger, level)
                         formatter = record.pop("logger_formatter", None)
                         if formatter is not None:
                             for handler in logger.handlers:
