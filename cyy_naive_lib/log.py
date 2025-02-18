@@ -20,6 +20,7 @@ def set_logger_level(logger: logging.Logger, level: int) -> None:
 class __LoggerEnv:
     __logger_lock = threading.RLock()
     __multiprocessing_ctx: Any = multiprocessing
+    __use_default_logger: bool = False
     __message_queue: Any = None
     __proxy_logger: logging.Logger | None = None
     __filenames: set[str] = set()
@@ -37,7 +38,12 @@ class __LoggerEnv:
             if cls.__proxy_logger is not None:
                 return cls.__proxy_logger
             cls.__initialize_logger()
-            cls.__proxy_logger = logging.getLogger("proxy_logger")
+            if cls.__use_default_logger:
+                cls.__proxy_logger = logging.getLogger()
+                for hander in cls.__proxy_logger.handlers:
+                    cls.__proxy_logger.removeHandler(hander)
+            else:
+                cls.__proxy_logger = logging.getLogger("proxy_logger")
             if cls.__proxy_logger.handlers:
                 return cls.__proxy_logger
             cls.__proxy_logger.addHandler(
@@ -238,6 +244,11 @@ class __LoggerEnv:
                 return
             except TypeError:
                 return
+
+
+def replace_default_logger() -> None:
+    # assert __LoggerEnv.__proxy_logger is None
+    __LoggerEnv.__use_default_logger = True
 
 
 def set_multiprocessing_ctx(ctx: Any) -> None:
