@@ -17,12 +17,24 @@ def set_logger_level(logger: logging.Logger, level: int) -> None:
         handler.setLevel(level)
 
 
+def get_replaced_loggers() -> set[str]:
+    replaced_loggers: set | str = os.environ.pop("CYY_REPLACED_LOGGER", set())
+    if isinstance(replaced_loggers, str):
+        replaced_loggers = set(replaced_loggers.split(","))
+    return replaced_loggers
+
+
+def replace_logger(name: str) -> None:
+    replaced_loggers = get_replaced_loggers()
+    replaced_loggers.add(name)
+    os.environ["CYY_REPLACED_LOGGER"] = ",".join(replaced_loggers)
+
+
 class __LoggerEnv:
     __logger_lock = threading.RLock()
     __multiprocessing_ctx: Any = multiprocessing
-    __use_default_logger: bool = False
     __message_queue: Any = None
-    __proxy_logger: logging.Logger | None = None
+    proxy_logger: logging.Logger | None = None
     __filenames: set[str] = set()
     __formatter: None | Any = None
     __logger_level: int | None = None
@@ -35,24 +47,25 @@ class __LoggerEnv:
     @classmethod
     def initialize_proxy_logger(cls) -> logging.Logger:
         with cls.__logger_lock:
-            if cls.__proxy_logger is not None:
-                return cls.__proxy_logger
+            if cls.proxy_logger is not None:
+                return cls.proxy_logger
             cls.__initialize_logger()
-            if cls.__use_default_logger:
-                cls.__proxy_logger = logging.getLogger()
-                for hander in cls.__proxy_logger.handlers:
-                    cls.__proxy_logger.removeHandler(hander)
-            else:
-                cls.__proxy_logger = logging.getLogger("proxy_logger")
-            if cls.__proxy_logger.handlers:
-                return cls.__proxy_logger
-            cls.__proxy_logger.addHandler(
+            cls.proxy_logger = logging.getLogger("proxy_logger")
+            if cls.proxy_logger.handlers:
+                return cls.proxy_logger
+            cls.proxy_logger.addHandler(
                 logging.handlers.QueueHandler(cls.__message_queue)
             )
-            cls.__proxy_logger.propagate = False
+            cls.proxy_logger.propagate = False
             cls.__apply_logger_setting()
-            set_logger_level(cls.__proxy_logger, logging.DEBUG)
-            return cls.__proxy_logger
+            set_logger_level(cls.proxy_logger, logging.DEBUG)
+            for name in get_replaced_loggers():
+                replaced_logger = logging.getLogger(name=name)
+                for hander in replaced_logger.handlers:
+                    replaced_logger.removeHandler(hander)
+                for hander in cls.proxy_logger.handlers:
+                    replaced_logger.addHandler(hander)
+            return cls.proxy_logger
 
     @classmethod
     def __apply_logger_setting(cls) -> None:
@@ -246,9 +259,12 @@ class __LoggerEnv:
                 return
 
 
+def initialize_proxy_logger() -> None:
+    __LoggerEnv.initialize_proxy_logger()
+
+
 def replace_default_logger() -> None:
-    # assert __LoggerEnv.__proxy_logger is None
-    __LoggerEnv.__use_default_logger = True
+    replace_logger(logging.getLogger().name)
 
 
 def set_multiprocessing_ctx(ctx: Any) -> None:
