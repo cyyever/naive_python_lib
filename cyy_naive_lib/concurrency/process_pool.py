@@ -53,10 +53,5 @@ class ProcessPool(ExecutorPool):
         self, fn: Callable, *args: Any, **kwargs: Any
     ) -> concurrent.futures.Future:
         if self.__pass_process_data:
-            return super().submit(
-                functools.partial(self.wrap_fun, fn),
-                *args,
-                **kwargs,
-            )
-
+            fn = functools.partial(self.wrap_fun, fn)
         return super().submit(fn, *args, **kwargs)
