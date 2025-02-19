@@ -1,6 +1,6 @@
 import hashlib
 import os
-import pickle
+import dill
 import tempfile
 import time
 from collections.abc import Callable
@@ -60,7 +60,7 @@ class DataStorage:
     def __load_data(self) -> Any:
         assert self.__data_path
         with open(self.__data_path, "rb") as f:
-            return pickle.load(f)
+            return dill.load(f)
 
     def __close_data_file(self) -> None:
         if self.__data_path is not None:
@@ -90,7 +90,7 @@ class DataStorage:
         if self.__data_hash is not None:
             return self.__data_hash
         hash_sha256 = hashlib.sha256()
-        hash_sha256.update(pickle.dumps(self.data))
+        hash_sha256.update(dill.dumps(self.data))
         self.__data_hash = hash_sha256.hexdigest()
         return self.__data_hash
 
@@ -110,7 +110,7 @@ class DataStorage:
                 os.makedirs(os.path.dirname(self.__data_path), exist_ok=True)
             assert self.__data_path is not None
             with open(self.__data_path, "wb") as f:
-                pickle.dump(self.__data, f)
+                dill.dump(self.__data, f)
                 self.__data = None
                 self.__data_location = DataLocation.Disk
 
@@ -125,7 +125,7 @@ def persistent_cache(
             return None
         fd = os.open(path, flags=os.O_RDONLY)
         with os.fdopen(fd, "rb") as f:
-            res = pickle.load(f)
+            res = dill.load(f)
         return res
 
     def write_data(data: Any, path: str) -> None:
@@ -133,7 +133,7 @@ def persistent_cache(
             os.remove(path)
         fd = os.open(path, flags=os.O_CREAT | os.O_EXCL | os.O_WRONLY)
         with os.fdopen(fd, "wb") as f:
-            pickle.dump(data, f)
+            dill.dump(data, f)
 
     def wrap(fun: Callable) -> Callable:
         def wrap2(*args, **kwargs):
@@ -143,13 +143,13 @@ def persistent_cache(
             assert cache_path is not None
             hash_sha256 = hashlib.sha256()
             if args:
-                hash_sha256.update(pickle.dumps(args))
+                hash_sha256.update(dill.dumps(args))
             else:
-                hash_sha256.update(pickle.dumps([]))
+                hash_sha256.update(dill.dumps([]))
             if kwargs:
-                hash_sha256.update(pickle.dumps(kwargs))
+                hash_sha256.update(dill.dumps(kwargs))
             else:
-                hash_sha256.update(pickle.dumps({}))
+                hash_sha256.update(dill.dumps({}))
             if os.path.isfile(cache_path):
                 os.remove(cache_path)
             os.makedirs(cache_path, exist_ok=True)

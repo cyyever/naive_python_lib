@@ -190,7 +190,7 @@ class TaskQueue:
         return f"__worker{worker_id}"
 
     def __getstate__(self) -> dict:
-        # capture what is normally pickled
+        # capture what is normally dilld
         state = self.__dict__.copy()
         state["_TaskQueue__workers"] = None
         return state

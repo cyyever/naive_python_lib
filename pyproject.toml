@@ -21,6 +21,7 @@ dependencies = [
   "FileLock-git",
   "requests",
   "tqdm",
+  "dill",
   "looseversion",
 ]
 

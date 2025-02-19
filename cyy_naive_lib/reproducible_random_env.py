@@ -1,6 +1,6 @@
 import copy
 import os
-import pickle
+import dill
 import random
 import threading
 from typing import Any
@@ -83,7 +83,7 @@ class ReproducibleRandomEnv:
             os.makedirs(seed_dir, exist_ok=True)
             self.__last_seed_path = seed_path
             with open(seed_path, "wb") as f:
-                return pickle.dump(
+                return dill.dump(
                     self.get_state(),
                     f,
                 )
@@ -100,7 +100,7 @@ class ReproducibleRandomEnv:
             assert not self._enabled
             with open(path, "rb") as f:
                 log_warning("%s load reproducible env from %s", id(self), path)
-                self.load_state(pickle.load(f))
+                self.load_state(dill.load(f))
 
     def load_last_seed(self) -> None:
         self.load(self.last_seed_path)
