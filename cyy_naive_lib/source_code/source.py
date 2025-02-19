@@ -1,8 +1,7 @@
 import os
+from filelock import FileLock
 from types import TracebackType
-
 import psutil
-from filelock_git.filelock import FileLock
 
 from .package_spec import PackageSpecification
 
@@ -32,7 +31,8 @@ class Source:
                     os.remove(lock_file)
 
         with FileLock(lock_file, timeout=3600) as lock:
-            os.write(lock.fd, bytes(str(os.getpid()), encoding="utf8"))
+            with open(lock.lock_file, "wt", encoding="utf8") as f:
+                f.write(str(os.getpid()))
             res = self._download()
             if os.path.isdir(res):
                 os.chdir(res)

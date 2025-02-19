@@ -18,7 +18,7 @@ classifiers = [
 dependencies = [
   "colorlog",
   "psutil",
-  "FileLock-git",
+  "filelock",
   "requests",
   "tqdm",
   "dill",
