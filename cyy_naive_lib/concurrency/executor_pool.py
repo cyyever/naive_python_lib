@@ -13,6 +13,9 @@ class ExecutorPool(ExceptionSafeExecutor):
         super().__init__(executor=executor)
         self.__futures: list[concurrent.futures.Future] = []
 
+    def wrap_executor(self, wrapper_type: type) -> None:
+        self._executor = wrapper_type(executor=self._executor)
+
     def submit(
         self, fn: Callable, /, *args: Any, **kwargs: Any
     ) -> concurrent.futures.Future:
