@@ -1,9 +1,10 @@
 import copy
 import os
-import dill
 import random
 import threading
 from typing import Any
+
+import dill
 
 try:
     import numpy as np

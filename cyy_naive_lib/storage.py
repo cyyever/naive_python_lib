@@ -1,11 +1,12 @@
 import hashlib
 import os
-import dill
 import tempfile
 import time
 from collections.abc import Callable
 from enum import IntEnum, auto
 from typing import Any
+
+import dill
 
 
 class DataLocation(IntEnum):
