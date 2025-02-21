@@ -5,8 +5,7 @@ from typing import Any
 
 import gevent.lock
 
-from .executor import ExecutorWrapper
-from .process_pool import ExtentedProcessPoolExecutor, ProcessPool
+from .process_pool import ProcessPool
 
 
 class CoroutineExcutorMixin(concurrent.futures.Executor):
@@ -24,5 +23,5 @@ class CoroutineExcutorMixin(concurrent.futures.Executor):
         return [g.value for g in coroutines]
 
 
-class CoroutineExcutor(ProcessPool, CoroutineExcutorMixin):
+class ProcessPoolWithCouroutine(ProcessPool, CoroutineExcutorMixin):
     pass
