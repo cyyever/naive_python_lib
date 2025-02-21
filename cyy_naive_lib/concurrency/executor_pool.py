@@ -6,35 +6,11 @@ from typing import Any
 from cyy_naive_lib.log import log_debug
 
 from .call import exception_aware_call
+from .executor import ExecutorWrapper
 
 
-class ExecutorWrapper(concurrent.futures.Executor):
-    def __init__(self, executor: concurrent.futures.Executor) -> None:
-        self._executor: concurrent.futures.Executor = executor
-
-    @property
-    def executor(self) -> concurrent.futures.Executor:
-        return self._executor
-
-    def submit(
-        self, fn: Callable, /, *args: Any, **kwargs: Any
-    ) -> concurrent.futures.Future:
-        return self._executor.submit(fn, *args, **kwargs)
-
-    def shutdown(self, *args, **kwargs) -> None:
-        self._executor.shutdown(*args, **kwargs)
-
-
-class ExecutorPool(ExecutorWrapper):
-    def __init__(
-        self, executor: concurrent.futures.Executor, catch_exception: bool = False
-    ) -> None:
-        super().__init__(executor=executor)
-        self.__catch_exception = catch_exception
-        self.__futures: list[concurrent.futures.Future] = []
-
-    def catch_exception(self) -> None:
-        self.__catch_exception = True
+class ExceptionSafeExecutor(ExecutorWrapper):
+    catch_exception: bool = False
 
     def submit(
         self, fn: Callable, /, *args: Any, **kwargs: Any
@@ -47,10 +23,28 @@ class ExecutorPool(ExecutorWrapper):
         Returns:
             A Future representing the given call.
         """
-        if self.__catch_exception:
-            future = self.executor.submit(exception_aware_call, fn, *args, **kwargs)
-        else:
-            future = self.executor.submit(fn, *args, **kwargs)
+        if self.catch_exception:
+            return super().submit(exception_aware_call, fn, *args, **kwargs)
+        return super().submit(fn, *args, **kwargs)
+
+
+class ExecutorPool(ExceptionSafeExecutor):
+    def __init__(self, executor: concurrent.futures.Executor) -> None:
+        super().__init__(executor=executor)
+        self.__futures: list[concurrent.futures.Future] = []
+
+    def submit(
+        self, fn: Callable, /, *args: Any, **kwargs: Any
+    ) -> concurrent.futures.Future:
+        """Submits a callable to be executed with the given arguments.
+
+        Schedules the callable to be executed as fn(*args, **kwargs) and returns
+        a Future instance representing the execution of the callable.
+
+        Returns:
+            A Future representing the given call.
+        """
+        future = super().submit(fn, *args, **kwargs)
         self.__futures.append(future)
         return future
 
