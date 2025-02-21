@@ -74,9 +74,10 @@ class BlockingSubmitExecutor(ExecutorWrapper):
         if cls.__thread_store is None:
             cls.__thread_store = {}
         assert cls.__thread_store is not None
-        if f"{name}_pending" not in cls.__thread_store:
+        if f"{name}_clear" not in cls.__thread_store:
+            print("report clear name")
             global_store.remove(f"{name}_pending")
-            cls.__thread_store[f"{name}_pending"] = True
+            cls.__thread_store[f"{name}_clear"] = True
 
     @classmethod
     def _fun(cls, fun: Callable, *args, **kwargs):
@@ -91,7 +92,7 @@ class BlockingSubmitExecutor(ExecutorWrapper):
         global_store = self.__global_store
         self.__wait_job(global_store)
         return super().submit(
-            fn,
+            functools.partial(self._fun, fn),
             *args,
             **kwargs,
             blocking_submit_executor_name=self.name,
