@@ -8,7 +8,7 @@ from cyy_naive_lib.log import log_debug
 from .call import exception_aware_call
 
 
-class ExecutorPool:
+class ExecutorPool(concurrent.futures.Executor):
     def __init__(
         self, executor: concurrent.futures.Executor, catch_exception: bool = False
     ) -> None:
