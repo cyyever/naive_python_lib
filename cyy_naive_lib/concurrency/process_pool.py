@@ -1,5 +1,4 @@
 import concurrent.futures
-import functools
 from collections.abc import Callable
 from typing import Any
 
@@ -14,14 +13,13 @@ from .process_initialization import (
 )
 
 
-class ProcessPool(ExecutorPool):
+class ExtentedProcessExecutor(concurrent.futures.ProcessPoolExecutor):
     def __init__(
         self,
         initializer=None,
         initargs=None,
         use_logger: bool = True,
         pass_process_data: bool = False,
-        max_tasks_per_child: int | None = 1,
         **kwargs,
     ) -> None:
         real_initarg: dict = {}
@@ -34,24 +32,24 @@ class ProcessPool(ExecutorPool):
             )
         if "mp_context" not in kwargs:
             kwargs["mp_context"] = ProcessContext().get_ctx()
+        if "max_tasks_per_child" not in kwargs:
+            kwargs["max_tasks_per_child"] = 1
 
         super().__init__(
-            concurrent.futures.ProcessPoolExecutor(
-                initializer=default_initializer,
-                initargs=(real_initarg,),
-                **kwargs,
-                max_tasks_per_child=max_tasks_per_child,
-            )
+            initializer=default_initializer,
+            initargs=(real_initarg,),
+            **kwargs,
         )
         self.__pass_process_data = pass_process_data
 
-    @classmethod
-    def wrap_fun(cls, fn: Callable, *args: Any, **kwargs: Any) -> Any:
-        return fn(*args, **kwargs, **get_process_data())
-
     def submit(
-        self, fn: Callable, *args: Any, **kwargs: Any
+        self, fn: Callable, /, *args: Any, **kwargs: Any
     ) -> concurrent.futures.Future:
         if self.__pass_process_data:
-            fn = functools.partial(self.wrap_fun, fn)
+            kwargs |= get_process_data()
         return super().submit(fn, *args, **kwargs)
+
+
+class ProcessPool(ExecutorPool):
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(ExtentedProcessExecutor(**kwargs))
