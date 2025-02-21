@@ -51,7 +51,6 @@ class ExceptionSafeExecutor(ExecutorWrapper):
 
 
 class BlockingSubmitExecutor(ExecutorWrapper):
-    __thread_store: dict | None = None
     __global_store: Any | None = None
 
     @functools.cached_property
@@ -71,13 +70,7 @@ class BlockingSubmitExecutor(ExecutorWrapper):
         cls, blocking_submit_executor_name: str, global_store
     ) -> None:
         name = blocking_submit_executor_name
-        if cls.__thread_store is None:
-            cls.__thread_store = {}
-        assert cls.__thread_store is not None
-        if f"{name}_clear" not in cls.__thread_store:
-            print("report clear name")
-            global_store.remove(f"{name}_pending")
-            cls.__thread_store[f"{name}_clear"] = True
+        global_store.remove(f"{name}_pending")
 
     @classmethod
     def _fun(cls, fun: Callable, *args, **kwargs):
