@@ -13,6 +13,10 @@ class ExecutorWrapper(concurrent.futures.Executor):
     def __init__(self, executor: concurrent.futures.Executor) -> None:
         self._executor: concurrent.futures.Executor = executor
 
+    @property
+    def executor(self):
+        return self._executor
+
     def wrap_executor(self, wrapper_type: type) -> None:
         new_executor = wrapper_type(executor=self._executor)
         assert isinstance(new_executor, concurrent.futures.Executor)
