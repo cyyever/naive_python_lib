@@ -57,9 +57,7 @@ class ExtentedProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
     ) -> concurrent.futures.Future:
         assert "fn" not in kwargs
         return super().submit(
-            functools.partial(
-                self.wrapped_fn, fn=fn, pass_process_data=self.__pass_process_data
-            ),
+            functools.partial(self.wrapped_fn, fn, self.__pass_process_data),
             *args,
             **kwargs,
         )
