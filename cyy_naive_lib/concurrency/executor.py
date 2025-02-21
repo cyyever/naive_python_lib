@@ -13,6 +13,11 @@ class ExecutorWrapper(concurrent.futures.Executor):
     def __init__(self, executor: concurrent.futures.Executor) -> None:
         self._executor: concurrent.futures.Executor = executor
 
+    def wrap_executor(self, wrapper_type: type) -> None:
+        new_executor = wrapper_type(executor=self._executor)
+        assert isinstance(new_executor, concurrent.futures.Executor)
+        self._executor = new_executor
+
     def submit(
         self, fn: Callable, /, *args: Any, **kwargs: Any
     ) -> concurrent.futures.Future:
