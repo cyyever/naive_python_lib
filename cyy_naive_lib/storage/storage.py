@@ -15,7 +15,7 @@ class DataLocation(IntEnum):
     Disk = auto()
 
 
-class DataStorage:
+class SyncedDataStorage:
     """封装数据存储操作"""
 
     def __init__(self, data: Any = None, data_path: str | None = None):
