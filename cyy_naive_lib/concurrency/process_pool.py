@@ -41,20 +41,26 @@ class ExtentedProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
             initargs=(real_initarg,),
             **kwargs,
         )
-        self._pass_process_data = pass_process_data
+        self.__pass_process_data = pass_process_data
 
+    @classmethod
     def wrapped_fn(
-        self, fn: Callable, /, *args: Any, **kwargs: Any
+        cls, fn: Callable, pass_process_data: bool, *args: Any, **kwargs: Any
     ) -> concurrent.futures.Future:
-        if self._pass_process_data:
-            kwargs |= get_process_data()
-        return fn(*args, **kwargs)
+        process_data = {}
+        if pass_process_data:
+            process_data = get_process_data()
+        return fn(*args, **kwargs, **process_data)
 
     def submit(
         self, fn: Callable, /, *args: Any, **kwargs: Any
     ) -> concurrent.futures.Future:
         return super().submit(
-            functools.partial(self.wrapped_fn, fn=fn), *args, **kwargs
+            functools.partial(
+                self.wrapped_fn, fn=fn, pass_process_data=self.__pass_process_data
+            ),
+            *args,
+            **kwargs,
         )
 
 
