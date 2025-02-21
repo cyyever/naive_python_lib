@@ -1,4 +1,5 @@
 import concurrent.futures
+import functools
 from collections.abc import Callable
 from typing import Any
 
@@ -52,7 +53,9 @@ class ExtentedProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
     def submit(
         self, fn: Callable, /, *args: Any, **kwargs: Any
     ) -> concurrent.futures.Future:
-        return super().submit(self.wrapped_fn, *args, **kwargs, fn=fn)
+        return super().submit(
+            functools.partial(self.wrapped_fn, fn=fn), *args, **kwargs
+        )
 
 
 class ProcessPool(ExecutorPool):

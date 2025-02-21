@@ -5,11 +5,11 @@ from cyy_naive_lib.concurrency import ProcessPool
 from cyy_naive_lib.fs.tempdir import TempDir
 from cyy_naive_lib.log import (
     add_file_handler,
-    remove_file_handler,
     log_debug,
     log_error,
     log_info,
     log_warning,
+    remove_file_handler,
     set_level,
 )
 
