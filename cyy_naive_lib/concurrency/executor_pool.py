@@ -5,27 +5,7 @@ from typing import Any
 
 from cyy_naive_lib.log import log_debug
 
-from .call import exception_aware_call
-from .executor import ExecutorWrapper
-
-
-class ExceptionSafeExecutor(ExecutorWrapper):
-    catch_exception: bool = False
-
-    def submit(
-        self, fn: Callable, /, *args: Any, **kwargs: Any
-    ) -> concurrent.futures.Future:
-        """Submits a callable to be executed with the given arguments.
-
-        Schedules the callable to be executed as fn(*args, **kwargs) and returns
-        a Future instance representing the execution of the callable.
-
-        Returns:
-            A Future representing the given call.
-        """
-        if self.catch_exception:
-            return super().submit(exception_aware_call, fn, *args, **kwargs)
-        return super().submit(fn, *args, **kwargs)
+from .executor import ExceptionSafeExecutor
 
 
 class ExecutorPool(ExceptionSafeExecutor):
