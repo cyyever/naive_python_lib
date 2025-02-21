@@ -1,7 +1,7 @@
 import multiprocessing
 import threading
 
-from cyy_naive_lib.concurrency import ProcessPool, ThreadPool, ProcessPoolWithCouroutine
+from cyy_naive_lib.concurrency import ProcessPool, ProcessPoolWithCouroutine, ThreadPool
 from cyy_naive_lib.log import log_warning
 
 
