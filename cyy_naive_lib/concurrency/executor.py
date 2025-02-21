@@ -84,3 +84,9 @@ class BlockingSubmitExecutor(ExecutorWrapper):
             blocking_submit_executor_name=self.name,
             global_store=global_store,
         )
+
+    def submit_batch(self, fun: Callable, kwargs_list: list):
+        assert hasattr(super(), "submit_batch")
+        return super().submit_batch(
+            [functools.partial(fun, **kwargs_elem) for kwargs_elem in kwargs_list],
+        )
