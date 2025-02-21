@@ -48,6 +48,7 @@ class ExceptionSafeExecutor(ExecutorWrapper):
 
 class BlockingSubmitExecutor(ExecutorWrapper):
     __thread_store: dict | None = None
+    __global_store: Any | None = None
 
     @functools.cached_property
     def name(self) -> str:
@@ -57,6 +58,9 @@ class BlockingSubmitExecutor(ExecutorWrapper):
         while global_store.has(f"{self.name}_pending"):
             time.sleep(0.1)
         global_store.store(f"{self.name}_pending", True)
+
+    def set_global_store(self, global_store) -> None:
+        self.__global_store = global_store
 
     @classmethod
     def __mark_job_launched(
@@ -80,7 +84,7 @@ class BlockingSubmitExecutor(ExecutorWrapper):
     def submit(
         self, fn: Callable, /, *args: Any, **kwargs: Any
     ) -> concurrent.futures.Future:
-        global_store = kwargs.pop("global_store")
+        global_store = self.__global_store
         self.__wait_job(global_store)
         return super().submit(
             fn,
