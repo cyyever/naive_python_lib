@@ -1,4 +1,5 @@
 from .batch import batch_process
+from .corountine import CoroutineExcutor
 from .process_context import ManageredProcessContext, ProcessContext
 from .process_pool import ProcessPool
 from .process_task_queue import ProcessTaskQueue
@@ -13,6 +14,7 @@ __all__ = [
     "ProcessContext",
     "ProcessPool",
     "ProcessTaskQueue",
+    "CoroutineExcutor",
     "BatchPolicy",
     "TaskQueue",
     "ThreadContext",

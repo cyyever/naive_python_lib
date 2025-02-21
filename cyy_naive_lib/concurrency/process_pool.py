@@ -13,7 +13,7 @@ from .process_initialization import (
 )
 
 
-class ExtentedProcessExecutor(concurrent.futures.ProcessPoolExecutor):
+class ExtentedProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
     def __init__(
         self,
         initializer=None,
@@ -52,4 +52,4 @@ class ExtentedProcessExecutor(concurrent.futures.ProcessPoolExecutor):
 
 class ProcessPool(ExecutorPool):
     def __init__(self, **kwargs: Any) -> None:
-        super().__init__(ExtentedProcessExecutor(**kwargs))
+        super().__init__(ExtentedProcessPoolExecutor(**kwargs))

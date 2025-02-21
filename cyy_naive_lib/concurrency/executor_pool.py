@@ -8,23 +8,36 @@ from cyy_naive_lib.log import log_debug
 from .call import exception_aware_call
 
 
-class ExecutorPool(concurrent.futures.Executor):
+class ExecutorWrapper(concurrent.futures.Executor):
+    def __init__(self, executor: concurrent.futures.Executor) -> None:
+        self._executor: concurrent.futures.Executor = executor
+
+    @property
+    def executor(self) -> concurrent.futures.Executor:
+        return self._executor
+
+    def submit(
+        self, fn: Callable, /, *args: Any, **kwargs: Any
+    ) -> concurrent.futures.Future:
+        return self._executor.submit(fn, *args, **kwargs)
+
+    def shutdown(self, *args, **kwargs) -> None:
+        self._executor.shutdown(*args, **kwargs)
+
+
+class ExecutorPool(ExecutorWrapper):
     def __init__(
         self, executor: concurrent.futures.Executor, catch_exception: bool = False
     ) -> None:
-        self.__executor: concurrent.futures.Executor = executor
+        super().__init__(executor=executor)
         self.__catch_exception = catch_exception
         self.__futures: list[concurrent.futures.Future] = []
 
     def catch_exception(self) -> None:
         self.__catch_exception = True
 
-    @property
-    def executor(self) -> concurrent.futures.Executor:
-        return self.__executor
-
     def submit(
-        self, fn: Callable, *args: Any, **kwargs: Any
+        self, fn: Callable, /, *args: Any, **kwargs: Any
     ) -> concurrent.futures.Future:
         """Submits a callable to be executed with the given arguments.
 
@@ -60,6 +73,3 @@ class ExecutorPool(concurrent.futures.Executor):
         if not_done_futures:
             self.__futures = list(not_done_futures)
         return results, len(self.__futures)
-
-    def shutdown(self, *args, **kwargs) -> None:
-        self.executor.shutdown(*args, **kwargs)

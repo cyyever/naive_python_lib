@@ -1,7 +1,7 @@
 import multiprocessing
 import threading
 
-from cyy_naive_lib.concurrency import ProcessPool, ThreadPool
+from cyy_naive_lib.concurrency import ProcessPool, ThreadPool, CoroutineExcutor
 from cyy_naive_lib.log import log_warning
 
 
@@ -22,4 +22,10 @@ def test_thread_pool():
 def test_process_pool() -> None:
     pool: ProcessPool = ProcessPool()
     pool.submit(process_fun)
+    pool.shutdown()
+
+
+def test_coroutine_excutor():
+    pool = CoroutineExcutor()
+    pool.submit(thd_fun)
     pool.shutdown()
