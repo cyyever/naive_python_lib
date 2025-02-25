@@ -11,23 +11,6 @@ from typing import Any
 from colorlog import ColoredFormatter
 
 
-class StreamToLogger:
-    """
-    Fake file-like stream object that redirects writes to a logger instance.
-    Copied from https://stackoverflow.com/questions/19425736/how-to-redirect-stdout-and-stderr-to-logger-in-python
-    """
-
-    def __init__(self, logger) -> None:
-        self.logger = logger
-
-    def write(self, buf) -> None:
-        for line in buf.rstrip().splitlines():
-            self.logger.info(line.rstrip())
-
-    def flush(self) -> None:
-        pass
-
-
 def set_logger_level(logger: logging.Logger, level: int) -> None:
     logger.setLevel(level)
     for handler in logger.handlers:
@@ -330,3 +313,22 @@ def log_warning(*args, **kwargs) -> None:
 
 def log_error(*args, **kwargs) -> None:
     __LoggerEnv.initialize_proxy_logger().error(*args, **kwargs, stacklevel=2)
+
+
+class StreamToLogger:
+    """
+    Fake file-like stream object that redirects writes to a logger instance.
+    Copied from https://stackoverflow.com/questions/19425736/how-to-redirect-stdout-and-stderr-to-logger-in-python
+    """
+
+    def __init__(self, logger: logging.Logger | None = None) -> None:
+        if logger is None:
+            logger = logging.getLogger()
+        self.logger = logger
+
+    def write(self, buf) -> None:
+        for line in buf.rstrip().splitlines():
+            self.logger.info(line.rstrip())
+
+    def flush(self) -> None:
+        pass
