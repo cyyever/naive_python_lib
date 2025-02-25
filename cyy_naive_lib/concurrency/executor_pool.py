@@ -5,10 +5,10 @@ from typing import Any
 
 from cyy_naive_lib.log import log_debug
 
-from .executor import ExceptionSafeExecutor
+from .executor import ExecutorWrapper
 
 
-class ExecutorPool(ExceptionSafeExecutor):
+class ExecutorPool(ExecutorWrapper):
     def __init__(self, executor: concurrent.futures.Executor) -> None:
         super().__init__(executor=executor)
         self.__futures: list[concurrent.futures.Future] = []

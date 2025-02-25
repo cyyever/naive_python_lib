@@ -45,8 +45,8 @@ class ExceptionSafeExecutor(ExecutorWrapper):
         Returns:
             A Future representing the given call.
         """
-        # if self.catch_exception:
-        #     return super().submit(exception_aware_call, fn, *args, **kwargs)
+        if self.catch_exception:
+            return super().submit(exception_aware_call, fn, *args, **kwargs)
         return super().submit(fn, *args, **kwargs)
 
 

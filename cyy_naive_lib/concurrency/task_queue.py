@@ -7,8 +7,9 @@ from typing import Any
 
 import psutil
 
-from ..log import apply_logger_setting, get_logger_setting, log_error
-from ..time_counter import TimeCounter
+from cyy_naive_lib.log import apply_logger_setting, get_logger_setting, log_error
+from cyy_naive_lib.time_counter import TimeCounter
+
 from .context import ConcurrencyContext
 
 
