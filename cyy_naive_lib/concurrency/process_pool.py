@@ -17,15 +17,15 @@ from .process_initialization import (
 class ExtentedProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
     def __init__(
         self,
-        initializer=None,
-        initargs=None,
+        initializer: None | Callable = None,
+        initargs: dict | None = None,
         use_logger: bool = True,
-        pass_process_data: bool = False,
         **kwargs,
     ) -> None:
         real_initarg: dict = {}
         real_initarg["initializers"] = [initializer]
         real_initarg["initargs_list"] = [{} if initargs is None else initargs]
+        pass_process_data = "process_data" in real_initarg["initargs_list"][0]
         if use_logger:
             real_initarg["initializers"].insert(0, reinitialize_logger)
             real_initarg["initargs_list"].insert(
