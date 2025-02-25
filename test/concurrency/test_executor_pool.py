@@ -27,5 +27,5 @@ def test_process_pool() -> None:
 
 def test_process_with_coroutine():
     pool = ProcessPoolWithCouroutine()
-    pool.submit_batch([thd_fun, thd_fun])
+    pool.submit_batch([thd_fun, thd_fun], kwargs_list=[])
     pool.shutdown()
