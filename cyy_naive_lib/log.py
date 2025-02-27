@@ -337,7 +337,6 @@ class StreamToLogger:
 
 
 def redirect_stdout_to_logger(logger_names: Iterable[str] | None = None):
-    replace_default_logger()
     if logger_names is not None:
         for name in logger_names:
             replace_logger(name=name)
