@@ -5,6 +5,7 @@ import logging.handlers
 import multiprocessing
 import os
 import threading
+from collections.abc import Iterable
 from contextlib import redirect_stdout
 from multiprocessing import Queue
 from typing import Any
@@ -335,6 +336,9 @@ class StreamToLogger:
             h.flush()
 
 
-def redirect_stdout_to_logger():
+def redirect_stdout_to_logger(logger_names: Iterable[str] | None = None):
     replace_default_logger()
+    if logger_names is not None:
+        for name in logger_names:
+            replace_logger(name=name)
     return redirect_stdout(StreamToLogger())
