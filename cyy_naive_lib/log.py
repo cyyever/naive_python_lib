@@ -5,6 +5,7 @@ import logging.handlers
 import multiprocessing
 import os
 import threading
+from contextlib import redirect_stdout
 from multiprocessing import Queue
 from typing import Any
 
@@ -326,9 +327,14 @@ class StreamToLogger:
             logger = logging.getLogger()
         self.logger = logger
 
-    def write(self, buf) -> None:
-        for line in buf.rstrip().splitlines():
-            self.logger.info(line.rstrip())
+    def write(self, buf: str) -> None:
+        self.logger.info("%s", buf)
 
     def flush(self) -> None:
-        pass
+        for h in self.logger.handlers:
+            h.flush()
+
+
+def redirect_stdout_to_logger():
+    replace_default_logger()
+    return redirect_stdout(StreamToLogger())
