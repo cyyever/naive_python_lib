@@ -144,10 +144,10 @@ class __LoggerEnv:
     @classmethod
     def __initialize_logger(cls) -> None:
         with cls.__logger_lock:
-            if cls.__message_queue is not None:
+            if cls.proxy_logger is not None:
                 return
-            cls.__message_queue = cls.__multiprocessing_ctx.Manager().Queue()
-            cls.initialize_proxy_logger()
+            if cls.__message_queue is None:
+                cls.__message_queue = cls.__multiprocessing_ctx.Manager().Queue()
 
             background_thd = cls.__multiprocessing_ctx.Process(
                 target=cls._worker,
@@ -262,8 +262,10 @@ class __LoggerEnv:
             except TypeError:
                 return
 
+
 def get_proxy_logger() -> None:
     return __LoggerEnv.initialize_proxy_logger()
+
 
 def initialize_proxy_logger() -> None:
     __LoggerEnv.initialize_proxy_logger()
