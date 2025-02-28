@@ -1,4 +1,5 @@
 import atexit
+import sys
 import contextlib
 import logging
 import logging.handlers
@@ -260,6 +261,8 @@ class __LoggerEnv:
             except TypeError:
                 return
 
+def get_proxy_logger() -> None:
+    return __LoggerEnv.initialize_proxy_logger()
 
 def initialize_proxy_logger() -> None:
     __LoggerEnv.initialize_proxy_logger()
@@ -325,7 +328,7 @@ class StreamToLogger:
 
     def __init__(self, logger: logging.Logger | None = None) -> None:
         if logger is None:
-            logger = logging.getLogger()
+            logger = get_proxy_logger()
         self.logger = logger
 
     def write(self, buf: str) -> None:
@@ -340,4 +343,5 @@ def redirect_stdout_to_logger(logger_names: Iterable[str] | None = None):
     if logger_names is not None:
         for name in logger_names:
             replace_logger(name=name)
+    return redirect_stdout(sys.stderr)
     return redirect_stdout(StreamToLogger())
