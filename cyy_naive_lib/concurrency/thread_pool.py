@@ -1,8 +1,8 @@
 import concurrent.futures
 
-from .executor_pool import ExecutorPool
+from .executor import ExecutorWrapper
 
 
-class ThreadPool(ExecutorPool):
+class ThreadPool(ExecutorWrapper):
     def __init__(self) -> None:
         super().__init__(executor=concurrent.futures.ThreadPoolExecutor())

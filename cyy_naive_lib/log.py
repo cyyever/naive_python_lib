@@ -1,10 +1,10 @@
 import atexit
-import sys
 import contextlib
 import logging
 import logging.handlers
 import multiprocessing
 import os
+import sys
 import threading
 from collections.abc import Iterable
 from contextlib import redirect_stdout

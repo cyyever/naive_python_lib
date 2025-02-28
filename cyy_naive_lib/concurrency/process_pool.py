@@ -5,7 +5,7 @@ from typing import Any
 
 from cyy_naive_lib.log import get_logger_setting
 
-from .executor_pool import ExecutorPool
+from .executor import ExecutorWrapper
 from .process_context import ProcessContext
 from .process_initialization import (
     default_initializer,
@@ -63,6 +63,6 @@ class ExtentedProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
         )
 
 
-class ProcessPool(ExecutorPool):
+class ProcessPool(ExecutorWrapper):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(ExtentedProcessPoolExecutor(**kwargs))
