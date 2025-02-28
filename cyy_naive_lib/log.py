@@ -45,6 +45,7 @@ class __LoggerEnv:
     def set_multiprocessing_ctx(cls, ctx: Any) -> None:
         with cls.__logger_lock:
             cls.__multiprocessing_ctx = ctx
+            assert cls.__message_queue is None
 
     @classmethod
     def initialize_proxy_logger(cls) -> logging.Logger:
