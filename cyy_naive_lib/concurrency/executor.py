@@ -103,7 +103,6 @@ class BlockingSubmitExecutor(ExecutorWrapper):
         return str(uuid.uuid4())
 
     def __wait_job(self, global_store) -> None:
-        print("wait %s", self.name)
         while global_store.has(f"{self.name}_pending"):
             self.peek_results(timeout=0.1)
         global_store.store(f"{self.name}_pending", True)
@@ -116,7 +115,6 @@ class BlockingSubmitExecutor(ExecutorWrapper):
         cls, blocking_submit_executor_name: str, global_store
     ) -> None:
         name = blocking_submit_executor_name
-        print("mark %s", name)
         global_store.remove(f"{name}_pending")
 
     @classmethod
