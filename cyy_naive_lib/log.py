@@ -263,7 +263,7 @@ class __LoggerEnv:
                 return
 
 
-def get_proxy_logger() -> None:
+def get_proxy_logger() -> logging.Logger:
     return __LoggerEnv.initialize_proxy_logger()
 
 
@@ -347,4 +347,4 @@ def redirect_stdout_to_logger(logger_names: Iterable[str] | None = None):
         for name in logger_names:
             replace_logger(name=name)
     return redirect_stdout(sys.stderr)
-    return redirect_stdout(StreamToLogger())
+    # return redirect_stdout(StreamToLogger())

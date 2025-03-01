@@ -26,6 +26,8 @@ dependencies = [
   "gevent"
 ]
 
+[tool.setuptools.package-data]
+cyy_naive_lib = ["py.typed"]
 
 [project.urls]
 Repository = "https://github.com/cyyever/naive_python_lib"
