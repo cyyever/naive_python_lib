@@ -65,10 +65,10 @@ class __LoggerEnv:
             set_logger_level(cls.proxy_logger, cls.__logger_level)
             for name in get_replaced_loggers():
                 replaced_logger = logging.getLogger(name=name)
-                for hander in replaced_logger.handlers:
-                    replaced_logger.removeHandler(hander)
-                for hander in cls.proxy_logger.handlers:
-                    replaced_logger.addHandler(hander)
+                for handler in replaced_logger.handlers:
+                    replaced_logger.removeHandler(handler)
+                for handler in cls.proxy_logger.handlers:
+                    replaced_logger.addHandler(handler)
             return cls.proxy_logger
 
     @classmethod
@@ -199,13 +199,12 @@ class __LoggerEnv:
         def add_file_handler_impl(
             filename: str,
             formatter: None | logging.Formatter = None,
-        ) -> logging.Handler:
+        ) -> None:
             for handler in logger.handlers:
-                if (
-                    isinstance(handler, logging.FileHandler)
-                    and handler.baseFilename == filename
-                ):
-                    return handler
+                if isinstance(handler, logging.FileHandler) and os.path.abspath(
+                    handler.baseFilename
+                ) == os.path.abspath(filename):
+                    return
             log_dir = os.path.dirname(filename)
             if log_dir:
                 os.makedirs(log_dir, exist_ok=True)
@@ -213,7 +212,7 @@ class __LoggerEnv:
             logger.addHandler(handler)
             if formatter is not None:
                 set_default_formatter(handler, with_color=False)
-            return handler
+            return
 
         while True:
             try:
@@ -242,15 +241,17 @@ class __LoggerEnv:
                         removed_filename = record.pop("removed_filename", None)
                         if removed_filename is not None:
                             for handler in logger.handlers:
-                                if (
-                                    isinstance(handler, logging.FileHandler)
-                                    and handler.baseFilename == removed_filename
-                                ):
+                                if isinstance(
+                                    handler, logging.FileHandler
+                                ) and os.path.abspath(
+                                    handler.baseFilename
+                                ) == os.path.abspath(removed_filename):
+                                    handler.flush()
                                     logger.removeHandler(handler)
                     case _:
                         logger.handle(record)
-                        for hander in logger.handlers:
-                            hander.flush()
+                        for handler in logger.handlers:
+                            handler.flush()
             except ValueError:
                 return
             except EOFError:
@@ -282,7 +283,7 @@ def add_file(filename: str) -> None:
 
 
 def remove_file_handler(filename: str) -> None:
-    add_file_handler(filename)
+    __LoggerEnv.remove_file_handler(filename)
 
 
 def add_file_handler(filename: str) -> None:
