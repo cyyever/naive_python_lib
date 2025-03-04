@@ -57,7 +57,7 @@ def _blkdevice(path):
     block = ""
 
     for device in glob("/sys/class/block/*/dev"):
-        with open(device) as f:
+        with open(device, encoding="utf8") as f:
             if f.read().strip() == device_id:
                 block = basename(dirname(device))
                 return block

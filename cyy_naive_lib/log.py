@@ -40,7 +40,7 @@ class __LoggerEnv:
     proxy_logger: logging.Logger | None = None
     __filenames: set[str] = set()
     __formatter: None | Any = None
-    __logger_level: int | None = None
+    __logger_level: int = logging.DEBUG
 
     @classmethod
     def set_multiprocessing_ctx(cls, ctx: Any) -> None:
@@ -62,7 +62,7 @@ class __LoggerEnv:
             )
             cls.proxy_logger.propagate = False
             cls.__apply_logger_setting()
-            set_logger_level(cls.proxy_logger, logging.DEBUG)
+            set_logger_level(cls.proxy_logger, cls.__logger_level)
             for name in get_replaced_loggers():
                 replaced_logger = logging.getLogger(name=name)
                 for hander in replaced_logger.handlers:
@@ -75,8 +75,7 @@ class __LoggerEnv:
     def __apply_logger_setting(cls) -> None:
         if cls.__message_queue is None:
             return
-        if cls.__logger_level is not None:
-            cls.__message_queue.put({"logger_level": cls.__logger_level})
+        cls.__message_queue.put({"logger_level": cls.__logger_level})
 
         if cls.__formatter is not None:
             cls.__message_queue.put({"logger_formatter": cls.__formatter})
@@ -121,8 +120,7 @@ class __LoggerEnv:
         }
         if cls.__formatter is not None:
             setting["logger_formatter"] = cls.__formatter
-        if cls.__logger_level is not None:
-            setting["logger_level"] = cls.__logger_level
+        setting["logger_level"] = cls.__logger_level
         return setting
 
     @classmethod

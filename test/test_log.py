@@ -27,6 +27,7 @@ def test_log() -> None:
     with TempDir():
         multiprocessing.current_process().name = "my process"
         add_file_handler("log")
+        __test_log()
         remove_file_handler("log")
         # with open("log", encoding="utf8") as f:
         #     file_content = f.readlines()
@@ -37,4 +38,5 @@ def test_log() -> None:
 def test_multiprocess_log() -> None:
     pool = ProcessPool()
     pool.submit(__test_log)
+    pool.wait_results()
     pool.shutdown()
