@@ -16,9 +16,11 @@ def load_json(json_file: str) -> dict[str, Any]:
     return res
 
 
-def save_json(data, json_file: str, backup: bool = True) -> None:
+def save_json(
+    data, json_file: str, backup: bool = True, indent: int = 2, **kwargs
+) -> None:
     with (
         Backuper(json_file) if backup else contextlib.nullcontext(),
         open(json_file, "w", encoding="utf8") as f,
     ):
-        json.dump(data, f, indent=2, sort_keys=True)
+        json.dump(data, f, indent=indent, **kwargs)
