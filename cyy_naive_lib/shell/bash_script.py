@@ -13,10 +13,10 @@ class BashScript(Script):
 
     def _wrap_content_in_strict_mode(self, env_part: str, content_part: str) -> str:
         return (
-            self.line_seperator.join(["set -eu", "set -o pipefail"])
-            + self.line_seperator
+            self.line_separator.join(["set -eu", "set -o pipefail"])
+            + self.line_separator
             + env_part
-            + self.line_seperator
+            + self.line_separator
             + content_part
         )
 
@@ -40,7 +40,7 @@ class BashScript(Script):
                 )
         return "export " + key + "=" + self.__double_quota_escape_str(value)
 
-    def _get_line_seperator(self) -> str:
+    def _get_line_separator(self) -> str:
         return "\n"
 
     def __double_quota_escape_str(self, string: str) -> str:

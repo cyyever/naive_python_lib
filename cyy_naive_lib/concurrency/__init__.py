@@ -1,5 +1,5 @@
 from .batch import batch_process
-from .coroutine import ProcessPoolWithCouroutine
+from .coroutine import ProcessPoolWithCoroutine
 from .executor import BlockingSubmitExecutor
 from .process_context import ManageredProcessContext, ProcessContext
 from .process_pool import ProcessPool
@@ -16,7 +16,7 @@ __all__ = [
     "BlockingSubmitExecutor",
     "ProcessPool",
     "ProcessTaskQueue",
-    "ProcessPoolWithCouroutine",
+    "ProcessPoolWithCoroutine",
     "BatchPolicy",
     "TaskQueue",
     "ThreadContext",

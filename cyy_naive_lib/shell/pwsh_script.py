@@ -10,20 +10,20 @@ class PowerShellScript(Script):
 
     def _wrap_content_in_strict_mode(self, env_part: str, content_part: str):
         return (
-            self.line_seperator.join(
+            self.line_separator.join(
                 [
                     "Set-StrictMode -Version Latest",
                     '$ErrorView="NormalView"',
                     '$ErrorActionPreference="Stop"',
                 ]
             )
-            + self.line_seperator
+            + self.line_separator
             + env_part
-            + self.line_seperator
+            + self.line_separator
             + content_part
         )
 
-    def _get_line_seperator(self) -> str:
+    def _get_line_separator(self) -> str:
         return "\r\n"
 
     def get_suffix(self) -> str:

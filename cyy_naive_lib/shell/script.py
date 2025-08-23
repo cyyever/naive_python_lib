@@ -12,7 +12,7 @@ class Script:
             self.append_content(content)
         self.env: list = []
         self.strict_mode: bool = True
-        self.line_seperator: str = self._get_line_seperator()
+        self.line_separator: str = self._get_line_separator()
 
     def append_env(self, key: str, value: str) -> None:
         r"""
@@ -60,12 +60,12 @@ class Script:
         raise RuntimeError("Can't create script name")
 
     def get_complete_content(self) -> str:
-        env_part = self.line_seperator.join([self._export(k, v) for (k, v) in self.env])
-        content_part = self.line_seperator.join(self.content)
+        env_part = self.line_separator.join([self._export(k, v) for (k, v) in self.env])
+        content_part = self.line_separator.join(self.content)
 
         if self.strict_mode:
             return self._wrap_content_in_strict_mode(env_part, content_part)
-        return env_part + self.line_seperator + content_part
+        return env_part + self.line_separator + content_part
 
     def exec(
         self,
@@ -97,7 +97,7 @@ class Script:
         """
         raise NotImplementedError()
 
-    def _get_line_seperator(self) -> str:
+    def _get_line_separator(self) -> str:
         raise NotImplementedError()
 
     def __remove_newline(self) -> None:
