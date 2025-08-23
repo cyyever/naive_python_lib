@@ -18,6 +18,9 @@ class TimeCounter:
         assert self.__start_ns is not None
         return (time.monotonic_ns() - self.__start_ns) / 1000000
 
+    def elapsed_seconds(self) -> float:
+        return self.elapsed_milliseconds() / 1000
+
     def __enter__(self):
         self.reset_start_time()
         return self
