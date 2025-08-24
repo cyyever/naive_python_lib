@@ -13,6 +13,7 @@ class Backuper:
             self.__hard_link = self.file + f".__hard_link{i}"
             if not os.path.exists(self.__hard_link):
                 os.link(self.file, self.__hard_link)
+                os.unlink(self.file)
                 break
         if self.__hard_link is None:
             raise RuntimeError("can't backup file")
