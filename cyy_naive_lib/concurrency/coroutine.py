@@ -3,11 +3,12 @@ import concurrent.futures
 from collections.abc import Callable, Sequence
 from typing import Any
 
-import gevent.lock
+import gevent
 
 from .process_pool import ProcessPool
 
 
+# pylint:disable=abstract-method
 class CoroutineExcutorMixin(concurrent.futures.Executor):
     def submit_batch(
         self, funs: Sequence[Callable], kwargs_list: Sequence[dict]

@@ -3,7 +3,7 @@ from typing import Any
 
 class GlobalStore:
     global_manager: None | Any = None
-    _objects: None | dict = None
+    _objects: dict | None = None
 
     def __init__(self, manager) -> None:
         if GlobalStore.global_manager is None:
