@@ -15,6 +15,7 @@ class Backuper:
                 os.link(self.file, self.__hard_link)
                 os.unlink(self.file)
                 break
+            self.__hard_link = None
         if self.__hard_link is None:
             raise RuntimeError("can't backup file")
 
