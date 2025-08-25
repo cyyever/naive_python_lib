@@ -1,14 +1,15 @@
+from multiprocessing.managers import DictProxy, SyncManager
 from typing import Any
 
 
 class GlobalStore:
     global_manager: None | Any = None
-    _objects: dict | None = None
+    _objects: DictProxy | None = None
 
-    def __init__(self, manager) -> None:
+    def __init__(self, manager: SyncManager) -> None:
         if GlobalStore.global_manager is None:
             GlobalStore.global_manager = manager
-        self.objects: dict | None = None
+        self.objects: DictProxy | None = None
         if GlobalStore._objects is None:
             assert GlobalStore.global_manager is not None
             GlobalStore._objects = GlobalStore.global_manager.dict()

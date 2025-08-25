@@ -8,7 +8,7 @@ class Backuper:
 
     def __enter__(self):
         if not os.path.isfile(self.file):
-            return
+            return self
         for i in range(100):
             self.__hard_link = self.file + f".__hard_link{i}"
             if not os.path.exists(self.__hard_link):
