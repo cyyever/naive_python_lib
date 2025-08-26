@@ -15,8 +15,13 @@ class Expected[T]:
         Like C++ std::expected
 
         """
+        assert (ok and value is not None) or (not ok and value is None)
         self.__ok: bool = ok
         self.__value: None | tuple[T] = value if value is None else (value,)
+
+    @classmethod
+    def ok(cls, value: T):
+        return cls(ok=True, value=value)
 
     @classmethod
     def not_ok(cls):
