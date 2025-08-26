@@ -325,6 +325,16 @@ class TaskQueue:
     def get_data(
         self, queue_name: str = "__result", timeout: float | None = None
     ) -> None | tuple:
+        res = self.__get_data(queue_name=queue_name, timeout=timeout)
+        if (
+            res is not None
+            and isinstance(res[0], _SentinelTask)
+            and queue_name != "__task"
+        ):
+            raise RuntimeError("Sending _SentinelTask in queue:" + queue_name)
+        return res
+
+    def __get_data(self, /, queue_name: str, timeout: float | None) -> None | tuple:
         result_queue, queue_type = self.__get_queue(queue_name)
         try:
             if queue_type == QueueType.Pipe:
