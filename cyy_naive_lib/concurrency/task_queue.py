@@ -101,7 +101,7 @@ class Worker:
             worker_id=worker_id,
         )
         if res is not None:
-            task_queue.put_data(data=res, queue_name="__result")
+            task_queue.put_data(data=res, queue_name="__result", reduce_task_count=True)
         return False
 
 
@@ -169,6 +169,7 @@ class TaskQueue:
         self.__stop_event: Any | None = None
         self.__queues: dict = {}
         self.__set_logger: bool = True
+        self.__task_cnt: int = 0
 
     @property
     def mp_ctx(self) -> ConcurrencyContext:
@@ -235,7 +236,13 @@ class TaskQueue:
             worker_id = max(self.__workers.keys(), default=-1) + 1
             self._start_worker(worker_id, use_thread=use_thread)
 
-    def put_data(self, data: Any, queue_name: str) -> None:
+    def put_data(
+        self, data: Any, queue_name: str, reduce_task_count: bool = False
+    ) -> None:
+        if reduce_task_count:
+            assert self.__task_cnt > 0
+            self.__task_cnt -= 1
+
         queue, queue_type = self.__get_queue(queue_name)
         data_list = [data]
         if hasattr(data, "get_data_list"):
@@ -297,12 +304,13 @@ class TaskQueue:
 
     def add_task(self, task: Any) -> None:
         self.put_data(data=task, queue_name="__task")
+        self.__task_cnt += 1
 
     def get_task(self, timeout: float | None) -> None | tuple:
         return self.get_data(queue_name="__task", timeout=timeout)
 
     def has_task(self) -> bool:
-        return self.has_data(queue_name="__task")
+        return self.has_data(queue_name="__task") or self.__task_cnt > 0
 
     def clear_data(self, queue_name) -> None:
         if queue_name not in self.__queues:

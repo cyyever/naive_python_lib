@@ -1,4 +1,5 @@
 import threading
+from collections.abc import Callable
 from typing import Any
 
 
@@ -18,8 +19,10 @@ class ConcurrencyContext:
     def create_event(self) -> Any:
         raise NotImplementedError()
 
-    def create_thread(self, name: str, target, args, kwargs) -> threading.Thread:
+    def create_thread(
+        self, name: str, target: Callable, args, kwargs
+    ) -> threading.Thread:
         return threading.Thread(name=name, target=target, args=args, kwargs=kwargs)
 
-    def create_worker(self, name, target, args, kwargs):
+    def create_worker(self, name: str, target: Callable, args, kwargs) -> Any:
         raise NotImplementedError()
