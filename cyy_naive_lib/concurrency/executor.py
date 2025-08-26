@@ -5,9 +5,9 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
-from cyy_naive_lib.log import log_debug
-
-from .call import exception_aware_call
+from ..function import exception_aware_call
+from ..log import log_debug
+from ..storage import GlobalStore
 
 
 class ExecutorWrapper(concurrent.futures.Executor):
@@ -39,19 +39,6 @@ class ExecutorWrapper(concurrent.futures.Executor):
         self.__futures.append(future)
         return future
 
-    def peek_results(
-        self,
-        timeout: float | None = None,
-        return_when=concurrent.futures.FIRST_EXCEPTION,
-    ) -> tuple:
-        done_futures, not_done_futures = concurrent.futures.wait(
-            self.__futures, timeout=timeout, return_when=return_when
-        )
-        for future in done_futures:
-            result = future.result()
-            log_debug("future result is %s", result)
-        return done_futures, not_done_futures
-
     def wait_results(
         self,
         timeout: float | None = None,
@@ -59,7 +46,7 @@ class ExecutorWrapper(concurrent.futures.Executor):
     ) -> tuple[dict, int]:
         if not self.__futures:
             return {}, 0
-        done_futures, not_done_futures = self.peek_results(
+        done_futures, not_done_futures = self._peek_results(
             timeout=timeout, return_when=return_when
         )
         results: dict = {}
@@ -74,6 +61,19 @@ class ExecutorWrapper(concurrent.futures.Executor):
 
     def shutdown(self, *args, **kwargs) -> None:
         self._executor.shutdown(*args, **kwargs)
+
+    def _peek_results(
+        self,
+        timeout: float | None = None,
+        return_when=concurrent.futures.FIRST_EXCEPTION,
+    ) -> tuple:
+        done_futures, not_done_futures = concurrent.futures.wait(
+            self.__futures, timeout=timeout, return_when=return_when
+        )
+        for future in done_futures:
+            result = future.result()
+            log_debug("future result is %s", result)
+        return done_futures, not_done_futures
 
 
 class ExceptionSafeExecutor(ExecutorWrapper):
@@ -96,7 +96,7 @@ class ExceptionSafeExecutor(ExecutorWrapper):
 
 
 class BlockingSubmitExecutor(ExecutorWrapper):
-    __global_store: Any | None = None
+    __global_store: GlobalStore | None = None
 
     @functools.cached_property
     def name(self) -> str:
@@ -104,10 +104,11 @@ class BlockingSubmitExecutor(ExecutorWrapper):
 
     def __wait_job(self, global_store) -> None:
         while global_store.has(f"{self.name}_pending"):
-            self.peek_results(timeout=0.1)
+            self._peek_results(timeout=0.1)
         global_store.store(f"{self.name}_pending", True)
 
-    def set_global_store(self, global_store) -> None:
+    def set_global_store(self, global_store: GlobalStore) -> None:
+        assert self.__global_store is None
         self.__global_store = global_store
 
     @classmethod
@@ -118,7 +119,7 @@ class BlockingSubmitExecutor(ExecutorWrapper):
         global_store.remove(f"{name}_pending")
 
     @classmethod
-    def _fun(cls, fun: Callable, *args, **kwargs):
+    def _fun(cls, fun: Callable, *args, **kwargs) -> Any:
         cls.__mark_job_launched(
             kwargs.pop("blocking_submit_executor_name"), kwargs.pop("global_store")
         )
@@ -137,7 +138,7 @@ class BlockingSubmitExecutor(ExecutorWrapper):
             global_store=global_store,
         )
 
-    def submit_batch(self, fun: Callable, kwargs_list: list):
+    def submit_batch(self, fun: Callable, kwargs_list: list) -> Any:
         batch_fun = getattr(self._executor, "submit_batch", None)
         assert batch_fun is not None
         return batch_fun(

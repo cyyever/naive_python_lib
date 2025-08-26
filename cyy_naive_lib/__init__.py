@@ -12,8 +12,8 @@ from .concurrency import (
     ThreadTaskQueue,
     batch_process,
 )
-from .decorator import Decorator
 from .fs import TempDir, get_temp_dir
+from .function import Decorator
 from .reproducible_random_env import ReproducibleRandomEnv
 from .storage import (
     DataStorage,
