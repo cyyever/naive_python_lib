@@ -95,6 +95,8 @@ class Worker:
         task = task_queue.get_task(timeout=3600)
         if task is None:
             return True
+        if isinstance(task[0], _SentinelTask):
+            return True
         res = task_queue.worker_fun(
             task=task[0],
             **kwargs,
@@ -328,13 +330,9 @@ class TaskQueue:
             if queue_type == QueueType.Pipe:
                 if result_queue[1].poll(timeout):
                     res = result_queue[1].recv()
-                    if isinstance(res, _SentinelTask):
-                        return None
                     return (res,)
                 return None
             res = result_queue.get(timeout=timeout)
-            if isinstance(res, _SentinelTask):
-                return None
             return (res,)
         except Exception as e:
             if (
