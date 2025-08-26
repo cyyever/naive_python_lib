@@ -13,7 +13,7 @@ from .concurrency import (
     batch_process,
 )
 from .fs import TempDir, get_temp_dir
-from .function import Decorator
+from .function import Decorator, Expected
 from .reproducible_random_env import ReproducibleRandomEnv
 from .storage import (
     DataStorage,
@@ -29,6 +29,7 @@ __all__ = [
     "DataStorage",
     "get_temp_dir",
     "TempDir",
+    "Expected",
     "persistent_cache",
     "GlobalStore",
     "get_cached_data",

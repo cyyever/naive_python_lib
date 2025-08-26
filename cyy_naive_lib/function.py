@@ -9,19 +9,19 @@ from typing import Any, Self
 from cyy_naive_lib.log import log_error
 
 
-class Expected:
-    def __init__(self, *, ok: bool, value: Any) -> None:
+class Expected[T]:
+    def __init__(self, *, ok: bool, value: T) -> None:
         """
         Like C++ std::expected
 
         """
         self.__ok: bool = ok
-        self.__value: Any = value
+        self.__value: T = value
 
     def is_ok(self) -> bool:
         return self.__ok
 
-    def value(self) -> Any:
+    def value(self) -> T:
         assert self.__ok
         return self.__value
 
