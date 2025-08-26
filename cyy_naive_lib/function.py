@@ -10,20 +10,25 @@ from cyy_naive_lib.log import log_error
 
 
 class Expected[T]:
-    def __init__(self, *, ok: bool, value: T) -> None:
+    def __init__(self, *, ok: bool, value: T | None) -> None:
         """
         Like C++ std::expected
 
         """
         self.__ok: bool = ok
-        self.__value: T = value
+        self.__value: None | tuple[T] = value if value is None else (value,)
+
+    @classmethod
+    def not_ok(cls):
+        return cls(ok=False, value=None)
 
     def is_ok(self) -> bool:
         return self.__ok
 
     def value(self) -> T:
         assert self.__ok
-        return self.__value
+        assert self.__value is not None
+        return self.__value[0]
 
 
 class Decorator:
