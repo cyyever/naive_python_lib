@@ -36,8 +36,8 @@ class Expected[T]:
         return self.__value[0]
 
 
-class Decorator:
-    def __init__(self, obj: Any) -> None:
+class Decorator[T]:
+    def __init__(self, obj: T) -> None:
         self._decorator_object = obj
         # self.__class__ = obj.__class__
 
