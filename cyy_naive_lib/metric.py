@@ -1,4 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
+import pandas as pd
+
 
 import numpy as np
 
@@ -7,7 +9,7 @@ import numpy as np
 class SamplesMetrics:
     samples: np.ndarray
 
-    percentiles: np.ndarray | dict | None = None
+    percentiles: np.ndarray | None = None
     std: float | None = None
     mean: float | None = None
     max: float | None = None
@@ -21,8 +23,9 @@ class SamplesMetrics:
     def compute(self) -> None:
         if self.percentiles is None:
             q = list(range(101))
-            res = np.percentile(a=self.samples, q=q).tolist()
-            self.percentiles = dict(zip(q, res, strict=False))
+            res = np.percentile(a=self.samples, q=q)
+            self.percentiles = res
+            # dict(zip(q, res, strict=False))
         if self.std is None:
             self.std = float(np.std(a=self.samples))
         if self.mean is None:
@@ -41,3 +44,16 @@ class SamplesMetricsGroup:
 
     def __post_init__(self):
         assert len(self.elements) > 1
+
+    def to_dict(self, element_labels: list[str]):
+        assert len(self.elements) == len(element_labels)
+        res = {"label": element_labels}
+        for field in fields(SamplesMetrics):
+            if field.name == "percentiles":
+                continue
+            res[field.name] = [getattr(e, field.name) for e in self.elements]
+        df1 = pd.DataFrame(data=res)
+        df2 = pd.DataFrame(
+            np.array([e.percentiles for e in self.elements]), columns=element_labels
+        )
+        return df1, df2
