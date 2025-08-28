@@ -1,8 +1,7 @@
 from dataclasses import dataclass, fields
-import pandas as pd
-
 
 import numpy as np
+import pandas as pd
 
 
 @dataclass(kw_only=True)
@@ -53,7 +52,6 @@ class SamplesMetricsGroup:
                 continue
             res[field.name] = [getattr(e, field.name) for e in self.elements]
         df1 = pd.DataFrame(data=res)
-        df2 = pd.DataFrame(
-            np.array([e.percentiles for e in self.elements]), columns=element_labels
-        )
+        percentile_table = np.stack([e.percentiles for e in self.elements]).transpose()
+        df2 = pd.DataFrame(percentile_table, columns=element_labels)
         return df1, df2
