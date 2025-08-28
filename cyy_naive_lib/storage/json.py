@@ -1,6 +1,5 @@
 import contextlib
 import json
-import os
 from typing import Any
 
 from .backuper import Backuper

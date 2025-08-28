@@ -2,6 +2,7 @@ from dataclasses import dataclass, fields
 
 import numpy as np
 import pandas as pd
+from .algorithm import flatten_list
 
 
 @dataclass(kw_only=True)
@@ -44,7 +45,7 @@ class SamplesMetricsGroup:
     def __post_init__(self):
         assert len(self.elements) > 1
 
-    def to_df(self, element_labels: list[str]):
+    def to_df(self, element_labels: list[str], percentile_value_label: str):
         assert len(self.elements) == len(element_labels)
         res = {"label": element_labels}
         for field in fields(SamplesMetrics):
@@ -52,6 +53,13 @@ class SamplesMetricsGroup:
                 continue
             res[field.name] = [getattr(e, field.name) for e in self.elements]
         df1 = pd.DataFrame(data=res)
-        percentile_table = np.stack([e.percentiles for e in self.elements]).transpose()
-        df2 = pd.DataFrame(percentile_table, columns=element_labels)
+        percentile_table = np.concatenate([e.percentiles for e in self.elements])
+        labels = flatten_list([[label] * 100 for label in element_labels])
+        percentiles = flatten_list([list(range(101)) for _ in self.elements])
+        res = {
+            "label": labels,
+            "percentiles": percentiles,
+            percentile_value_label: percentile_table,
+        }
+        df2 = pd.DataFrame(data=res)
         return df1, df2
