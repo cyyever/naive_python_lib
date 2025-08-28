@@ -6,14 +6,9 @@ from typing import Any
 from .backuper import Backuper
 
 
-def load_json(json_file: str) -> dict[str, Any]:
-    res = {}
-    if os.path.isfile(json_file):
-        with open(json_file, encoding="utf8") as f:
-            res = json.load(f)
-            assert isinstance(res, dict), json_file
-            res = {str(k): v for k, v in res.items()}
-    return res
+def load_json(json_file: str) -> Any:
+    with open(json_file, encoding="utf8") as f:
+        return json.load(f)
 
 
 def save_json(
