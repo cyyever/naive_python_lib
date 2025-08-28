@@ -33,3 +33,11 @@ class SamplesMetrics:
             self.min = float(np.min(a=self.samples))
         if self.median is None:
             self.median = float(np.median(a=self.samples))
+
+
+@dataclass(kw_only=True)
+class SamplesMetricsGroup:
+    elements: list[SamplesMetrics]
+
+    def __post_init__(self):
+        assert len(self.elements) > 1
