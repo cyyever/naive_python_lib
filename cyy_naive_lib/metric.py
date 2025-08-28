@@ -45,7 +45,7 @@ class SamplesMetricsGroup:
     def __post_init__(self):
         assert len(self.elements) > 1
 
-    def to_dict(self, element_labels: list[str]):
+    def to_df(self, element_labels: list[str]):
         assert len(self.elements) == len(element_labels)
         res = {"label": element_labels}
         for field in fields(SamplesMetrics):
