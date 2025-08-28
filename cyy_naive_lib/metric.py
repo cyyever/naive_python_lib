@@ -58,7 +58,7 @@ class SamplesMetricsGroup:
         percentiles = flatten_list([list(range(101)) for _ in self.elements])
         res = {
             "label": labels,
-            "percentiles": percentiles,
+            "percentile": percentiles,
             percentile_value_label: percentile_table,
         }
         df2 = pd.DataFrame(data=res)
