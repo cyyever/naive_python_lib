@@ -7,16 +7,6 @@ from .msys2_script import MSYS2Script
 from .pwsh_script import PowerShellScript
 from .script import Script
 
-__all__ = [
-    "BashScript",
-    "Mingw64Script",
-    "PowerShellScript",
-    "MSYS2Script",
-    "get_shell_script_type",
-    "get_shell_script",
-    "exec_cmd",
-]
-
 
 def get_shell_script_type(os_hint: OSType | None = None) -> type:
     if os_hint is None:
@@ -36,3 +26,14 @@ def exec_cmd(
     throw: bool = True,
 ) -> tuple[Any, int]:
     return get_shell_script(cmd, os_hint=os_hint).exec(throw=throw)
+
+
+__all__ = [
+    "BashScript",
+    "Mingw64Script",
+    "PowerShellScript",
+    "MSYS2Script",
+    "get_shell_script_type",
+    "get_shell_script",
+    "exec_cmd",
+]

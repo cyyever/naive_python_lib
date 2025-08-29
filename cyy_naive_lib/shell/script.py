@@ -6,7 +6,7 @@ from .shell import Shell
 
 
 class Script:
-    def __init__(self, content: str | None = None) -> None:
+    def __init__(self, content: str | Iterable[str] | None = None) -> None:
         self.content: list = []
         if content is not None:
             self.append_content(content)
@@ -42,7 +42,7 @@ class Script:
             self.content = list(content) + self.content
         self.__remove_newline()
 
-    def append_content(self, content: str | Iterable) -> None:
+    def append_content(self, content: str | Iterable[str]) -> None:
         if isinstance(content, str):
             self.content += content.splitlines()
         else:
