@@ -15,6 +15,15 @@ from .concurrency import (
 from .fs import TempDir, get_temp_dir
 from .function import Decorator, Expected
 from .reproducible_random_env import ReproducibleRandomEnv
+from .shell import (
+    BashScript,
+    Mingw64Script,
+    MSYS2Script,
+    PowerShellScript,
+    exec_cmd,
+    get_shell_script,
+    get_shell_script_type,
+)
 from .storage import (
     DataStorage,
     GlobalStore,
@@ -50,4 +59,11 @@ __all__ = [
     "ThreadPool",
     "ThreadTaskQueue",
     "ReproducibleRandomEnv",
+    "BashScript",
+    "Mingw64Script",
+    "PowerShellScript",
+    "MSYS2Script",
+    "get_shell_script_type",
+    "get_shell_script",
+    "exec_cmd",
 ]
