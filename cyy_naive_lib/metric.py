@@ -2,7 +2,6 @@ from dataclasses import dataclass, fields
 
 import numpy as np
 import pandas as pd
-from .algorithm import flatten_list
 
 
 @dataclass(kw_only=True)
@@ -25,7 +24,6 @@ class SamplesMetrics:
             q = list(range(101))
             res = np.percentile(a=self.samples, q=q)
             self.percentiles = res
-            # dict(zip(q, res, strict=False))
         if self.std is None:
             self.std = float(np.std(a=self.samples))
         if self.mean is None:
@@ -37,6 +35,25 @@ class SamplesMetrics:
         if self.median is None:
             self.median = float(np.median(a=self.samples))
 
+    def to_df(self, label: str | None = None):
+        res = {}
+        if label is not None:
+            res["label"] = [label]
+        for field in fields(SamplesMetrics):
+            if field.name in ("samples", "percentiles"):
+                continue
+            res[field.name] = [getattr(self, field.name)]
+        df1 = pd.DataFrame(data=res)
+
+        res2 = {
+            "percentile": list(range(101)),
+            "percentile_value": self.percentiles,
+        }
+        if label is not None:
+            res2["label"] = [label] * 101
+        df2 = pd.DataFrame(data=res2)
+        return df1, df2
+
 
 @dataclass(kw_only=True)
 class SamplesMetricsGroup:
@@ -45,21 +62,19 @@ class SamplesMetricsGroup:
     def __post_init__(self):
         assert len(self.elements) > 1
 
-    def to_df(self, element_labels: list[str], percentile_value_label: str):
+    def to_df(self, element_labels: list[str]):
         assert len(self.elements) == len(element_labels)
         res = {"label": element_labels}
         for field in fields(SamplesMetrics):
             if field.name == "percentiles":
                 continue
             res[field.name] = [getattr(e, field.name) for e in self.elements]
-        df1 = pd.DataFrame(data=res)
-        percentile_table = np.concatenate([e.percentiles for e in self.elements])
-        labels = flatten_list([[label] * 100 for label in element_labels])
-        percentiles = flatten_list([list(range(101)) for _ in self.elements])
-        res = {
-            "label": labels,
-            "percentile": percentiles,
-            percentile_value_label: percentile_table,
-        }
-        df2 = pd.DataFrame(data=res)
-        return df1, df2
+        sub_df1s = []
+        sub_df2s = []
+        for e, label in zip(self.elements, element_labels, strict=False):
+            df1, df2 = e.to_df(label=label)
+            sub_df1s.append(df1)
+            sub_df2s.append(df2)
+        return pd.concat(sub_df1s, ignore_index=True), pd.concat(
+            sub_df2s, ignore_index=True
+        )
