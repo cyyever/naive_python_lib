@@ -14,6 +14,7 @@ class SamplesMetrics:
     max: float | None = None
     min: float | None = None
     median: float | None = None
+    label: str | None = None
 
     def __post_init__(self):
         assert len(self.samples.shape) == 1
@@ -35,7 +36,8 @@ class SamplesMetrics:
         if self.median is None:
             self.median = float(np.median(a=self.samples))
 
-    def to_df(self, label: str | None = None):
+    def to_df(self, new_label: str | None = None):
+        label = self.label if new_label is None else new_label
         res = {}
         if label is not None:
             res["label"] = [label]
@@ -62,17 +64,11 @@ class SamplesMetricsGroup:
     def __post_init__(self):
         assert len(self.elements) > 1
 
-    def to_df(self, element_labels: list[str]):
-        assert len(self.elements) == len(element_labels)
-        res = {"label": element_labels}
-        for field in fields(SamplesMetrics):
-            if field.name == "percentiles":
-                continue
-            res[field.name] = [getattr(e, field.name) for e in self.elements]
+    def to_df(self):
         sub_df1s = []
         sub_df2s = []
-        for e, label in zip(self.elements, element_labels, strict=False):
-            df1, df2 = e.to_df(label=label)
+        for e in self.elements:
+            df1, df2 = e.to_df()
             sub_df1s.append(df1)
             sub_df2s.append(df2)
         return pd.concat(sub_df1s, ignore_index=True), pd.concat(
