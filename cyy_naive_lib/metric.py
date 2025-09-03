@@ -1,4 +1,5 @@
 from dataclasses import dataclass, fields
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -47,7 +48,7 @@ class SamplesMetrics:
             res[field.name] = [getattr(self, field.name)]
         df1 = pd.DataFrame(data=res)
 
-        res2 = {
+        res2: dict[str, Any] = {
             "percentile": list(range(101)),
             "percentile_value": self.percentiles,
         }

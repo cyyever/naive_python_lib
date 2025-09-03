@@ -32,7 +32,7 @@ class ProcessPeerToPeerTopology(PeerToPeerTopology):
     def get_queue(self, peer_id) -> ProcessTaskQueue:
         return self.__queues[peer_id]
 
-    def get_from_peer(self, my_id, peer_id) -> None | tuple:
+    def get_from_peer(self, my_id, peer_id):
         assert 0 <= my_id < self.worker_num
         assert 0 <= peer_id < self.worker_num
         return self.get_queue(peer_id).get_data(queue_name=f"result_{my_id}")
