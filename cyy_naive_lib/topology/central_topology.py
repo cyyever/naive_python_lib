@@ -1,3 +1,4 @@
+import multiprocessing
 from typing import Any
 
 from ..concurrency import ProcessContext
@@ -82,15 +83,17 @@ class ProcessQueueCentralTopology(CentralTopology):
         self, *args: Any, mp_context: ProcessContext | None = None, **kwargs: Any
     ) -> None:
         super().__init__(*args, **kwargs)
-        self.__queues: dict = {}
+        self.__queues: dict[
+            int, tuple[multiprocessing.Queue, multiprocessing.Queue]
+        ] = {}
         if mp_context is None:
             mp_context = ProcessContext()
         self.__context = mp_context
         for worker_id in range(self.worker_num):
-            self.__queues[worker_id] = [
+            self.__queues[worker_id] = (
                 self.__context.create_queue(),
                 self.__context.create_queue(),
-            ]
+            )
 
     def get_from_worker(self, worker_id: int) -> Any:
         assert 0 <= worker_id < self.worker_num
@@ -119,4 +122,6 @@ class ProcessQueueCentralTopology(CentralTopology):
         pass
 
     def close_worker_channel(self, worker_id: int) -> None:
-        self.__queues.pop(worker_id)
+        queue1, queue2 = self.__queues.pop(worker_id)
+        queue1.close()
+        queue2.close()

@@ -33,7 +33,9 @@ def change_mapping_keys(
     return new_d
 
 
-def change_mapping_values(d: MutableMapping, key, f: Callable) -> MutableMapping:
+def change_mapping_values(
+    d: MutableMapping | list | tuple, key, f: Callable
+) -> MutableMapping | list:
     r"""
     Return a new mapping with keys changed
     """
@@ -46,7 +48,7 @@ def change_mapping_values(d: MutableMapping, key, f: Callable) -> MutableMapping
             return new_d
         case list() | tuple():
             return [change_mapping_values(elm, key, f) for elm in d]
-    return d
+    raise NotImplementedError(str(d))
 
 
 def flatten_mapping(d: Mapping) -> list:

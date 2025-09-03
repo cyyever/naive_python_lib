@@ -1,6 +1,7 @@
 from typing import Any
 
 from ..concurrency import ProcessTaskQueue
+from ..function import Expected
 from .topology import Topology
 
 
@@ -8,13 +9,16 @@ class PeerToPeerTopology(Topology):
     def __init__(self, worker_num: int) -> None:
         self.worker_num = worker_num
 
-    def get_from_peer(self, my_id: int, peer_id: int) -> None | tuple:
+    def get_from_peer(self, my_id: int, peer_id: int) -> Expected:
         raise NotImplementedError()
 
     def peer_end_has_data(self, my_id: int, peer_id: int) -> bool:
         raise NotImplementedError()
 
     def send_to_peer(self, my_id: int, peer_id: int, data: Any) -> None:
+        raise NotImplementedError()
+
+    def close(self, my_id: int) -> None:
         raise NotImplementedError()
 
 

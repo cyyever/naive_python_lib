@@ -5,13 +5,7 @@ import threading
 from typing import Any
 
 import dill
-
-try:
-    import numpy as np
-
-    has_np = True
-except ImportError:
-    has_np = False
+import numpy as np
 
 from cyy_naive_lib.log import log_debug, log_warning
 
@@ -47,13 +41,12 @@ class ReproducibleRandomEnv:
                 log_debug("get random lib state")
                 self.__randomlib_state = random.getstate()
 
-            if has_np:
-                if self.__numpy_state is not None:
-                    log_debug("overwrite numpy random lib state")
-                    np.random.set_state(copy.deepcopy(self.__numpy_state))
-                else:
-                    log_debug("get numpy random lib state")
-                    self.__numpy_state = np.random.get_state()
+            if self.__numpy_state is not None:
+                log_debug("overwrite numpy random lib state")
+                np.random.set_state(copy.deepcopy(self.__numpy_state))
+            else:
+                log_debug("get numpy random lib state")
+                self.__numpy_state = np.random.get_state()
             self._enabled = True
 
     def disable(self) -> None:

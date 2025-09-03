@@ -1,5 +1,7 @@
-from collections.abc import Callable, Generator, Sequence
-from typing import Any
+from collections.abc import Callable, Generator, Iterable, Sequence
+from typing import Any, TypeVar
+
+T = TypeVar("T")
 
 
 def split_list_to_chunks(my_list: list, chunk_size: int) -> Generator:
@@ -24,7 +26,7 @@ def flatten_list(seq: list) -> list:
     return res
 
 
-def search_sublists(sublists: list[list]) -> Callable:
+def search_sublists(sublists: Sequence[Sequence]) -> Callable:
     assert sublists
     lookup_table: dict[tuple, Any] = {}
     for sub_list in sublists:
@@ -52,7 +54,7 @@ def search_sublists(sublists: list[list]) -> Callable:
     return search_sublists_impl
 
 
-def sublist(a: list, b: list, start=0) -> int | None:
+def sublist(a: Sequence[T], b: Sequence[T], start: int = 0) -> int | None:
     idx = start
     while True:
         try:
@@ -65,7 +67,7 @@ def sublist(a: list, b: list, start=0) -> int | None:
     return None
 
 
-def flatten_seq(seq: Sequence) -> list:
+def flatten_seq(seq: Iterable) -> list:
     r"""
     Flatten Return a flatted sequence
     """
