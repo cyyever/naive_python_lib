@@ -17,11 +17,11 @@ def test_process_task_queue():
     time.sleep(1)
     assert queue.has_data()
     data = queue.get_data()
-    assert data is not None and data[0] == "abc"
+    assert data.is_ok() and data.value() == "abc"
     queue.stop()
     queue = ProcessTaskQueue(worker_num=8, mp_ctx=ManageredProcessContext())
     queue.start(worker_fun=hello)
     queue.add_task(())
     data = queue.get_data()
-    assert data is not None and data[0] == "abc"
+    assert data.is_ok() and data.value() == "abc"
     queue.stop()

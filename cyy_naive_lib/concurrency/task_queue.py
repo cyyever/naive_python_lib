@@ -10,6 +10,7 @@ import psutil
 from cyy_naive_lib.log import apply_logger_setting, get_logger_setting, log_error
 from cyy_naive_lib.time_counter import TimeCounter
 
+from ..function import Expected
 from .context import ConcurrencyContext
 
 
@@ -69,7 +70,7 @@ class Worker:
         self,
         *,
         log_setting: dict,
-        task_queue: Any,
+        task_queue: "TaskQueue",
         ppid: int,
         worker_id: int,
         **kwargs: Any,
@@ -91,20 +92,18 @@ class Worker:
                 return
         task_queue.clear_data(task_queue.get_worker_queue_name(worker_id))
 
-    def _get_task(self, task_queue: Any, timeout: float):
+    def _get_task(self, task_queue: "TaskQueue", timeout: float):
         task = task_queue.get_task(timeout=timeout)
-        if task is None:
-            return None
-        if isinstance(task[0], _SentinelTask):
-            return None
+        if task.is_ok() and isinstance(task.value(), _SentinelTask):
+            return Expected.not_ok()
         return task
 
-    def process(self, task_queue: Any, worker_id: int, **kwargs: Any) -> bool:
+    def process(self, task_queue: "TaskQueue", worker_id: int, **kwargs: Any) -> bool:
         task = self._get_task(task_queue=task_queue, timeout=3600)
-        if task is None:
+        if not task.is_ok():
             return True
         res = task_queue.worker_fun(
-            task=task[0],
+            task=task.value(),
             **kwargs,
             worker_id=worker_id,
         )
@@ -114,13 +113,11 @@ class Worker:
 
 
 class BatchWorker(Worker):
-    def __init__(self) -> None:
-        super().__init__()
-        self.batch_size: int = 1
+    batch_size: int = 1
 
     def process(
         self,
-        task_queue: Any,
+        task_queue: "TaskQueue",
         worker_id: int,
         batch_policy: BatchPolicy | None = None,
         **kwargs: Any,
@@ -137,10 +134,10 @@ class BatchWorker(Worker):
                 task = self._get_task(task_queue=task_queue, timeout=0.000001)
             else:
                 break
-            if task is None:
+            if not task.is_ok():
                 end_process = True
                 break
-            tasks.append(task[0])
+            tasks.append(task.value())
         if not tasks:
             return end_process
         batch_size = len(tasks)
@@ -206,6 +203,7 @@ class TaskQueue:
 
     @property
     def worker_fun(self):
+        assert self.__worker_fun is not None
         return self.__worker_fun
 
     def add_queue(self, name: str, queue_type: QueueType) -> None:
@@ -306,7 +304,7 @@ class TaskQueue:
     def add_task(self, task: Any) -> None:
         self.put_data(data=task, queue_name="__task")
 
-    def get_task(self, timeout: float | None) -> None | tuple:
+    def get_task(self, timeout: float | None) -> Expected:
         return self.get_data(queue_name="__task", timeout=timeout)
 
     def has_task(self) -> bool:
@@ -322,32 +320,32 @@ class TaskQueue:
 
     def get_data(
         self, queue_name: str = "__result", timeout: float | None = None
-    ) -> None | tuple:
+    ) -> Expected[Any]:
         res = self.__get_data(queue_name=queue_name, timeout=timeout)
         if (
-            res is not None
-            and isinstance(res[0], _SentinelTask)
+            res.is_ok()
+            and isinstance(res.value(), _SentinelTask)
             and queue_name != "__task"
         ):
             raise RuntimeError("Sending _SentinelTask in queue:" + queue_name)
         return res
 
-    def __get_data(self, /, queue_name: str, timeout: float | None) -> None | tuple:
+    def __get_data(self, /, queue_name: str, timeout: float | None) -> Expected[Any]:
         result_queue, queue_type = self.__get_queue(queue_name)
         try:
             if queue_type == QueueType.Pipe:
                 if result_queue[1].poll(timeout):
                     res = result_queue[1].recv()
-                    return (res,)
-                return None
+                    return Expected.ok(value=res)
+                return Expected.not_ok()
             res = result_queue.get(timeout=timeout)
-            return (res,)
+            return Expected.ok(value=res)
         except Exception as e:
             if (
                 "empty" in e.__class__.__name__.lower()
                 or "eof" in e.__class__.__name__.lower()
             ):
-                return None
+                return Expected.not_ok()
             raise e
 
     def has_data(self, queue_name: str = "__result") -> bool:

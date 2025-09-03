@@ -29,7 +29,9 @@ class ProcessContext(ConcurrencyContext):
     def create_event(self) -> Any:
         return self.get_ctx().Event()
 
-    def create_worker(self, name: str, target: Any, args: list, kwargs: dict) -> Any:
+    def create_worker(
+        self, name: str, target: Any, args: list, kwargs: dict
+    ) -> multiprocessing.Process:
         return self.get_ctx().Process(
             name=name, target=target, args=args, kwargs=kwargs
         )
