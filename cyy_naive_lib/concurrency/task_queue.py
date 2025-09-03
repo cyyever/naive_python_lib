@@ -91,11 +91,17 @@ class Worker:
                 return
         task_queue.clear_data(task_queue.get_worker_queue_name(worker_id))
 
-    def process(self, task_queue: Any, worker_id: int, **kwargs: Any) -> bool:
-        task = task_queue.get_task(timeout=3600)
+    def _get_task(self, task_queue: Any, timeout: float):
+        task = task_queue.get_task(timeout=timeout)
         if task is None:
-            return True
+            return None
         if isinstance(task[0], _SentinelTask):
+            return None
+        return task
+
+    def process(self, task_queue: Any, worker_id: int, **kwargs: Any) -> bool:
+        task = self._get_task(task_queue=task_queue, timeout=3600)
+        if task is None:
             return True
         res = task_queue.worker_fun(
             task=task[0],
@@ -126,9 +132,9 @@ class BatchWorker(Worker):
         tasks = []
         for idx in range(self.batch_size):
             if idx == 0:
-                task = task_queue.get_task(timeout=3600)
+                task = self._get_task(task_queue=task_queue, timeout=3600)
             elif task_queue.has_task():
-                task = task_queue.get_task(timeout=0.00001)
+                task = self._get_task(task_queue=task_queue, timeout=0.000001)
             else:
                 break
             if task is None:
