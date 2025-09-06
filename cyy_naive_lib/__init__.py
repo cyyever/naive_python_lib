@@ -1,3 +1,4 @@
+from .algorithm import mapping_to_list
 from .concurrency import (
     BatchPolicy,
     BlockingSubmitExecutor,
@@ -45,6 +46,7 @@ __all__ = [
     "load_json",
     "save_json",
     "TimeCounter",
+    "mapping_to_list",
     "Decorator",
     "batch_process",
     "ManageredProcessContext",
