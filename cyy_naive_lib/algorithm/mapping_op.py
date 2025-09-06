@@ -9,6 +9,12 @@ def get_mapping_items_by_key_order(d: Mapping) -> Generator:
         yield (k, d[k])
 
 
+def mapping_to_list(d: Mapping) -> list[dict]:
+    keys = list(d.keys())
+    transposed_values = zip(*d.values(), strict=True)
+    return [dict(zip(keys, row, strict=True)) for row in transposed_values]
+
+
 def get_mapping_values_by_key_order(d: Mapping) -> Generator:
     r"""
     Return a generator giving the values by key order.
