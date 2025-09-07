@@ -1,4 +1,12 @@
-from collections.abc import Callable, Generator, Mapping, MutableMapping, Sequence
+from collections.abc import (
+    Callable,
+    Generator,
+    Mapping,
+    MutableMapping,
+    Sequence,
+    Iterable,
+)
+from typing import Any
 
 
 def get_mapping_items_by_key_order(d: Mapping) -> Generator:
@@ -24,7 +32,7 @@ def get_mapping_values_by_key_order(d: Mapping) -> Generator:
 
 
 def change_mapping_keys(
-    d: MutableMapping, f: Callable, recursive: bool = False
+    d: MutableMapping, f: Callable[[Any], Any], recursive: bool = False
 ) -> MutableMapping:
     r"""
     Return a new mapping with keys changed
@@ -39,20 +47,21 @@ def change_mapping_keys(
     return new_d
 
 
-def change_mapping_values(
-    d: MutableMapping | list | tuple, key, f: Callable
-) -> MutableMapping | list:
+def change_mapping_values[T](d: T, key, f: Callable) -> T | list:
     r"""
     Return a new mapping with keys changed
     """
     match d:
         case MutableMapping():
+            print(d, type(d))
             new_d = type(d)()
             for k, v in d.items():
                 v = f(v) if k == key else change_mapping_values(v, key, f)
                 new_d[k] = v
             return new_d
-        case list() | tuple():
+        case str():
+            return d
+        case Iterable():
             return [change_mapping_values(elm, key, f) for elm in d]
     raise NotImplementedError(str(d))
 
