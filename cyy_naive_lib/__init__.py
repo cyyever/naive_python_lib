@@ -39,6 +39,7 @@ from .storage import (
     persistent_cache,
     save_json,
 )
+from .source_code import *
 from .time_counter import TimeCounter
 
 __all__ = [
