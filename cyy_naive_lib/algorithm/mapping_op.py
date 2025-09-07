@@ -4,9 +4,11 @@ from collections.abc import (
     Mapping,
     MutableMapping,
     Sequence,
-    Iterable,
 )
 from typing import Any
+
+from ..function import Expected
+from .generic import recursive_mutable_op
 
 
 def get_mapping_items_by_key_order(d: Mapping) -> Generator:
@@ -47,23 +49,18 @@ def change_mapping_keys(
     return new_d
 
 
-def change_mapping_values[T](d: T, key, f: Callable) -> T | list:
+def change_mapping_values[T, S](d: T, key: S, f: Callable[[S], Any]) -> T | list:
     r"""
-    Return a new mapping with keys changed
+    Return a new mapping with values changed
     """
-    match d:
-        case MutableMapping():
-            print(d, type(d))
-            new_d = type(d)()
-            for k, v in d.items():
-                v = f(v) if k == key else change_mapping_values(v, key, f)
-                new_d[k] = v
-            return new_d
-        case str():
-            return d
-        case Iterable():
-            return [change_mapping_values(elm, key, f) for elm in d]
-    raise NotImplementedError(str(d))
+
+    def fun(data):
+        if isinstance(data, MutableMapping) and key in data:
+            data[key] = f(data[key])
+            return Expected.ok(data)
+        return Expected.not_ok()
+
+    return recursive_mutable_op(d, fun, check=True)
 
 
 def flatten_mapping(d: Mapping) -> list:
