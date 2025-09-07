@@ -6,15 +6,13 @@ from typing import Any
 from ..function import Expected
 
 
-def recursive_op(
-    data: Any, fun: Callable[[Any], Expected], check: bool = False
-) -> None:
+def recursive_op(data: Any, fun: Callable[[Any], bool], check: bool = False) -> None:
     flag = False
 
-    def recursive_op_impl(data: Any, fun: Callable[[Any], Expected]) -> None:
+    def recursive_op_impl(data: Any, fun: Callable[[Any], bool]) -> None:
         nonlocal flag
         res = fun(data)
-        if res.is_ok():
+        if res:
             flag = True
             return
         match data:
@@ -44,12 +42,12 @@ def recursive_op(
         assert flag, "function is not applied"
 
 
-def recursive_mutable_op(
-    data: Any, fun: Callable[[Any], Expected], check: bool = False
-) -> Any:
+def recursive_mutable_op[T](
+    data: T, fun: Callable[[Any], Expected], check: bool = False
+) -> T:
     flag = False
 
-    def recursive_op_impl(data: Any, fun: Callable[[Any], Expected]) -> Any:
+    def recursive_op_impl[S](data: S, fun: Callable[[Any], Expected]) -> S:
         nonlocal flag
         res = fun(data)
         if res.is_ok():
@@ -66,9 +64,9 @@ def recursive_mutable_op(
                 return data
 
             case tuple():
-                return tuple(recursive_op_impl(element, fun) for element in data)
+                return tuple(recursive_op_impl(element, fun) for element in data)  # noqa
             case functools.partial():
-                return functools.partial(
+                return functools.partial(  # noqa
                     data.func,
                     *recursive_op_impl(data.args, fun),
                     **recursive_op_impl(data.keywords, fun),

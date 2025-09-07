@@ -1,4 +1,10 @@
-from .algorithm import mapping_to_list
+from .algorithm import (
+    mapping_to_list,
+    recursive_mutable_op,
+    recursive_op,
+    get_mapping_items_by_key_order,
+    get_mapping_values_by_key_order,
+)
 from .concurrency import (
     BatchPolicy,
     BlockingSubmitExecutor,
@@ -68,4 +74,8 @@ __all__ = [
     "get_shell_script_type",
     "get_shell_script",
     "exec_cmd",
+    "recursive_op",
+    "get_mapping_items_by_key_order",
+    "get_mapping_values_by_key_order",
+    "recursive_mutable_op",
 ]
