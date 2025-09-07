@@ -1,3 +1,4 @@
+from .generic import recursive_mutable_op, recursive_op
 from .hash import file_hash
 from .mapping_op import (
     change_mapping_keys,
@@ -20,6 +21,8 @@ __all__ = [
     "file_hash",
     "split_list_to_chunks",
     "flatten_list",
+    "recursive_mutable_op",
+    "recursive_op",
     "search_sublists",
     "sublist",
     "flatten_seq",
