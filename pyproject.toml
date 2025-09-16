@@ -22,7 +22,10 @@ dependencies = [
   "requests",
   "tqdm",
   "dill",
+  "pytest",
+  "pytest_cov",
   "looseversion",
+  "numpy",
   "gevent"
 ]
 
