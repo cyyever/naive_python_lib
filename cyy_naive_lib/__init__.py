@@ -19,7 +19,7 @@ from .concurrency import (
     ThreadTaskQueue,
     batch_process,
 )
-from .fs import TempDir, get_temp_dir
+from .fs import TempDir, get_temp_dir, list_files, list_files_by_suffixes
 from .function import Decorator, Expected
 from .reproducible_random_env import ReproducibleRandomEnv
 from .shell import (
@@ -79,4 +79,6 @@ __all__ = [
     "get_mapping_items_by_key_order",
     "get_mapping_values_by_key_order",
     "recursive_mutable_op",
+    "list_files",
+    "list_files_by_suffixes",
 ]
