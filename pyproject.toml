@@ -50,7 +50,8 @@ select = [
   # Pylint
   "PL",
   "PIE",
-  "RUF"
+  "RUF",
+  "ANN"
 ]
 ignore = ["PLR2004", "PLR0912", "E501"]
 

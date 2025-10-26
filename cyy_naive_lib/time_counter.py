@@ -5,7 +5,9 @@ from cyy_naive_lib.log import log_debug, log_info
 
 
 class TimeCounter:
-    def __init__(self, debug_logging: bool = True, log_prefix: str | None = None):
+    def __init__(
+        self, debug_logging: bool = True, log_prefix: str | None = None
+    ) -> None:
         self.__debug_logging = debug_logging
         self.__log_prefix = log_prefix
         self.__start_ns: int | None = None

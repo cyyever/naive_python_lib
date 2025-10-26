@@ -1,7 +1,7 @@
 from cyy_naive_lib.concurrency import ProcessContext
 
 
-def test_pipe():
+def test_pipe() -> None:
     ctx = ProcessContext()
     p, q = ctx.create_pipe()
     p.send(1)

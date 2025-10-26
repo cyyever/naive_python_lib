@@ -18,7 +18,7 @@ class DataLocation(IntEnum):
 class SyncedDataStorage:
     """封装数据存储操作"""
 
-    def __init__(self, data: Any = None, data_path: str | None = None):
+    def __init__(self, data: Any = None, data_path: str | None = None) -> None:
         self.__data: Any = data
         self.__data_path: str | None = data_path
         self.__data_hash: str | None = None
@@ -82,7 +82,7 @@ class SyncedDataStorage:
     def __contains__(self, key) -> bool:
         return key in self.data
 
-    def __del__(self):
+    def __del__(self) -> None:
         if self.__use_tmp_file:
             self.__remove_data_file()
 

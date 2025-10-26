@@ -64,7 +64,7 @@ def _blkdevice(path):
     return None
 
 
-def _is_nt_ssd(path):
+def _is_nt_ssd(path) -> bool:
     return True
 
 

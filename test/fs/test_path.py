@@ -5,7 +5,7 @@ from cyy_naive_lib.fs.path import find_directories, list_files_by_suffixes
 from cyy_naive_lib.fs.tempdir import TempDir
 
 
-def test_list_files_by_suffixes():
+def test_list_files_by_suffixes() -> None:
     with TempDir():
         shutil.copy(__file__, ".")
         files = list_files_by_suffixes(os.getcwd(), [".py"])

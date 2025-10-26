@@ -7,7 +7,12 @@ from typing import Any, Self
 
 import psutil
 
-from cyy_naive_lib.log import apply_logger_setting, get_logger_setting, log_error
+from cyy_naive_lib.log import (
+    apply_logger_setting,
+    get_logger_setting,
+    log_error,
+    log_debug,
+)
 from cyy_naive_lib.time_counter import TimeCounter
 
 from ..function import Expected
@@ -46,6 +51,8 @@ class BatchPolicy:
             < self._mean_processing_times[batch_size]
         ):
             batch_size += 1
+            if batch_size not in self._mean_processing_times:
+                return batch_size
         return batch_size
 
     def set_current_batch_size(self, batch_size: int) -> None:
@@ -155,7 +162,7 @@ class Worker:
 
 
 class BatchWorker(Worker):
-    def __init__(self, batch_policy: BatchPolicy):
+    def __init__(self, batch_policy: BatchPolicy) -> None:
         super().__init__()
         self.batch_size: int = 1
         self.batch_policy: BatchPolicy = batch_policy
@@ -204,6 +211,8 @@ class BatchWorker(Worker):
         self.batch_size = self.batch_policy.explore_batch_size(
             initial_batch_size=batch_size
         )
+        assert batch_size <= self.batch_size
+        log_debug("new batch_size is %s", self.batch_size)
         return end_process
 
 
@@ -218,7 +227,7 @@ class TaskQueue:
         self.__worker_num: int = worker_num
         self.__worker_fun: Callable | None = None
         self.__workers: None | dict = None
-        self._batch_policy_type = batch_policy_type
+        self.__batch_policy_type = batch_policy_type
         self.__stop_event: Any | None = None
         self.__queues: dict = {}
         self.__set_logger: bool = True
@@ -304,10 +313,12 @@ class TaskQueue:
 
     def _start_worker(self, worker_id: int, use_thread: bool) -> None:
         assert self.__workers is not None and worker_id not in self.__workers
-        if self._batch_policy_type is not None:
-            target: Worker = BatchWorker(batch_policy=self._batch_policy_type())
-        else:
-            target = Worker()
+
+        target: Worker = (
+            BatchWorker(batch_policy=self.__batch_policy_type())
+            if self.__batch_policy_type is not None
+            else Worker()
+        )
         creator = self.mp_ctx.create_worker
         if use_thread:
             creator = self.mp_ctx.create_thread

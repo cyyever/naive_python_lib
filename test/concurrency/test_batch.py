@@ -10,7 +10,7 @@ def get_queue_types():
     return queue_types
 
 
-def test_batch_process():
+def test_batch_process() -> None:
     for queue_type in get_queue_types():
         queue = queue_type(worker_num=2)
         queue.start(worker_fun=worker)

@@ -5,7 +5,7 @@ from .peer_to_peer_topology import PeerToPeerTopology
 
 
 class PeerEndpoint(Endpoint):
-    def __init__(self, topology: PeerToPeerTopology, worker_id: int):
+    def __init__(self, topology: PeerToPeerTopology, worker_id: int) -> None:
         super().__init__(topology=topology)
         self.__worker_id: int = worker_id
 

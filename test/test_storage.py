@@ -16,7 +16,7 @@ def test_storage() -> None:
     assert data["c"] == "d"
 
 
-def test_json_io():
+def test_json_io() -> None:
     data = {1: 2, "c": "d"}
     with TempDir():
         save_json(data, "./abc.json")

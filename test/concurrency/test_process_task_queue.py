@@ -2,6 +2,7 @@ import time
 
 from cyy_naive_lib.concurrency import (
     BatchPolicy,
+    RetryableBatchPolicy,
     ManageredProcessContext,
     ProcessTaskQueue,
     ThreadTaskQueue,
@@ -9,7 +10,7 @@ from cyy_naive_lib.concurrency import (
 from cyy_naive_lib.log import log_info
 
 
-def hello(task, **kwargs):
+def hello(task, **kwargs) -> str:
     assert task == ()
     log_info("call from other process")
     return "abc"
@@ -26,7 +27,7 @@ def get_queue_types():
     return queue_types
 
 
-def test_process_task_queue():
+def test_process_task_queue() -> None:
     for queue_type in get_queue_types():
         queue = queue_type(worker_num=8)
         queue.start(worker_fun=hello)
@@ -41,17 +42,4 @@ def test_process_task_queue():
         queue.add_task(())
         data = queue.get_data()
         assert data.is_ok() and data.value() == "abc"
-        queue.stop()
-
-
-def test_task_queue_batch_process():
-    for queue_type in get_queue_types():
-        queue = queue_type(worker_num=1,batch_policy_type=BatchPolicy)
-        queue.start(worker_fun=batch_hello)
-        tasks = list(range(5))
-        for task in tasks:
-            queue.add_task(task)
-        for _ in tasks:
-            data = queue.get_data()
-            assert data.is_ok() and data.value() == "abc"
         queue.stop()

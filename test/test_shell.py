@@ -9,23 +9,23 @@ from cyy_naive_lib.shell.mingw64_script import Mingw64Script
 from cyy_naive_lib.shell.msys2_script import MSYS2Script
 
 
-def test_exec_cmd():
+def test_exec_cmd() -> None:
     with TempDir():
         _, res = get_shell_script("echo 'exec cmd' && ls").exec(throw=False)
         assert res == 0
 
 
-def test_msys2_scriot():
+def test_msys2_scriot() -> None:
     if which("msys2_shell.cmd"):
         MSYS2Script(content="pwd").exec()
 
 
-def test_mingw64_scriot():
+def test_mingw64_scriot() -> None:
     if which("msys2_shell.cmd"):
         Mingw64Script(content="pwd").exec()
 
 
-def test_unix_docker():
+def test_unix_docker() -> None:
     if os.getenv("TEST_DOCKER") and which("docker") and exec_cmd("sudo docker ps"):
         with TempDir():
             bash_script = BashScript(content="ls")
