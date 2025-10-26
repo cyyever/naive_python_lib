@@ -14,6 +14,12 @@ def hello(task, **kwargs):
     return "abc"
 
 
+def batch_hello(tasks, **kwargs):
+    assert tasks
+    log_info("call from other process")
+    return ["abc" for _ in tasks]
+
+
 def get_queue_types():
     queue_types = [ThreadTaskQueue, ProcessTaskQueue]
     return queue_types
@@ -40,9 +46,11 @@ def test_process_task_queue():
 def test_task_queue_batch_process():
     for queue_type in get_queue_types():
         queue = queue_type(worker_num=1, batch_process=True)
-        queue.start(worker_fun=hello)
+        queue.start(worker_fun=batch_hello)
         tasks = list(range(5))
         for task in tasks:
             queue.add_task(task)
-        queue.get_data()
+        for _ in tasks:
+            data = queue.get_data()
+            assert data.is_ok() and data.value() == "abc"
         queue.stop()

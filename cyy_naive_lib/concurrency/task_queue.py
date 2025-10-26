@@ -164,15 +164,22 @@ class BatchWorker(Worker):
         batch_size = len(tasks)
 
         self.batch_policy.set_current_batch_size(batch_size=batch_size)
-        res = None
+        results: list | None = None
         with self.batch_policy:
             res = task_queue.worker_fun(
                 tasks=tasks,
                 worker_id=worker_id,
                 **kwargs,
             )
-        if res is not None:
-            task_queue.put_data(data=res, queue_name="__result")
+            assert isinstance(res, list) or res is None
+            if results is None:
+                results = res
+            else:
+                assert isinstance(res, list)
+                results += res
+        assert not results or len(results) == len(tasks)
+        for result in results:
+            task_queue.put_data(data=result, queue_name="__result")
         self.batch_size = self.batch_policy.adjust_batch_size(batch_size=batch_size)
         return end_process
 
