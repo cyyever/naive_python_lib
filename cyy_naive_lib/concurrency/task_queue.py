@@ -3,7 +3,7 @@ import os
 import traceback
 from collections.abc import Callable
 from enum import StrEnum, auto
-from typing import Any
+from typing import Any, Self
 
 import psutil
 
@@ -23,16 +23,21 @@ class BatchPolicy:
     def __init__(self) -> None:
         self._processing_times: dict = {}
         self.__time_counter: TimeCounter = TimeCounter()
+        self.__current_batch_size: int | None = None
 
-    def start_batch(self, **kwargs: Any) -> None:
+    def start_batch(self, batch_size: int) -> None:
         self.__time_counter.reset_start_time()
+        self.__current_batch_size = batch_size
 
-    def end_batch(self, batch_size: int, **kwargs: Any) -> None:
+    def end_batch(self) -> None:
+        assert self.__current_batch_size is not None
+        batch_size = self.__current_batch_size
         self._processing_times[batch_size] = (
             self.__time_counter.elapsed_milliseconds() / batch_size
         )
+        self.__current_batch_size = None
 
-    def adjust_batch_size(self, batch_size: int, **kwargs: Any) -> int:
+    def adjust_batch_size(self, batch_size: int) -> int:
         if (
             batch_size + 1 not in self._processing_times
             or self._processing_times[batch_size + 1]
@@ -40,6 +45,21 @@ class BatchPolicy:
         ):
             return batch_size + 1
         return batch_size
+
+    def set_current_batch_size(self, batch_size: int) -> None:
+        self.__current_batch_size = batch_size
+
+    def __enter__(self) -> Self:
+        assert self.__current_batch_size is not None
+        self.start_batch(batch_size=self.__current_batch_size)
+        return self
+
+    def __exit__(self, *args) -> None:
+        self.end_batch()
+
+
+class ResourceConstraintBatchPolicy(BatchPolicy):
+    pass
 
 
 class _SentinelTask:
@@ -114,16 +134,17 @@ class Worker:
 
 class BatchWorker(Worker):
     batch_size: int = 1
+    batch_policy: BatchPolicy | None = None
 
     def process(
         self,
         task_queue: "TaskQueue",
         worker_id: int,
-        batch_policy: BatchPolicy | None = None,
+        batch_policy_type: type[BatchPolicy] = BatchPolicy,
         **kwargs: Any,
     ) -> bool:
-        if batch_policy is None:
-            batch_policy = BatchPolicy()
+        if self.batch_policy is None:
+            self.batch_policy = batch_policy_type()
         assert self.batch_size > 0
         end_process = False
         tasks = []
@@ -141,21 +162,18 @@ class BatchWorker(Worker):
         if not tasks:
             return end_process
         batch_size = len(tasks)
-        if not end_process and batch_policy is not None:
-            batch_policy.start_batch(batch_size=batch_size, **kwargs)
-        res = task_queue.worker_fun(
-            tasks=tasks,
-            worker_id=worker_id,
-            **kwargs,
-        )
-        if not end_process and batch_policy is not None:
-            batch_policy.end_batch(batch_size=batch_size, **kwargs)
+
+        self.batch_policy.set_current_batch_size(batch_size=batch_size)
+        res = None
+        with self.batch_policy:
+            res = task_queue.worker_fun(
+                tasks=tasks,
+                worker_id=worker_id,
+                **kwargs,
+            )
         if res is not None:
             task_queue.put_data(data=res, queue_name="__result")
-        if not end_process and batch_policy is not None:
-            self.batch_size = batch_policy.adjust_batch_size(
-                batch_size=batch_size, **kwargs
-            )
+        self.batch_size = self.batch_policy.adjust_batch_size(batch_size=batch_size)
         return end_process
 
 
@@ -202,7 +220,7 @@ class TaskQueue:
         return state
 
     @property
-    def worker_fun(self):
+    def worker_fun(self) -> Callable:
         assert self.__worker_fun is not None
         return self.__worker_fun
 
