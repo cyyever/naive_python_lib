@@ -21,45 +21,67 @@ class QueueType(StrEnum):
 
 class BatchPolicy:
     def __init__(self) -> None:
-        self._processing_times: dict = {}
+        self._mean_processing_times: dict = {}
         self.__time_counter: TimeCounter = TimeCounter()
         self.__current_batch_size: int | None = None
 
-    def start_batch(self, batch_size: int) -> None:
+    def _start_batch(self) -> None:
+        assert self.__current_batch_size is not None
         self.__time_counter.reset_start_time()
-        self.__current_batch_size = batch_size
 
-    def end_batch(self) -> None:
+    def _end_batch(self) -> None:
         assert self.__current_batch_size is not None
         batch_size = self.__current_batch_size
-        self._processing_times[batch_size] = (
+        self._mean_processing_times[batch_size] = (
             self.__time_counter.elapsed_milliseconds() / batch_size
         )
         self.__current_batch_size = None
 
-    def adjust_batch_size(self, batch_size: int) -> int:
-        if (
-            batch_size + 1 not in self._processing_times
-            or self._processing_times[batch_size + 1]
-            < self._processing_times[batch_size]
+    def explore_batch_size(self, initial_batch_size: int) -> int:
+        assert initial_batch_size >= 1, initial_batch_size
+        batch_size = initial_batch_size
+        while (
+            batch_size + 1 not in self._mean_processing_times
+            or self._mean_processing_times[batch_size + 1]
+            < self._mean_processing_times[batch_size]
         ):
-            return batch_size + 1
+            batch_size += 1
         return batch_size
 
     def set_current_batch_size(self, batch_size: int) -> None:
+        assert batch_size >= 1, batch_size
         self.__current_batch_size = batch_size
 
     def __enter__(self) -> Self:
         assert self.__current_batch_size is not None
-        self.start_batch(batch_size=self.__current_batch_size)
+        self._start_batch()
         return self
 
     def __exit__(self, *args) -> None:
-        self.end_batch()
+        self._end_batch()
 
 
-class ResourceConstraintBatchPolicy(BatchPolicy):
-    pass
+class RetryableBatchPolicy(BatchPolicy):
+    def __init__(self) -> None:
+        super().__init__()
+        self._no_workable_batch_sizes: set[int] = set()
+
+    def set_current_batch_size(self, batch_size: int) -> None:
+        assert self.is_batch_size_allowed(batch_size)
+        super().set_current_batch_size(batch_size)
+
+    def is_batch_size_allowed(self, batch_size: int):
+        return all(
+            batch_size < no_workable_batch_size
+            for no_workable_batch_size in self._no_workable_batch_sizes
+        )
+
+    def explore_batch_size(self, initial_batch_size: int) -> int:
+        batch_size = super().explore_batch_size(initial_batch_size)
+        while not self.is_batch_size_allowed(batch_size):
+            batch_size -= 1
+        assert batch_size >= 1
+        return batch_size
 
 
 class _SentinelTask:
@@ -133,18 +155,17 @@ class Worker:
 
 
 class BatchWorker(Worker):
-    batch_size: int = 1
-    batch_policy: BatchPolicy | None = None
+    def __init__(self, batch_policy: BatchPolicy):
+        super().__init__()
+        self.batch_size: int = 1
+        self.batch_policy: BatchPolicy = batch_policy
 
     def process(
         self,
         task_queue: "TaskQueue",
         worker_id: int,
-        batch_policy_type: type[BatchPolicy] = BatchPolicy,
         **kwargs: Any,
     ) -> bool:
-        if self.batch_policy is None:
-            self.batch_policy = batch_policy_type()
         assert self.batch_size > 0
         end_process = False
         tasks = []
@@ -180,7 +201,9 @@ class BatchWorker(Worker):
         assert not results or len(results) == len(tasks)
         for result in results:
             task_queue.put_data(data=result, queue_name="__result")
-        self.batch_size = self.batch_policy.adjust_batch_size(batch_size=batch_size)
+        self.batch_size = self.batch_policy.explore_batch_size(
+            initial_batch_size=batch_size
+        )
         return end_process
 
 
@@ -189,13 +212,13 @@ class TaskQueue:
         self,
         mp_ctx: ConcurrencyContext,
         worker_num: int = 1,
-        batch_process: bool = False,
+        batch_policy_type: type[BatchPolicy] | None = None,
     ) -> None:
         self.__mp_ctx = mp_ctx
         self.__worker_num: int = worker_num
         self.__worker_fun: Callable | None = None
         self.__workers: None | dict = None
-        self._batch_process: bool = batch_process
+        self._batch_policy_type = batch_policy_type
         self.__stop_event: Any | None = None
         self.__queues: dict = {}
         self.__set_logger: bool = True
@@ -281,8 +304,8 @@ class TaskQueue:
 
     def _start_worker(self, worker_id: int, use_thread: bool) -> None:
         assert self.__workers is not None and worker_id not in self.__workers
-        if self._batch_process:
-            target: Worker = BatchWorker()
+        if self._batch_policy_type is not None:
+            target: Worker = BatchWorker(batch_policy=self._batch_policy_type())
         else:
             target = Worker()
         creator = self.mp_ctx.create_worker
