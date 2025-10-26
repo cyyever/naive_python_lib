@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from dataclasses import dataclass, fields
 from typing import Any
 
@@ -7,7 +8,7 @@ import pandas as pd
 
 @dataclass(kw_only=True)
 class SamplesMetrics:
-    samples: np.ndarray
+    samples: np.ndarray | Sequence
 
     percentiles: np.ndarray | None = None
     std: float | None = None
@@ -18,6 +19,8 @@ class SamplesMetrics:
     label: str | None = None
 
     def __post_init__(self):
+        if not isinstance(self.samples, np.ndarray):
+            self.samples = np.asarray(self.samples)
         assert len(self.samples.shape) == 1
         self.compute()
 
