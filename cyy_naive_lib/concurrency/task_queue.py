@@ -1,4 +1,5 @@
 import copy
+import itertools
 import os
 import traceback
 from collections.abc import Callable
@@ -167,6 +168,51 @@ class BatchWorker(Worker):
         self.batch_size: int = 1
         self.batch_policy: BatchPolicy = batch_policy
 
+    def __batch_process(
+        self,
+        tasks: list[Any],
+        task_queue: "TaskQueue",
+        **kwargs: Any,
+    ) -> None:
+        assert self.batch_size > 0
+        results: list | None = None
+        batch_size = len(tasks)
+        for batch in itertools.batched(tasks, n=batch_size, strict=False):
+            self.batch_policy.set_current_batch_size(batch_size=batch_size)
+            with self.batch_policy:
+                res = task_queue.worker_fun(
+                    tasks=batch,
+                    **kwargs,
+                )
+                assert isinstance(res, list) or res is None
+                if results is None:
+                    results = res
+                else:
+                    assert isinstance(res, list)
+                    results += res
+            assert not results or len(results) == len(batch)
+            self.batch_size = self.batch_policy.explore_batch_size(
+                initial_batch_size=batch_size
+            )
+            assert batch_size <= self.batch_size
+            log_debug("new batch_size is %s", self.batch_size)
+            for result in results:
+                task_queue.put_data(data=result, queue_name="__result")
+
+    def __collect_tasks(self, task_queue: "TaskQueue") -> tuple[list, bool]:
+        end_process = False
+        tasks = []
+        for idx in range(self.batch_size):
+            if idx == 0:
+                task = self._get_task(task_queue=task_queue, timeout=3600)
+            else:
+                task = self._get_task(task_queue=task_queue, timeout=0.000001)
+            if not task.is_ok():
+                end_process = True
+                break
+            tasks.append(task.value())
+        return tasks, end_process
+
     def process(
         self,
         task_queue: "TaskQueue",
@@ -174,45 +220,11 @@ class BatchWorker(Worker):
         **kwargs: Any,
     ) -> bool:
         assert self.batch_size > 0
-        end_process = False
-        tasks = []
-        for idx in range(self.batch_size):
-            if idx == 0:
-                task = self._get_task(task_queue=task_queue, timeout=3600)
-            elif task_queue.has_task():
-                task = self._get_task(task_queue=task_queue, timeout=0.000001)
-            else:
-                break
-            if not task.is_ok():
-                end_process = True
-                break
-            tasks.append(task.value())
-        if not tasks:
-            return end_process
-        batch_size = len(tasks)
-
-        self.batch_policy.set_current_batch_size(batch_size=batch_size)
-        results: list | None = None
-        with self.batch_policy:
-            res = task_queue.worker_fun(
-                tasks=tasks,
-                worker_id=worker_id,
-                **kwargs,
+        tasks, end_process = self.__collect_tasks(task_queue=task_queue)
+        if tasks:
+            self.__batch_process(
+                tasks=tasks, task_queue=task_queue, worker_id=worker_id
             )
-            assert isinstance(res, list) or res is None
-            if results is None:
-                results = res
-            else:
-                assert isinstance(res, list)
-                results += res
-        assert not results or len(results) == len(tasks)
-        for result in results:
-            task_queue.put_data(data=result, queue_name="__result")
-        self.batch_size = self.batch_policy.explore_batch_size(
-            initial_batch_size=batch_size
-        )
-        assert batch_size <= self.batch_size
-        log_debug("new batch_size is %s", self.batch_size)
         return end_process
 
 

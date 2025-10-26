@@ -2,11 +2,11 @@ import cProfile
 import pstats
 import sys
 from types import TracebackType
-from typing import Self
+from typing import Self, TextIO
 
 
 class Profile:
-    def __init__(self, stats_stream=sys.stdout) -> None:
+    def __init__(self, stats_stream: TextIO = sys.stdout) -> None:
         self.__profile: None | cProfile.Profile = None
         self.__stats_stream = stats_stream
 
@@ -24,10 +24,10 @@ class Profile:
         self,
         exc_type: type[BaseException] | None,
         exc_value: BaseException | None,
-        real_traceback: TracebackType | None,
+        traceback: TracebackType | None,
     ) -> None:
         self.profile.disable()
-        if real_traceback:
+        if traceback:
             return
         ps = pstats.Stats(self.profile, stream=self.__stats_stream).sort_stats(
             pstats.SortKey.CUMULATIVE
