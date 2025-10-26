@@ -77,7 +77,7 @@ class RetryableBatchPolicy(BatchPolicy):
         assert self.is_batch_size_allowed(batch_size)
         super().set_current_batch_size(batch_size)
 
-    def is_batch_size_allowed(self, batch_size: int):
+    def is_batch_size_allowed(self, batch_size: int) -> bool:
         return all(
             batch_size < no_workable_batch_size
             for no_workable_batch_size in self._no_workable_batch_sizes
@@ -104,7 +104,7 @@ class RepeatedResult:
     def get_data_list(self) -> list:
         return [self.data for _ in range(self.__num)]
 
-    def set_data(self, data) -> None:
+    def set_data(self, data: Any) -> None:
         self.__data = data
 
     @property
@@ -141,7 +141,7 @@ class Worker:
                 return
         task_queue.clear_data(task_queue.get_worker_queue_name(worker_id))
 
-    def _get_task(self, task_queue: "TaskQueue", timeout: float):
+    def _get_task(self, task_queue: "TaskQueue", timeout: float) -> Expected:
         task = task_queue.get_task(timeout=timeout)
         if task.is_ok() and isinstance(task.value(), _SentinelTask):
             return Expected.not_ok()
@@ -246,7 +246,7 @@ class TaskQueue:
         return self.__stop_event.is_set()
 
     @property
-    def worker_num(self):
+    def worker_num(self) -> int:
         return self.__worker_num
 
     def get_worker_queue_name(self, worker_id: int) -> str:
@@ -369,7 +369,7 @@ class TaskQueue:
     def has_task(self) -> bool:
         return self.has_data(queue_name="__task")
 
-    def clear_data(self, queue_name) -> None:
+    def clear_data(self, queue_name: str) -> None:
         if queue_name not in self.__queues:
             return
         while True:
