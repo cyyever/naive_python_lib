@@ -24,7 +24,7 @@ class Script:
         r"""
         Add an environment variable to the script
         """
-        self.env = [(key, value)] + self.env
+        self.env = [(key, value), *self.env]
 
     def append_env_path(self, key: str, value: str) -> None:
         self.append_env(key, self._convert_path(value))

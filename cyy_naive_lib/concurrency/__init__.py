@@ -10,17 +10,17 @@ from .thread_pool import ThreadPool
 from .thread_task_queue import ThreadTaskQueue
 
 __all__ = [
-    "batch_process",
+    "BatchPolicy",
+    "BlockingSubmitExecutor",
     "ManageredProcessContext",
     "ProcessContext",
-    "BlockingSubmitExecutor",
     "ProcessPool",
-    "ProcessTaskQueue",
     "ProcessPoolWithCoroutine",
-    "BatchPolicy",
+    "ProcessTaskQueue",
     "RetryableBatchPolicy",
     "TaskQueue",
     "ThreadContext",
     "ThreadPool",
     "ThreadTaskQueue",
+    "batch_process",
 ]

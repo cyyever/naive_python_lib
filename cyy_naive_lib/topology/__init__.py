@@ -8,11 +8,11 @@ from .endpoint import Endpoint
 from .topology import Topology
 
 __all__ = [
-    "Topology",
     "CentralTopology",
+    "ClientEndpoint",
+    "Endpoint",
     "ProcessPipeCentralTopology",
     "ProcessQueueCentralTopology",
     "ServerEndpoint",
-    "ClientEndpoint",
-    "Endpoint",
+    "Topology",
 ]

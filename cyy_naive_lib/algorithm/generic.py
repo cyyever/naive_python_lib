@@ -64,9 +64,9 @@ def recursive_mutable_op[T](
                 return data
 
             case tuple():
-                return tuple(recursive_op_impl(element, fun) for element in data)  # noqa
+                return tuple(recursive_op_impl(element, fun) for element in data)
             case functools.partial():
-                return functools.partial(  # noqa
+                return functools.partial(
                     data.func,
                     *recursive_op_impl(data.args, fun),
                     **recursive_op_impl(data.keywords, fun),

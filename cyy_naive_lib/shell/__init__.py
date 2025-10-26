@@ -30,10 +30,10 @@ def exec_cmd(
 
 __all__ = [
     "BashScript",
+    "MSYS2Script",
     "Mingw64Script",
     "PowerShellScript",
-    "MSYS2Script",
-    "get_shell_script_type",
-    "get_shell_script",
     "exec_cmd",
+    "get_shell_script",
+    "get_shell_script_type",
 ]

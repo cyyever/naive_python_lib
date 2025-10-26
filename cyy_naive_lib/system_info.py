@@ -89,11 +89,11 @@ def get_operating_system() -> str:
 @functools.cache
 def get_processor_name() -> str:
     if os.path.isfile("/proc/cpuinfo"):
-        return [
+        return next(
             line.lower()
             for line in readlines("/proc/cpuinfo")
             if "model name" in line.lower()
-        ][0]
+        )
     processor_name = ""
     if which("sysctl") is not None:
         output = os.popen("sysctl hw.model").read().lower()
