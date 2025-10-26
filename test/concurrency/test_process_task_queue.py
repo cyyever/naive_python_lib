@@ -1,8 +1,7 @@
 import time
+from typing import Any
 
 from cyy_naive_lib.concurrency import (
-    BatchPolicy,
-    RetryableBatchPolicy,
     ManageredProcessContext,
     ProcessTaskQueue,
     ThreadTaskQueue,
@@ -10,13 +9,13 @@ from cyy_naive_lib.concurrency import (
 from cyy_naive_lib.log import log_info
 
 
-def hello(task, **kwargs) -> str:
+def hello(task:tuple, **kwargs) -> str:
     assert task == ()
     log_info("call from other process")
     return "abc"
 
 
-def batch_hello(tasks, **kwargs):
+def batch_hello(tasks:Any, **kwargs) -> list[str]:
     assert tasks
     log_info("call from other process")
     return ["abc" for _ in tasks]

@@ -33,10 +33,10 @@ class ProcessPeerToPeerTopology(PeerToPeerTopology):
             for peer_id in range(self.worker_num):
                 self.__queues[worker_id].add_result_queue(f"result_{peer_id}")
 
-    def get_queue(self, peer_id) -> ProcessTaskQueue:
+    def get_queue(self, peer_id: int) -> ProcessTaskQueue:
         return self.__queues[peer_id]
 
-    def get_from_peer(self, my_id, peer_id):
+    def get_from_peer(self, my_id: int, peer_id: int):
         assert 0 <= my_id < self.worker_num
         assert 0 <= peer_id < self.worker_num
         return self.get_queue(peer_id).get_data(queue_name=f"result_{my_id}")

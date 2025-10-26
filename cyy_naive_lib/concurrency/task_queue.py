@@ -10,8 +10,8 @@ import psutil
 from cyy_naive_lib.log import (
     apply_logger_setting,
     get_logger_setting,
-    log_error,
     log_debug,
+    log_error,
 )
 from cyy_naive_lib.time_counter import TimeCounter
 

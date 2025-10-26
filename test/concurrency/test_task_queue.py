@@ -1,9 +1,10 @@
 from typing import Any
+
 from cyy_naive_lib.concurrency import (
     ProcessTaskQueue,
-    ThreadTaskQueue,
-    TaskQueue,
     RetryableBatchPolicy,
+    TaskQueue,
+    ThreadTaskQueue,
 )
 from cyy_naive_lib.log import log_warning
 

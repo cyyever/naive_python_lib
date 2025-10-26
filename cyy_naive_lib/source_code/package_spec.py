@@ -1,4 +1,5 @@
 import re
+from typing import Self
 
 from looseversion import LooseVersion
 
@@ -55,10 +56,10 @@ class PackageSpecification:
             return res
         return res + ":" + self.branch
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Self) -> bool:
         return self.name == other.name and self.branch == other.branch
 
-    def __ne__(self, other):
+    def __ne__(self, other: Self):
         return not self.__eq__(other)
 
     def __hash__(self) -> int:
