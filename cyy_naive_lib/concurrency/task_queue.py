@@ -1,9 +1,9 @@
 import copy
-import itertools
 import os
 import traceback
 from collections.abc import Callable
 from enum import StrEnum, auto
+from types import TracebackType
 from typing import Any, Self
 
 import psutil
@@ -29,19 +29,22 @@ class BatchPolicy:
     def __init__(self) -> None:
         self._mean_processing_times: dict = {}
         self.__time_counter: TimeCounter = TimeCounter()
-        self.__current_batch_size: int | None = None
+        self._current_batch_size: int | None = None
 
     def _start_batch(self) -> None:
-        assert self.__current_batch_size is not None
+        assert self._current_batch_size is not None
         self.__time_counter.reset_start_time()
 
     def _end_batch(self) -> None:
-        assert self.__current_batch_size is not None
-        batch_size = self.__current_batch_size
+        assert self._current_batch_size is not None
+        batch_size = self._current_batch_size
         self._mean_processing_times[batch_size] = (
             self.__time_counter.elapsed_milliseconds() / batch_size
         )
-        self.__current_batch_size = None
+        self._current_batch_size = None
+
+    def _cancel_batch(self) -> None:
+        self._current_batch_size = None
 
     def explore_batch_size(self, initial_batch_size: int) -> int:
         assert initial_batch_size >= 1, initial_batch_size
@@ -58,15 +61,23 @@ class BatchPolicy:
 
     def set_current_batch_size(self, batch_size: int) -> None:
         assert batch_size >= 1, batch_size
-        self.__current_batch_size = batch_size
+        self._current_batch_size = batch_size
 
     def __enter__(self) -> Self:
-        assert self.__current_batch_size is not None
+        assert self._current_batch_size is not None
         self._start_batch()
         return self
 
-    def __exit__(self, *args) -> None:
-        self._end_batch()
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        if exc_value is None:
+            self._end_batch()
+        else:
+            self._cancel_batch()
 
 
 class RetryableBatchPolicy(BatchPolicy):
@@ -90,6 +101,18 @@ class RetryableBatchPolicy(BatchPolicy):
             batch_size -= 1
         assert batch_size >= 1
         return batch_size
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        if exc_value is not None:
+            assert self._current_batch_size is not None
+            log_error("Forbid batch size %s", self._current_batch_size)
+            self._no_workable_batch_sizes.add(self._current_batch_size)
+        super().__exit__(exc_type, exc_value, traceback)
 
 
 class _SentinelTask:
@@ -175,29 +198,36 @@ class BatchWorker(Worker):
         **kwargs: Any,
     ) -> None:
         assert self.batch_size > 0
-        results: list | None = None
         batch_size = len(tasks)
-        for batch in itertools.batched(tasks, n=batch_size, strict=False):
-            self.batch_policy.set_current_batch_size(batch_size=batch_size)
-            with self.batch_policy:
-                res = task_queue.worker_fun(
-                    tasks=batch,
-                    **kwargs,
+        while tasks:
+            batch = tasks[:batch_size]
+            results: list | None = None
+            try:
+                self.batch_policy.set_current_batch_size(batch_size=batch_size)
+                with self.batch_policy:
+                    results = task_queue.worker_fun(
+                        tasks=batch,
+                        **kwargs,
+                    )
+                self.batch_size = self.batch_policy.explore_batch_size(
+                    initial_batch_size=batch_size
                 )
-                assert isinstance(res, list) or res is None
-                if results is None:
-                    results = res
+                assert batch_size <= self.batch_size
+                log_debug("new batch_size is %s", self.batch_size)
+                tasks = tasks[len(batch) :]
+            except BaseException:
+                if (
+                    isinstance(self.batch_policy, RetryableBatchPolicy)
+                    and batch_size > 1
+                ):
+                    batch_size -= 1
+                    continue
                 else:
-                    assert isinstance(res, list)
-                    results += res
-            assert not results or len(results) == len(batch)
-            self.batch_size = self.batch_policy.explore_batch_size(
-                initial_batch_size=batch_size
-            )
-            assert batch_size <= self.batch_size
-            log_debug("new batch_size is %s", self.batch_size)
-            for result in results:
-                task_queue.put_data(data=result, queue_name="__result")
+                    raise
+            assert results is None or len(results) == len(batch)
+            if results is not None:
+                for result in results:
+                    task_queue.put_data(data=result, queue_name="__result")
 
     def __collect_tasks(self, task_queue: "TaskQueue") -> tuple[list, bool]:
         end_process = False
