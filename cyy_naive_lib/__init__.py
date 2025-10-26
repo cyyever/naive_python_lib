@@ -13,6 +13,7 @@ from .concurrency import (
     ProcessPool,
     ProcessPoolWithCoroutine,
     ProcessTaskQueue,
+    RetryableBatchPolicy,
     TaskQueue,
     ThreadContext,
     ThreadPool,
@@ -80,5 +81,6 @@ __all__ = [
     "get_mapping_values_by_key_order",
     "recursive_mutable_op",
     "list_files",
+    "RetryableBatchPolicy",
     "list_files_by_suffixes",
 ]

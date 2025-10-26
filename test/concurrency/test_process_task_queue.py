@@ -1,6 +1,7 @@
 import time
 
 from cyy_naive_lib.concurrency import (
+    BatchPolicy,
     ManageredProcessContext,
     ProcessTaskQueue,
     ThreadTaskQueue,
@@ -45,7 +46,7 @@ def test_process_task_queue():
 
 def test_task_queue_batch_process():
     for queue_type in get_queue_types():
-        queue = queue_type(worker_num=1, batch_process=True)
+        queue = queue_type(worker_num=1,batch_policy_type=BatchPolicy)
         queue.start(worker_fun=batch_hello)
         tasks = list(range(5))
         for task in tasks:
