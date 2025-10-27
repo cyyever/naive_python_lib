@@ -1,4 +1,5 @@
 import copy
+import math
 import os
 import traceback
 from collections.abc import Callable
@@ -38,9 +39,12 @@ class BatchPolicy:
     def _end_batch(self) -> None:
         assert self._current_batch_size is not None
         batch_size = self._current_batch_size
-        self._mean_processing_times[batch_size] = (
-            self.__time_counter.elapsed_milliseconds() / batch_size
-        )
+        new_mean_time = self.__time_counter.elapsed_milliseconds() / batch_size
+        if batch_size in self._mean_processing_times:
+            new_mean_time = (
+                self._mean_processing_times[batch_size] + new_mean_time
+            ) / 2
+        self._mean_processing_times[batch_size] = new_mean_time
         self._current_batch_size = None
 
     def _cancel_batch(self) -> None:
@@ -49,10 +53,21 @@ class BatchPolicy:
     def explore_batch_size(self, initial_batch_size: int) -> int:
         assert initial_batch_size >= 1, initial_batch_size
         batch_size = initial_batch_size
+        assert batch_size in self._mean_processing_times
+        # if (
+        #     batch_size > 1
+        #     and self._mean_processing_times[batch_size]
+        #     > self._mean_processing_times[batch_size - 1]
+        # ):
+        #     batch_size -= 1
         while (
             batch_size + 1 not in self._mean_processing_times
-            or self._mean_processing_times[batch_size + 1]
-            < self._mean_processing_times[batch_size]
+            or math.fabs(
+                self._mean_processing_times[batch_size + 1]
+                - self._mean_processing_times[batch_size]
+            )
+            / self._mean_processing_times[batch_size]
+            < 0.1
         ):
             batch_size += 1
             if batch_size not in self._mean_processing_times:
