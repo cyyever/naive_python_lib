@@ -218,6 +218,7 @@ class BatchWorker(Worker):
             batch = tasks[:batch_size]
             results: list | None = None
             try:
+                log_error("use batch size %s",batch_size)
                 self.batch_policy.set_current_batch_size(batch_size=batch_size)
                 with self.batch_policy:
                     results = task_queue.worker_fun(
