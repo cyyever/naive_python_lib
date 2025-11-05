@@ -1,4 +1,5 @@
 import os
+import sys
 from types import TracebackType
 
 import psutil
@@ -32,8 +33,9 @@ class Source:
                     os.remove(lock_file)
 
         with FileLock(lock_file, timeout=3600) as lock:
-            with open(lock.lock_file, "w", encoding="utf8") as f:
-                f.write(str(os.getpid()))
+            if sys.platform != "win32":
+                with open(lock.lock_file, "w", encoding="utf8") as f:
+                    f.write(str(os.getpid()))
             res = self._download()
             if os.path.isdir(res):
                 os.chdir(res)
