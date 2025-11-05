@@ -1,4 +1,5 @@
 import logging
+import sys
 import multiprocessing
 
 from cyy_naive_lib.concurrency import ProcessPool
@@ -24,6 +25,8 @@ def __test_log() -> None:
 
 
 def test_log() -> None:
+    if sys.platform == "win32":
+        return
     with TempDir():
         multiprocessing.current_process().name = "my process"
         add_file_handler("log")

@@ -1,11 +1,11 @@
 from cyy_naive_lib.concurrency import ProcessTaskQueue, ThreadTaskQueue, batch_process
 
 
-def worker(task, **kwargs):
+def worker(task: int, **kwargs) -> dict:
     return {task: task}
 
 
-def get_queue_types():
+def get_queue_types() -> list[type]:
     queue_types = [ThreadTaskQueue, ProcessTaskQueue]
     return queue_types
 

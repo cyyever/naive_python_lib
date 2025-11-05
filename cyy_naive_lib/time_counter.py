@@ -1,5 +1,6 @@
 import time
 import traceback
+from typing import Self
 
 from cyy_naive_lib.log import log_debug, log_info
 
@@ -23,7 +24,7 @@ class TimeCounter:
     def elapsed_seconds(self) -> float:
         return self.elapsed_milliseconds() / 1000
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         self.reset_start_time()
         return self
 

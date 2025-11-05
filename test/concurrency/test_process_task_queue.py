@@ -9,19 +9,19 @@ from cyy_naive_lib.concurrency import (
 from cyy_naive_lib.log import log_info
 
 
-def hello(task:tuple, **kwargs) -> str:
+def hello(task: tuple, **kwargs) -> str:
     assert task == ()
     log_info("call from other process")
     return "abc"
 
 
-def batch_hello(tasks:Any, **kwargs) -> list[str]:
+def batch_hello(tasks: Any, **kwargs) -> list[str]:
     assert tasks
     log_info("call from other process")
     return ["abc" for _ in tasks]
 
 
-def get_queue_types():
+def get_queue_types() -> list[type]:
     queue_types = [ThreadTaskQueue, ProcessTaskQueue]
     return queue_types
 
