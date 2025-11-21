@@ -1,5 +1,6 @@
 import copy
 import math
+import multiprocessing.context
 import os
 import traceback
 from collections.abc import Callable
@@ -19,6 +20,7 @@ from cyy_naive_lib.time_counter import TimeCounter
 
 from ..function import Expected
 from .context import ConcurrencyContext
+from .process_context import ProcessContext
 
 
 class QueueType(StrEnum):
@@ -381,13 +383,22 @@ class TaskQueue:
         creator = self.mp_ctx.create_worker
         if use_thread:
             creator = self.mp_ctx.create_thread
-        in_thread = use_thread or self.mp_ctx.in_thread()
+        use_spwan = (
+            use_thread
+            or self.mp_ctx.in_thread()
+            or (
+                isinstance(self.mp_ctx, ProcessContext)
+                and isinstance(
+                    self.mp_ctx.get_ctx(), multiprocessing.context.SpawnContext
+                )
+            )
+        )
 
         self.__workers[worker_id] = creator(
             name=f"worker {worker_id}",
             target=target,
             args=(),
-            kwargs=self._get_task_kwargs(worker_id, in_thread=in_thread),
+            kwargs=self._get_task_kwargs(worker_id, use_spwan=use_spwan),
         )
         self.__workers[worker_id].start()
 
@@ -472,13 +483,13 @@ class TaskQueue:
             return queue[1].poll()
         return not queue.empty()
 
-    def _get_task_kwargs(self, worker_id: int, in_thread: bool) -> dict:
+    def _get_task_kwargs(self, worker_id: int, use_spwan: bool) -> dict:
         kwargs = {
             "task_queue": self,
             "worker_id": worker_id,
             "ppid": os.getpid(),
         }
-        if self.__set_logger and not in_thread:
+        if self.__set_logger and use_spwan:
             kwargs["log_setting"] = get_logger_setting()
         else:
             kwargs["log_setting"] = {}

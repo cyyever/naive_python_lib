@@ -1,6 +1,6 @@
 import logging
-import sys
 import multiprocessing
+import sys
 
 from cyy_naive_lib.concurrency import ProcessPool
 from cyy_naive_lib.fs.tempdir import TempDir
