@@ -12,7 +12,6 @@ dependencies = [
   "colorlog",
   "dill",
   "filelock",
-  "gevent",
   "looseversion",
   "psutil",
   "pytest",
@@ -22,7 +21,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-full = ["numpy] 
+full = ["numpy", "gevent"] 
 
 [project.urls]
 Repository = "https://github.com/cyyever/naive_python_lib"
