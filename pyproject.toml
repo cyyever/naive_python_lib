@@ -14,13 +14,15 @@ dependencies = [
   "filelock",
   "gevent",
   "looseversion",
-  "numpy",
   "psutil",
   "pytest",
   "pytest_cov",
   "requests",
   "tqdm"
 ]
+
+[project.optional-dependencies]
+full = ["numpy] 
 
 [project.urls]
 Repository = "https://github.com/cyyever/naive_python_lib"
