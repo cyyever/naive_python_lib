@@ -50,7 +50,7 @@ class Script:
         self.__remove_newline()
 
     def get_suffix(self) -> str:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _get_temp_script_name(self) -> str:
         for idx in range(10000):
@@ -86,19 +86,19 @@ class Script:
         return output, exit_code
 
     def _get_exec_command_line(self) -> Never:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _wrap_content_in_strict_mode(self, env_part: str, content_part: str) -> str:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _export(self, key: str, value: str) -> str:
         r"""
         Return an command to export the environment variable
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _get_line_separator(self) -> str:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def __remove_newline(self) -> None:
         self.content = [line.rstrip("\r\n") for line in self.content]

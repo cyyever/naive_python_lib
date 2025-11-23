@@ -13,7 +13,7 @@ class ThreadContext(ConcurrencyContext):
         return True
 
     def create_pipe(self) -> Any:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def create_event(self) -> threading.Event:
         return threading.Event()

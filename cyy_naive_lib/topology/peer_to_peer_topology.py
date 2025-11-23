@@ -10,16 +10,16 @@ class PeerToPeerTopology(Topology):
         self.worker_num = worker_num
 
     def get_from_peer(self, my_id: int, peer_id: int) -> Expected:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def peer_end_has_data(self, my_id: int, peer_id: int) -> bool:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def send_to_peer(self, my_id: int, peer_id: int, data: Any) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def close(self, my_id: int) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class ProcessPeerToPeerTopology(PeerToPeerTopology):

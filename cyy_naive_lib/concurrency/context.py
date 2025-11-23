@@ -5,7 +5,7 @@ from typing import Any
 
 class ConcurrencyContext:
     def create_queue(self) -> Any:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def in_thread(self) -> bool:
         return False
@@ -14,10 +14,10 @@ class ConcurrencyContext:
         return False
 
     def create_pipe(self) -> Any:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def create_event(self) -> Any:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def create_thread(
         self, name: str, target: Callable, args, kwargs
@@ -25,4 +25,4 @@ class ConcurrencyContext:
         return threading.Thread(name=name, target=target, args=args, kwargs=kwargs)
 
     def create_worker(self, name: str, target: Callable, args, kwargs) -> Any:
-        raise NotImplementedError()
+        raise NotImplementedError

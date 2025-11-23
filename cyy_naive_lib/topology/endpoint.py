@@ -6,4 +6,4 @@ class Endpoint:
         self._topology: Topology = topology
 
     def close(self) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError

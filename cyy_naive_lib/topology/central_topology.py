@@ -10,28 +10,28 @@ class CentralTopology(Topology):
         self.worker_num = worker_num
 
     def get_from_server(self, worker_id: int) -> Any:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def get_from_worker(self, worker_id: int) -> Any:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def has_data_from_server(self, worker_id: int) -> bool:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def has_data_from_worker(self, worker_id: int) -> bool:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def send_to_server(self, worker_id: int, data: Any) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def send_to_worker(self, worker_id: int, data: Any) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def close_server_channel(self) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def close_worker_channel(self, worker_id: int) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class ProcessPipeCentralTopology(CentralTopology):

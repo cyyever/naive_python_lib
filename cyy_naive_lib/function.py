@@ -46,7 +46,7 @@ class Decorator[T]:
 
     def __getattr__(self, name: str) -> Any:
         if "decorator_object" in name:
-            raise AttributeError()
+            raise AttributeError
         return getattr(self._decorator_object, name)
 
 
