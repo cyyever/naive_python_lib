@@ -1,5 +1,9 @@
 from .batch import batch_process
-from .coroutine import ProcessPoolWithCoroutine
+
+try:
+    from .coroutine import ProcessPoolWithCoroutine
+except Exception:
+    pass
 from .executor import BlockingSubmitExecutor
 from .process_context import ManageredProcessContext, ProcessContext
 from .process_pool import ProcessPool
