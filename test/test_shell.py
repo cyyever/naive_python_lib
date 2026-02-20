@@ -7,6 +7,7 @@ from cyy_naive_lib.shell.bash_script import BashScript
 from cyy_naive_lib.shell.docker_file import DockerFile
 from cyy_naive_lib.shell.mingw64_script import Mingw64Script
 from cyy_naive_lib.shell.msys2_script import MSYS2Script
+from cyy_naive_lib.shell.pwsh_script import PowerShellScript
 
 
 def test_exec_cmd() -> None:
@@ -23,6 +24,24 @@ def test_msys2_scriot() -> None:
 def test_mingw64_scriot() -> None:
     if which("msys2_shell.cmd"):
         Mingw64Script(content="pwd").exec()
+
+
+def test_pwsh_script() -> None:
+    if which("pwsh"):
+        with TempDir():
+            _, res = PowerShellScript(content="Write-Output 'hello'").exec(
+                throw=False
+            )
+            assert res == 0
+
+
+def test_pwsh_script_with_env() -> None:
+    if which("pwsh"):
+        with TempDir():
+            script = PowerShellScript(content="Write-Output $env:MY_VAR")
+            script.append_env("MY_VAR", "test_value")
+            _, res = script.exec(throw=False)
+            assert res == 0
 
 
 def test_unix_docker() -> None:

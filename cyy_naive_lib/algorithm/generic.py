@@ -1,15 +1,14 @@
 import dataclasses
 import functools
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
-from typing import Any
 
 from ..function import Expected
 
 
-def recursive_op(data: Any, fun: Callable[[Any], bool], check: bool = False) -> None:
+def recursive_op(data: object, fun: Callable[[object], bool], check: bool = False) -> None:
     flag = False
 
-    def recursive_op_impl(data: Any, fun: Callable[[Any], bool]) -> None:
+    def recursive_op_impl(data: object, fun: Callable[[object], bool]) -> None:
         nonlocal flag
         res = fun(data)
         if res:
@@ -43,11 +42,11 @@ def recursive_op(data: Any, fun: Callable[[Any], bool], check: bool = False) -> 
 
 
 def recursive_mutable_op[T](
-    data: T, fun: Callable[[Any], Expected], check: bool = False
+    data: T, fun: Callable[[object], Expected], check: bool = False
 ) -> T:
     flag = False
 
-    def recursive_op_impl[S](data: S, fun: Callable[[Any], Expected]) -> S:
+    def recursive_op_impl[S](data: S, fun: Callable[[object], Expected]) -> S:
         nonlocal flag
         res = fun(data)
         if res.is_ok():

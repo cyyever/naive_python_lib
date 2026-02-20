@@ -1,7 +1,6 @@
 import concurrent.futures
 import functools
 from collections.abc import Callable
-from typing import Any
 
 from cyy_naive_lib.log import get_logger_setting
 
@@ -45,7 +44,7 @@ class ExtendedProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
 
     @classmethod
     def wrapped_fn(
-        cls, fn: Callable, pass_process_data: bool, *args: Any, **kwargs: Any
+        cls, fn: Callable, pass_process_data: bool, *args: object, **kwargs: object
     ) -> concurrent.futures.Future:
         process_data = {}
         if pass_process_data:
@@ -53,7 +52,7 @@ class ExtendedProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
         return fn(*args, **kwargs, **process_data)
 
     def submit(
-        self, fn: Callable, /, *args: Any, **kwargs: Any
+        self, fn: Callable, /, *args: object, **kwargs: object
     ) -> concurrent.futures.Future:
         assert "fn" not in kwargs
         return super().submit(
@@ -64,5 +63,5 @@ class ExtendedProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
 
 
 class ProcessPool(ExecutorWrapper):
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: object) -> None:
         super().__init__(ExtendedProcessPoolExecutor(**kwargs))

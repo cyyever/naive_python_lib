@@ -4,7 +4,7 @@ import inspect
 import time
 import traceback
 from collections.abc import Callable
-from typing import Any, Self
+from typing import Self
 
 from cyy_naive_lib.log import log_error
 
@@ -44,13 +44,13 @@ class Decorator[T]:
     def __copy__(self) -> Self:
         return type(self)(copy.copy(self._decorator_object))
 
-    def __getattr__(self, name: str) -> Any:
+    def __getattr__(self, name: str) -> object:
         if "decorator_object" in name:
             raise AttributeError
         return getattr(self._decorator_object, name)
 
 
-def exception_aware_call(fn: Callable, *args: Any, **kwargs: Any) -> Any:
+def exception_aware_call(fn: Callable, *args: object, **kwargs: object) -> object | None:
     try:
         if inspect.iscoroutinefunction(fn):
             return asyncio.run(fn(*args, **kwargs))

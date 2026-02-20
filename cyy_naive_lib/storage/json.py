@@ -1,11 +1,10 @@
 import contextlib
 import json
-from typing import Any
 
 from .backuper import Backuper
 
 
-def load_json(json_file: str) -> Any:
+def load_json(json_file: str) -> object:
     with open(json_file, encoding="utf8") as f:
         return json.load(f)
 

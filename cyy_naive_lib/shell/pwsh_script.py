@@ -29,13 +29,14 @@ class PowerShellScript(Script):
     def get_suffix(self) -> str:
         return "ps1"
 
-    def _get_exec_command_line(self):
-        with open("script.ps1", "w", encoding="utf8") as f:
+    def _get_exec_command_line(self) -> dict:
+        script_name = self._get_temp_script_name()
+        with open(script_name, "w", encoding="utf8") as f:
             f.write(self.get_complete_content())
-            return {
-                "cmd": ["pwsh", "-NoProfile", "-File", "script.ps1"],
-                "script_name": "script.ps1",
-            }
+        return {
+            "cmd": ["pwsh", "-NoProfile", "-File", script_name],
+            "script_name": script_name,
+        }
 
     def _export(self, key: str, value: str):
         if value.startswith("(") and value.endswith(")"):

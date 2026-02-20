@@ -2,7 +2,6 @@ import copy
 import os
 import random
 import threading
-from typing import Any
 
 import dill
 import numpy as np
@@ -14,8 +13,8 @@ class ReproducibleRandomEnv:
     lock = threading.RLock()
 
     def __init__(self) -> None:
-        self.__randomlib_state: Any = None
-        self.__numpy_state: Any = None
+        self.__randomlib_state: tuple | None = None
+        self.__numpy_state: dict | None = None
         self._enabled: bool = False
         self.__last_seed_path: None | str = None
 
@@ -69,7 +68,7 @@ class ReproducibleRandomEnv:
             "numpy_state": self.__numpy_state,
         }
 
-    def save(self, seed_dir: str) -> Any:
+    def save(self, seed_dir: str) -> None:
         seed_path = os.path.join(seed_dir, "random_seed.pk")
         log_warning("%s save reproducible env to %s", id(self), seed_path)
         with self.lock:

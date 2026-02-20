@@ -1,6 +1,6 @@
 from collections.abc import Callable, Generator, Iterable, Sequence
 from itertools import batched
-from typing import Any, TypeVar
+from typing import TypeVar
 
 T = TypeVar("T")
 
@@ -27,7 +27,7 @@ def flatten_list(seq: list) -> list:
 
 def search_sublists(sublists: Sequence[Sequence]) -> Callable:
     assert sublists
-    lookup_table: dict[tuple, Any] = {}
+    lookup_table: dict[tuple, set] = {}
     for sub_list in sublists:
         assert sub_list
         a = sub_list[0]

@@ -9,7 +9,6 @@ import threading
 from collections.abc import Iterable
 from contextlib import redirect_stdout
 from multiprocessing import Queue
-from typing import Any
 
 from colorlog import ColoredFormatter
 
@@ -35,15 +34,15 @@ def replace_logger(name: str) -> None:
 
 class __LoggerEnv:
     __logger_lock = threading.RLock()
-    __multiprocessing_ctx: Any = multiprocessing
-    __message_queue: Any = None
+    __multiprocessing_ctx: multiprocessing.context.BaseContext = multiprocessing
+    __message_queue: Queue | None = None
     proxy_logger: logging.Logger | None = None
     __filenames: set[str] = set()
-    __formatter: None | Any = None
+    __formatter: None | logging.Formatter = None
     __logger_level: int = logging.DEBUG
 
     @classmethod
-    def set_multiprocessing_ctx(cls, ctx: Any) -> None:
+    def set_multiprocessing_ctx(cls, ctx: multiprocessing.context.BaseContext) -> None:
         with cls.__logger_lock:
             cls.__multiprocessing_ctx = ctx
             assert cls.__message_queue is None
@@ -90,7 +89,7 @@ class __LoggerEnv:
             cls.__apply_logger_setting()
 
     @classmethod
-    def set_level(cls, level: Any) -> None:
+    def set_level(cls, level: int) -> None:
         with cls.__logger_lock:
             cls.__logger_level = level
             cls.__apply_logger_setting()
@@ -274,7 +273,7 @@ def replace_default_logger() -> None:
     replace_logger(logging.getLogger().name)
 
 
-def set_multiprocessing_ctx(ctx: Any) -> None:
+def set_multiprocessing_ctx(ctx: multiprocessing.context.BaseContext) -> None:
     __LoggerEnv.set_multiprocessing_ctx(ctx)
 
 
@@ -290,7 +289,7 @@ def add_file_handler(filename: str) -> None:
     __LoggerEnv.add_file_handler(filename)
 
 
-def set_level(level: Any) -> None:
+def set_level(level: int) -> None:
     __LoggerEnv.set_level(level)
 
 

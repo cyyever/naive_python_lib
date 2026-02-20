@@ -1,5 +1,3 @@
-from typing import Any
-
 from ..concurrency import ProcessTaskQueue
 from ..function import Expected
 from .topology import Topology
@@ -15,7 +13,7 @@ class PeerToPeerTopology(Topology):
     def peer_end_has_data(self, my_id: int, peer_id: int) -> bool:
         raise NotImplementedError
 
-    def send_to_peer(self, my_id: int, peer_id: int, data: Any) -> None:
+    def send_to_peer(self, my_id: int, peer_id: int, data: object) -> None:
         raise NotImplementedError
 
     def close(self, my_id: int) -> None:
@@ -24,7 +22,7 @@ class PeerToPeerTopology(Topology):
 
 class ProcessPeerToPeerTopology(PeerToPeerTopology):
     def __init__(
-        self, task_queue_type: type[ProcessTaskQueue], *args: Any, **kwargs: Any
+        self, task_queue_type: type[ProcessTaskQueue], *args: object, **kwargs: object
     ) -> None:
         super().__init__(*args, **kwargs)
         self.__queues: dict = {}
@@ -46,7 +44,7 @@ class ProcessPeerToPeerTopology(PeerToPeerTopology):
         assert 0 <= peer_id < self.worker_num
         return self.get_queue(peer_id).has_data(queue_name=f"result_{my_id}")
 
-    def send_to_peer(self, my_id: int, peer_id: int, data: Any) -> None:
+    def send_to_peer(self, my_id: int, peer_id: int, data: object) -> None:
         assert 0 <= my_id < self.worker_num
         assert 0 <= peer_id < self.worker_num
         return self.get_queue(my_id).put_data(data=data, queue_name=f"result_{peer_id}")

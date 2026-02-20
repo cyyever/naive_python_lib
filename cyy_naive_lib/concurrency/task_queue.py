@@ -6,7 +6,7 @@ import traceback
 from collections.abc import Callable
 from enum import StrEnum, auto
 from types import TracebackType
-from typing import Any, Self
+from typing import Self
 
 import psutil
 
@@ -114,8 +114,9 @@ class RetryableBatchPolicy(BatchPolicy):
 
     def explore_batch_size(self, initial_batch_size: int) -> int:
         batch_size = super().explore_batch_size(initial_batch_size)
-        while not self.is_batch_size_allowed(batch_size):
-            batch_size -= 1
+        if batch_size > 1:
+            while not self.is_batch_size_allowed(batch_size):
+                batch_size -= 1
         assert batch_size >= 1
         return batch_size
 
@@ -137,7 +138,7 @@ class _SentinelTask:
 
 
 class RepeatedResult:
-    def __init__(self, data: Any, num: int, copy_data: bool = True) -> None:
+    def __init__(self, data: object, num: int, copy_data: bool = True) -> None:
         self.__data = data
         self.__num = num
         self.__copy_data = copy_data
@@ -145,7 +146,7 @@ class RepeatedResult:
     def get_data_list(self) -> list:
         return [self.data for _ in range(self.__num)]
 
-    def set_data(self, data: Any) -> None:
+    def set_data(self, data: object) -> None:
         self.__data = data
 
     @property
@@ -163,7 +164,7 @@ class Worker:
         task_queue: "TaskQueue",
         ppid: int,
         worker_id: int,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> None:
         if log_setting:
             apply_logger_setting(log_setting)
@@ -188,7 +189,7 @@ class Worker:
             return Expected.not_ok()
         return task
 
-    def process(self, task_queue: "TaskQueue", worker_id: int, **kwargs: Any) -> bool:
+    def process(self, task_queue: "TaskQueue", worker_id: int, **kwargs: object) -> bool:
         task = self._get_task(task_queue=task_queue, timeout=3600)
         if not task.is_ok():
             return True
@@ -210,9 +211,9 @@ class BatchWorker(Worker):
 
     def __batch_process(
         self,
-        tasks: list[Any],
+        tasks: list[object],
         task_queue: "TaskQueue",
-        **kwargs: Any,
+        **kwargs: object,
     ) -> None:
         assert self.batch_size > 0
         batch_size = len(tasks)
@@ -266,7 +267,7 @@ class BatchWorker(Worker):
         self,
         task_queue: "TaskQueue",
         worker_id: int,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> bool:
         assert self.batch_size > 0
         tasks, end_process = self.__collect_tasks(task_queue=task_queue)
@@ -289,7 +290,7 @@ class TaskQueue:
         self.__worker_fun: Callable | None = None
         self.__workers: None | dict = None
         self.__batch_policy_type = batch_policy_type
-        self.__stop_event: Any | None = None
+        self.__stop_event: object | None = None
         self.__queues: dict = {}
         self.__set_logger: bool = True
 
@@ -359,7 +360,7 @@ class TaskQueue:
             worker_id = max(self.__workers.keys(), default=-1) + 1
             self._start_worker(worker_id, use_thread=use_thread)
 
-    def put_data(self, data: Any, queue_name: str) -> None:
+    def put_data(self, data: object, queue_name: str) -> None:
         queue, queue_type = self.__get_queue(queue_name)
         data_list = [data]
         if hasattr(data, "get_data_list"):
@@ -430,7 +431,7 @@ class TaskQueue:
     def release(self) -> None:
         self.stop()
 
-    def add_task(self, task: Any) -> None:
+    def add_task(self, task: object) -> None:
         self.put_data(data=task, queue_name="__task")
 
     def get_task(self, timeout: float | None) -> Expected:
@@ -444,12 +445,12 @@ class TaskQueue:
             return
         while True:
             res = self.get_data(queue_name=queue_name, timeout=0.000001)
-            if res is None:
+            if res.not_ok() or res.value() is None:
                 return
 
     def get_data(
         self, queue_name: str = "__result", timeout: float | None = None
-    ) -> Expected[Any]:
+    ) -> Expected[object]:
         res = self.__get_data(queue_name=queue_name, timeout=timeout)
         if (
             res.is_ok()
@@ -459,7 +460,7 @@ class TaskQueue:
             raise RuntimeError("Sending _SentinelTask in queue:" + queue_name)
         return res
 
-    def __get_data(self, /, queue_name: str, timeout: float | None) -> Expected[Any]:
+    def __get_data(self, /, queue_name: str, timeout: float | None) -> Expected[object]:
         result_queue, queue_type = self.__get_queue(queue_name)
         try:
             if queue_type == QueueType.Pipe:

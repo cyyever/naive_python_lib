@@ -1,6 +1,5 @@
 import inspect
 from collections.abc import Callable, Generator
-from typing import Any
 
 
 def get_kwarg_names(fun: Callable) -> set:
@@ -11,12 +10,12 @@ def get_kwarg_names(fun: Callable) -> set:
     }
 
 
-def call_fun(fun: Callable, kwargs: dict) -> Any:
+def call_fun(fun: Callable, kwargs: dict) -> object:
     return fun(**{k: v for k, v in kwargs.items() if k in get_kwarg_names(fun)})
 
 
 def get_descendant_attrs(
-    obj: Any, filter_fun: Callable, recursive: bool, data_only: bool = True
+    obj: object, filter_fun: Callable, recursive: bool, data_only: bool = True
 ) -> Generator:
     for name, attr in inspect.getmembers(obj):
         if not name.startswith("__") and not name.endswith("__"):
@@ -30,8 +29,8 @@ def get_descendant_attrs(
                 )
 
 
-def get_class_attrs(obj: Any, filter_fun: Callable | None = None) -> dict:
-    def new_filter_fun(name: str, attr: Any) -> bool:
+def get_class_attrs(obj: object, filter_fun: Callable | None = None) -> dict:
+    def new_filter_fun(name: str, attr: object) -> bool:
         if filter_fun is None:
             return inspect.isclass(attr)
         return inspect.isclass(attr) and filter_fun(name, attr)

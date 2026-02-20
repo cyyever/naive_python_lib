@@ -4,7 +4,6 @@ import tempfile
 import time
 from collections.abc import Callable
 from enum import IntEnum, auto
-from typing import Any
 
 import dill
 
@@ -18,8 +17,8 @@ class DataLocation(IntEnum):
 class SyncedDataStorage:
     """封装数据存储操作"""
 
-    def __init__(self, data: Any = None, data_path: str | None = None) -> None:
-        self.__data: Any = data
+    def __init__(self, data: object = None, data_path: str | None = None) -> None:
+        self.__data: object = data
         self.__data_path: str | None = data_path
         self.__data_hash: str | None = None
         self.__data_location: DataLocation = DataLocation.NoData
@@ -40,7 +39,7 @@ class SyncedDataStorage:
         self.__data_path = data_path
         self.__use_tmp_file = False
 
-    def set_data(self, data: Any) -> None:
+    def set_data(self, data: object) -> None:
         self.__data = data
         self.mark_new_data()
 
@@ -53,12 +52,12 @@ class SyncedDataStorage:
         return self.__data_path
 
     @property
-    def data(self) -> Any:
+    def data(self) -> object:
         if self.__data_location == DataLocation.Disk:
             self.__data = self.__load_data()
         return self.__data
 
-    def __load_data(self) -> Any:
+    def __load_data(self) -> object:
         assert self.__data_path
         with open(self.__data_path, "rb") as f:
             return dill.load(f)
@@ -76,10 +75,10 @@ class SyncedDataStorage:
                 os.remove(self.__data_path)
             self.__data_path = None
 
-    def __getitem__(self, key: Any) -> Any:
+    def __getitem__(self, key: object) -> object:
         return self.data[key]
 
-    def __contains__(self, key: Any) -> bool:
+    def __contains__(self, key: object) -> bool:
         return key in self.data
 
     def __del__(self) -> None:
@@ -121,7 +120,7 @@ class SyncedDataStorage:
 def persistent_cache(
     path: str | None = None, cache_time: float | None = None
 ) -> Callable:
-    def read_data(path: str) -> Any:
+    def read_data(path: str) -> object:
         if not os.path.isfile(path):
             return None
         if cache_time is not None and time.time() > cache_time + os.path.getmtime(path):
@@ -131,7 +130,7 @@ def persistent_cache(
             res = dill.load(f)
         return res
 
-    def write_data(data: Any, path: str) -> None:
+    def write_data(data: object, path: str) -> None:
         if os.path.isfile(path):
             os.remove(path)
         fd = os.open(path, flags=os.O_CREAT | os.O_EXCL | os.O_WRONLY)
@@ -169,5 +168,5 @@ def persistent_cache(
     return wrap
 
 
-def get_cached_data(path: str, data_fun: Callable) -> Any:
+def get_cached_data(path: str, data_fun: Callable) -> object:
     return persistent_cache(path=path)(data_fun)()

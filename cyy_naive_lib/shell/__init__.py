@@ -1,5 +1,3 @@
-from typing import Any
-
 from ..system_info import OSType, get_operating_system_type
 from .bash_script import BashScript
 from .mingw64_script import Mingw64Script
@@ -24,7 +22,7 @@ def exec_cmd(
     cmd: str,
     os_hint: OSType | None = None,
     throw: bool = True,
-) -> tuple[Any, int]:
+) -> tuple[str, int]:
     return get_shell_script(cmd, os_hint=os_hint).exec(throw=throw)
 
 

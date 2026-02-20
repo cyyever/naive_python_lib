@@ -1,7 +1,6 @@
 import concurrent
 import concurrent.futures
 from collections.abc import Callable, Sequence
-from typing import Any
 
 import gevent
 
@@ -16,7 +15,7 @@ class CoroutineExcutorMixin(concurrent.futures.Executor):
         return self.submit(self.batch_fun, funs=funs, kwargs_list=kwargs_list)
 
     @classmethod
-    def batch_fun(cls, funs, kwargs_list, **extra_kwargs) -> list[Any]:
+    def batch_fun(cls, funs, kwargs_list, **extra_kwargs) -> list[object]:
         assert funs
         coroutines = [
             gevent.spawn(fun, **kwargs, **extra_kwargs)

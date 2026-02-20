@@ -1,10 +1,9 @@
 from collections.abc import Iterable
-from typing import Any
 
 from .task_queue import TaskQueue
 
 
-def batch_process(queue: TaskQueue, tasks: Iterable[Any]) -> dict:
+def batch_process(queue: TaskQueue, tasks: Iterable[object]) -> dict:
     assert not queue.has_data()
     result: dict = {}
     cnt = 0

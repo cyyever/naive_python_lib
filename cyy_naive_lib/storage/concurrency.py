@@ -1,9 +1,9 @@
 from multiprocessing.managers import DictProxy, SyncManager
-from typing import Any
+from multiprocessing.synchronize import RLock, Semaphore
 
 
 class GlobalStore:
-    global_manager: None | Any = None
+    global_manager: SyncManager | None = None
     _objects: DictProxy | None = None
 
     def __init__(self, manager: SyncManager) -> None:
@@ -28,12 +28,12 @@ class GlobalStore:
         assert self.global_manager is not None
         self.store(name, self.global_manager.RLock())
 
-    def store(self, name: str, obj: Any) -> None:
+    def store(self, name: str, obj: object) -> None:
         assert self.objects is not None
         assert name not in self.objects
         self.objects[name] = obj
 
-    def get_semaphore(self, name: str) -> Any:
+    def get_semaphore(self, name: str) -> Semaphore:
         assert self.objects is not None
         result = self.get_with_default(name)
         if result is None:
@@ -44,11 +44,11 @@ class GlobalStore:
                     result = self.objects.setdefault(name, free_semaphore)
         return result
 
-    def get_with_default(self, name: str, default: Any = None) -> Any:
+    def get_with_default(self, name: str, default: object = None) -> object:
         assert self.objects is not None
         return self.objects.get(name, default)
 
-    def get(self, name: str) -> Any:
+    def get(self, name: str) -> object:
         assert self.objects is not None
         return self.objects[name]
 
@@ -56,6 +56,6 @@ class GlobalStore:
         assert self.objects is not None
         return name in self.objects
 
-    def remove(self, name: str) -> Any:
+    def remove(self, name: str) -> object:
         assert self.objects is not None
         return self.objects.pop(name)

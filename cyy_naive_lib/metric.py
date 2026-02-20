@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, fields
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -42,7 +41,7 @@ class SamplesMetrics:
 
     def to_df(self, new_label: str | None = None):
         label = self.label if new_label is None else new_label
-        res = {}
+        res: dict[str, list] = {}
         if label is not None:
             res["label"] = [label]
         for field in fields(SamplesMetrics):
@@ -51,7 +50,7 @@ class SamplesMetrics:
             res[field.name] = [getattr(self, field.name)]
         df1 = pd.DataFrame(data=res)
 
-        res2: dict[str, Any] = {
+        res2: dict[str, list | np.ndarray | None] = {
             "percentile": list(range(101)),
             "percentile_value": self.percentiles,
         }

@@ -3,7 +3,6 @@ import concurrent.futures
 import functools
 import uuid
 from collections.abc import Callable
-from typing import Any
 
 from ..function import exception_aware_call
 from ..log import log_debug
@@ -25,7 +24,7 @@ class ExecutorWrapper(concurrent.futures.Executor):
         self._executor = new_executor
 
     def submit(
-        self, fn: Callable, /, *args: Any, **kwargs: Any
+        self, fn: Callable, /, *args: object, **kwargs: object
     ) -> concurrent.futures.Future:
         """Submits a callable to be executed with the given arguments.
 
@@ -80,7 +79,7 @@ class ExceptionSafeExecutor(ExecutorWrapper):
     catch_exception: bool = False
 
     def submit(
-        self, fn: Callable, /, *args: Any, **kwargs: Any
+        self, fn: Callable, /, *args: object, **kwargs: object
     ) -> concurrent.futures.Future:
         """Submits a callable to be executed with the given arguments.
 
@@ -119,14 +118,14 @@ class BlockingSubmitExecutor(ExecutorWrapper):
         global_store.remove(f"{name}_pending")
 
     @classmethod
-    def _fun(cls, fun: Callable, *args, **kwargs) -> Any:
+    def _fun(cls, fun: Callable, *args, **kwargs) -> object:
         cls.__mark_job_launched(
             kwargs.pop("blocking_submit_executor_name"), kwargs.pop("global_store")
         )
         return fun(*args, **kwargs)
 
     def submit(
-        self, fn: Callable, /, *args: Any, **kwargs: Any
+        self, fn: Callable, /, *args: object, **kwargs: object
     ) -> concurrent.futures.Future:
         global_store = self.__global_store
         self.__wait_job(global_store)
@@ -138,7 +137,7 @@ class BlockingSubmitExecutor(ExecutorWrapper):
             global_store=global_store,
         )
 
-    def submit_batch(self, fun: Callable, kwargs_list: list) -> Any:
+    def submit_batch(self, fun: Callable, kwargs_list: list) -> object:
         batch_fun = getattr(self._executor, "submit_batch", None)
         assert batch_fun is not None
         return batch_fun(

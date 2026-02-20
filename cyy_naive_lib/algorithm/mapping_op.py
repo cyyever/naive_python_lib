@@ -5,7 +5,6 @@ from collections.abc import (
     MutableMapping,
     Sequence,
 )
-from typing import Any
 
 from ..function import Expected
 from .generic import recursive_mutable_op
@@ -34,7 +33,7 @@ def get_mapping_values_by_key_order(d: Mapping) -> Generator:
 
 
 def change_mapping_keys(
-    d: MutableMapping, f: Callable[[Any], Any], recursive: bool = False
+    d: MutableMapping, f: Callable[[object], object], recursive: bool = False
 ) -> MutableMapping:
     r"""
     Return a new mapping with keys changed
@@ -49,7 +48,7 @@ def change_mapping_keys(
     return new_d
 
 
-def change_mapping_values[T, S](d: T, key: S, f: Callable[[S], Any]) -> T | list:
+def change_mapping_values[T, S](d: T, key: S, f: Callable[[S], object]) -> T | list:
     r"""
     Return a new mapping with values changed
     """

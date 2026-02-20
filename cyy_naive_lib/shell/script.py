@@ -1,6 +1,6 @@
 import os
 from collections.abc import Iterable
-from typing import Any, Never, TextIO
+from typing import Never, TextIO
 
 from .shell import Shell
 
@@ -72,7 +72,7 @@ class Script:
         throw: bool = True,
         extra_output_files: None | list[TextIO] = None,
         **exec_kwargs,
-    ) -> tuple[Any, int]:
+    ) -> tuple[str, int]:
         res = self._get_exec_command_line()
         output, exit_code = Shell.exec(
             command_line=res["cmd"],

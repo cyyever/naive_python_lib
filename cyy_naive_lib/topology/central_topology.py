@@ -1,5 +1,4 @@
 import multiprocessing
-from typing import Any
 
 from ..concurrency import ProcessContext
 from .topology import Topology
@@ -9,10 +8,10 @@ class CentralTopology(Topology):
     def __init__(self, worker_num: int) -> None:
         self.worker_num = worker_num
 
-    def get_from_server(self, worker_id: int) -> Any:
+    def get_from_server(self, worker_id: int) -> object:
         raise NotImplementedError
 
-    def get_from_worker(self, worker_id: int) -> Any:
+    def get_from_worker(self, worker_id: int) -> object:
         raise NotImplementedError
 
     def has_data_from_server(self, worker_id: int) -> bool:
@@ -21,10 +20,10 @@ class CentralTopology(Topology):
     def has_data_from_worker(self, worker_id: int) -> bool:
         raise NotImplementedError
 
-    def send_to_server(self, worker_id: int, data: Any) -> None:
+    def send_to_server(self, worker_id: int, data: object) -> None:
         raise NotImplementedError
 
-    def send_to_worker(self, worker_id: int, data: Any) -> None:
+    def send_to_worker(self, worker_id: int, data: object) -> None:
         raise NotImplementedError
 
     def close_server_channel(self) -> None:
@@ -36,7 +35,7 @@ class CentralTopology(Topology):
 
 class ProcessPipeCentralTopology(CentralTopology):
     def __init__(
-        self, *args: Any, mp_context: ProcessContext | None = None, **kwargs: Any
+        self, *args: object, mp_context: ProcessContext | None = None, **kwargs: object
     ) -> None:
         super().__init__(*args, **kwargs)
         self.__pipes: dict = {}
@@ -47,18 +46,18 @@ class ProcessPipeCentralTopology(CentralTopology):
             # 0 => server 1=> worker
             self.__pipes[worker_id] = self.__context.create_pipe()
 
-    def get_from_worker(self, worker_id: int) -> Any:
+    def get_from_worker(self, worker_id: int) -> object:
         assert 0 <= worker_id < self.worker_num
         return self.__pipes[worker_id][0].recv()
 
-    def send_to_worker(self, worker_id: int, data: Any) -> None:
+    def send_to_worker(self, worker_id: int, data: object) -> None:
         self.__pipes[worker_id][0].send(data)
 
     def has_data_from_worker(self, worker_id: int) -> bool:
         assert 0 <= worker_id < self.worker_num
         return self.__pipes[worker_id][0].poll()
 
-    def get_from_server(self, worker_id: int) -> Any:
+    def get_from_server(self, worker_id: int) -> object:
         assert 0 <= worker_id < self.worker_num
         return self.__pipes[worker_id][1].recv()
 
@@ -66,7 +65,7 @@ class ProcessPipeCentralTopology(CentralTopology):
         assert 0 <= worker_id < self.worker_num
         return self.__pipes[worker_id][1].poll()
 
-    def send_to_server(self, worker_id: int, data: Any) -> None:
+    def send_to_server(self, worker_id: int, data: object) -> None:
         assert 0 <= worker_id < self.worker_num
         return self.__pipes[worker_id][1].send(data)
 
@@ -80,7 +79,7 @@ class ProcessPipeCentralTopology(CentralTopology):
 
 class ProcessQueueCentralTopology(CentralTopology):
     def __init__(
-        self, *args: Any, mp_context: ProcessContext | None = None, **kwargs: Any
+        self, *args: object, mp_context: ProcessContext | None = None, **kwargs: object
     ) -> None:
         super().__init__(*args, **kwargs)
         self.__queues: dict[
@@ -95,7 +94,7 @@ class ProcessQueueCentralTopology(CentralTopology):
                 self.__context.create_queue(),
             )
 
-    def get_from_worker(self, worker_id: int) -> Any:
+    def get_from_worker(self, worker_id: int) -> object:
         assert 0 <= worker_id < self.worker_num
         return self.__queues[worker_id][1].get()
 
@@ -103,10 +102,10 @@ class ProcessQueueCentralTopology(CentralTopology):
         assert 0 <= worker_id < self.worker_num
         return not self.__queues[worker_id][1].empty()
 
-    def send_to_worker(self, worker_id: int, data: Any) -> None:
+    def send_to_worker(self, worker_id: int, data: object) -> None:
         self.__queues[worker_id][0].put(data)
 
-    def get_from_server(self, worker_id: int) -> Any:
+    def get_from_server(self, worker_id: int) -> object:
         assert 0 <= worker_id < self.worker_num
         return self.__queues[worker_id][0].get()
 
@@ -114,7 +113,7 @@ class ProcessQueueCentralTopology(CentralTopology):
         assert 0 <= worker_id < self.worker_num
         return not self.__queues[worker_id][0].empty()
 
-    def send_to_server(self, worker_id: int, data: Any) -> None:
+    def send_to_server(self, worker_id: int, data: object) -> None:
         assert 0 <= worker_id < self.worker_num
         self.__queues[worker_id][1].put(data)
 
