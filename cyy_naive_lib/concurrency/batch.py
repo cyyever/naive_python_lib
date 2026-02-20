@@ -14,12 +14,14 @@ def batch_process(queue: TaskQueue, tasks: Iterable[object]) -> dict:
             cnt -= 1
             data = queue.get_data()
             assert data.is_ok()
-            assert isinstance(data.value(), dict)
-            result |= data.value()
+            data_value = data.value()
+            assert isinstance(data_value, dict)
+            result |= data_value
     while cnt > 0:
         data = queue.get_data()
         assert data.is_ok()
-        assert isinstance(data.value(), dict)
-        result |= data.value()
+        data_value = data.value()
+        assert isinstance(data_value, dict)
+        result |= data_value
         cnt -= 1
     return result

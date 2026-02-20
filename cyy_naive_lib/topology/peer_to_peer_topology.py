@@ -22,7 +22,7 @@ class PeerToPeerTopology(Topology):
 
 class ProcessPeerToPeerTopology(PeerToPeerTopology):
     def __init__(
-        self, task_queue_type: type[ProcessTaskQueue], *args: object, **kwargs: object
+        self, task_queue_type: type[ProcessTaskQueue], *args: int, **kwargs: int
     ) -> None:
         super().__init__(*args, **kwargs)
         self.__queues: dict = {}

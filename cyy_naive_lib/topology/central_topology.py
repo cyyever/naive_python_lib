@@ -35,7 +35,7 @@ class CentralTopology(Topology):
 
 class ProcessPipeCentralTopology(CentralTopology):
     def __init__(
-        self, *args: object, mp_context: ProcessContext | None = None, **kwargs: object
+        self, *args: int, mp_context: ProcessContext | None = None, **kwargs: int
     ) -> None:
         super().__init__(*args, **kwargs)
         self.__pipes: dict = {}
@@ -79,7 +79,7 @@ class ProcessPipeCentralTopology(CentralTopology):
 
 class ProcessQueueCentralTopology(CentralTopology):
     def __init__(
-        self, *args: object, mp_context: ProcessContext | None = None, **kwargs: object
+        self, *args: int, mp_context: ProcessContext | None = None, **kwargs: int
     ) -> None:
         super().__init__(*args, **kwargs)
         self.__queues: dict[

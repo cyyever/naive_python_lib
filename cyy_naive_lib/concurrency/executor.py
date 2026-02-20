@@ -23,7 +23,7 @@ class ExecutorWrapper(concurrent.futures.Executor):
         assert isinstance(new_executor, concurrent.futures.Executor)
         self._executor = new_executor
 
-    def submit(
+    def submit(  # type: ignore[override]
         self, fn: Callable, /, *args: object, **kwargs: object
     ) -> concurrent.futures.Future:
         """Submits a callable to be executed with the given arguments.
@@ -78,7 +78,7 @@ class ExecutorWrapper(concurrent.futures.Executor):
 class ExceptionSafeExecutor(ExecutorWrapper):
     catch_exception: bool = False
 
-    def submit(
+    def submit(  # type: ignore[override]
         self, fn: Callable, /, *args: object, **kwargs: object
     ) -> concurrent.futures.Future:
         """Submits a callable to be executed with the given arguments.
@@ -124,7 +124,7 @@ class BlockingSubmitExecutor(ExecutorWrapper):
         )
         return fun(*args, **kwargs)
 
-    def submit(
+    def submit(  # type: ignore[override]
         self, fn: Callable, /, *args: object, **kwargs: object
     ) -> concurrent.futures.Future:
         global_store = self.__global_store

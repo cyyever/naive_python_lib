@@ -25,5 +25,5 @@ class CoroutineExcutorMixin(concurrent.futures.Executor):
         return [g.value for g in coroutines]
 
 
-class ProcessPoolWithCoroutine(ProcessPool, CoroutineExcutorMixin):
+class ProcessPoolWithCoroutine(ProcessPool, CoroutineExcutorMixin):  # type: ignore[misc]
     pass

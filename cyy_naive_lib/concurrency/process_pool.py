@@ -51,7 +51,7 @@ class ExtendedProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
             process_data = get_process_data()
         return fn(*args, **kwargs, **process_data)
 
-    def submit(
+    def submit(  # type: ignore[override]
         self, fn: Callable, /, *args: object, **kwargs: object
     ) -> concurrent.futures.Future:
         assert "fn" not in kwargs
@@ -63,5 +63,5 @@ class ExtendedProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
 
 
 class ProcessPool(ExecutorWrapper):
-    def __init__(self, **kwargs: object) -> None:
+    def __init__(self, **kwargs) -> None:
         super().__init__(ExtendedProcessPoolExecutor(**kwargs))

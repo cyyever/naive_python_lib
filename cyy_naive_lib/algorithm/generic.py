@@ -29,9 +29,10 @@ def recursive_op(data: object, fun: Callable[[object], bool], check: bool = Fals
                 recursive_op_impl(data.keywords, fun)
                 return
         try:
-            for field in dataclasses.fields(data):
-                recursive_op_impl(getattr(data, field.name), fun)
-            return
+            if dataclasses.is_dataclass(data) and not isinstance(data, type):
+                for field in dataclasses.fields(data):
+                    recursive_op_impl(getattr(data, field.name), fun)
+                return
         # pylint: disable=broad-exception-caught
         except BaseException:
             pass
@@ -63,7 +64,7 @@ def recursive_mutable_op[T](
                 return data
 
             case tuple():
-                return tuple(recursive_op_impl(element, fun) for element in data)
+                return tuple(recursive_op_impl(element, fun) for element in data)  # type: ignore[return-value]
             case functools.partial():
                 return functools.partial(
                     data.func,
@@ -71,13 +72,14 @@ def recursive_mutable_op[T](
                     **recursive_op_impl(data.keywords, fun),
                 )
         try:
-            for field in dataclasses.fields(data):
-                setattr(
-                    data,
-                    field.name,
-                    recursive_op_impl(getattr(data, field.name), fun),
-                )
-            return data
+            if dataclasses.is_dataclass(data) and not isinstance(data, type):
+                for field in dataclasses.fields(data):
+                    setattr(
+                        data,
+                        field.name,
+                        recursive_op_impl(getattr(data, field.name), fun),
+                    )
+                return data
         # pylint: disable=broad-exception-caught
         except BaseException:
             pass

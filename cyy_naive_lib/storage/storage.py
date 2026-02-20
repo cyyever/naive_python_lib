@@ -76,10 +76,12 @@ class SyncedDataStorage:
             self.__data_path = None
 
     def __getitem__(self, key: object) -> object:
-        return self.data[key]
+        data = self.data
+        return data[key]  # type: ignore[index]
 
     def __contains__(self, key: object) -> bool:
-        return key in self.data
+        data = self.data
+        return key in data  # type: ignore[operator]
 
     def __del__(self) -> None:
         if self.__use_tmp_file:
