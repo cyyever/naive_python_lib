@@ -50,7 +50,9 @@ class Decorator[T]:
         return getattr(self._decorator_object, name)
 
 
-def exception_aware_call(fn: Callable, *args: object, **kwargs: object) -> object | None:
+def exception_aware_call(
+    fn: Callable, *args: object, **kwargs: object
+) -> object | None:
     try:
         if inspect.iscoroutinefunction(fn):
             return asyncio.run(fn(*args, **kwargs))

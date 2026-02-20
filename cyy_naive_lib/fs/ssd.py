@@ -50,7 +50,7 @@ def _is_posix_ssd(path: str) -> bool:
     if not os.path.isfile(path):
         m = re.search(r"p\d+$", block)
         if m:
-            path = f"/sys/block/{block[:m.start()]}/queue/rotational"
+            path = f"/sys/block/{block[: m.start()]}/queue/rotational"
     try:
         with open(path, encoding="ascii") as fp:
             return fp.read().strip() == "0"

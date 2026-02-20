@@ -1,12 +1,12 @@
 import threading
 
-from cyy_naive_lib.log import apply_logger_setting
+from cyy_naive_lib.log import LoggerSetting, apply_logger_setting
 
 __local_data: threading.local = threading.local()
 __local_data.data = {}
 
 
-def reinitialize_logger(logger_setting: dict, **kwargs: object) -> None:
+def reinitialize_logger(logger_setting: LoggerSetting | None, **kwargs: object) -> None:
     apply_logger_setting(logger_setting)
 
 

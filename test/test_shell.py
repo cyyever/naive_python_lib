@@ -29,9 +29,7 @@ def test_mingw64_scriot() -> None:
 def test_pwsh_script() -> None:
     if which("pwsh"):
         with TempDir():
-            _, res = PowerShellScript(content="Write-Output 'hello'").exec(
-                throw=False
-            )
+            _, res = PowerShellScript(content="Write-Output 'hello'").exec(throw=False)
             assert res == 0
 
 

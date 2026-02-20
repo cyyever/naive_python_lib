@@ -24,10 +24,10 @@ class ProcessContext(ConcurrencyContext):
     def support_pipe(self) -> bool:
         return True
 
-    def create_pipe(self) -> tuple:  # type: ignore[override]
+    def create_pipe(self) -> tuple:
         return self.get_ctx().Pipe()
 
-    def create_event(self) -> multiprocessing.synchronize.Event:  # type: ignore[override]
+    def create_event(self) -> multiprocessing.synchronize.Event:
         return self.get_ctx().Event()
 
     def create_worker(
@@ -41,7 +41,7 @@ class ProcessContext(ConcurrencyContext):
 class ManageredProcessContext(ProcessContext):
     managers: dict[object, multiprocessing.managers.SyncManager] = {}
 
-    def get_ctx(self) -> multiprocessing.context.BaseContext:  # type: ignore[override]
+    def get_ctx(self) -> multiprocessing.context.BaseContext:
         underlying_ctx = super().get_ctx()
         if underlying_ctx not in self.managers:
             self.managers[underlying_ctx] = underlying_ctx.Manager()  # type: ignore[attr-defined]

@@ -5,7 +5,9 @@ from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, 
 from ..function import Expected
 
 
-def recursive_op(data: object, fun: Callable[[object], bool], check: bool = False) -> None:
+def recursive_op(
+    data: object, fun: Callable[[object], bool], check: bool = False
+) -> None:
     flag = False
 
     def recursive_op_impl(data: object, fun: Callable[[object], bool]) -> None:

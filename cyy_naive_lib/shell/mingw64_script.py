@@ -1,8 +1,9 @@
 from .bash_script import BashScript
+from .script import ExecCommandLine
 
 
 class Mingw64Script(BashScript):
-    def _get_exec_command_line(self) -> dict:
+    def _get_exec_command_line(self) -> ExecCommandLine:
         res = super()._get_exec_command_line()
         res["cmd"] = [
             "msys2_shell.cmd",

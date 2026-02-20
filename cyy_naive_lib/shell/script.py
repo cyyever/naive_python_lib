@@ -1,8 +1,13 @@
 import os
 from collections.abc import Iterable
-from typing import TextIO
+from typing import TextIO, TypedDict
 
 from .shell import Shell
+
+
+class ExecCommandLine(TypedDict):
+    cmd: list[str]
+    script_name: str
 
 
 class Script:
@@ -85,7 +90,7 @@ class Script:
             raise RuntimeError("failed to execute script")
         return output, exit_code
 
-    def _get_exec_command_line(self) -> dict[str, object]:
+    def _get_exec_command_line(self) -> ExecCommandLine:
         raise NotImplementedError
 
     def _wrap_content_in_strict_mode(self, env_part: str, content_part: str) -> str:

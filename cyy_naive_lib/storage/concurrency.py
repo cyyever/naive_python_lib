@@ -22,7 +22,9 @@ class GlobalStore:
                 ),
             )
         self.objects = GlobalStore._objects
-        self.default_lock: RLock = self.get("default_lock")  # type: ignore[assignment]
+        default_lock = self.get("default_lock")
+        assert isinstance(default_lock, RLock)
+        self.default_lock: RLock = default_lock
 
     def store_lock(self, name: str) -> None:
         assert self.global_manager is not None
@@ -41,9 +43,11 @@ class GlobalStore:
                 result = self.get_with_default(name)
                 if result is None:
                     free_semaphores = self.get("free_semaphores")
-                    free_semaphore = free_semaphores.pop()  # type: ignore[union-attr]
+                    assert isinstance(free_semaphores, list)
+                    free_semaphore = free_semaphores.pop()
                     result = self.objects.setdefault(name, free_semaphore)
-        return result  # type: ignore[return-value]
+        assert isinstance(result, Semaphore)
+        return result
 
     def get_with_default(self, name: str, default: object = None) -> object:
         assert self.objects is not None

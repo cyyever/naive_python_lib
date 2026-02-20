@@ -13,6 +13,7 @@ from typing import Self
 import psutil
 
 from cyy_naive_lib.log import (
+    LoggerSetting,
     apply_logger_setting,
     get_logger_setting,
     log_debug,
@@ -162,7 +163,7 @@ class Worker:
     def __call__(
         self,
         *,
-        log_setting: dict,
+        log_setting: LoggerSetting | None,
         task_queue: "TaskQueue",
         ppid: int,
         worker_id: int,
@@ -191,7 +192,9 @@ class Worker:
             return Expected.not_ok()
         return task
 
-    def process(self, task_queue: "TaskQueue", worker_id: int, **kwargs: object) -> bool:
+    def process(
+        self, task_queue: "TaskQueue", worker_id: int, **kwargs: object
+    ) -> bool:
         task = self._get_task(task_queue=task_queue, timeout=3600)
         if not task.is_ok():
             return True
@@ -292,7 +295,9 @@ class TaskQueue:
         self.__worker_fun: Callable | None = None
         self.__workers: None | dict = None
         self.__batch_policy_type = batch_policy_type
-        self.__stop_event: threading.Event | multiprocessing.synchronize.Event | None = None
+        self.__stop_event: (
+            threading.Event | multiprocessing.synchronize.Event | None
+        ) = None
         self.__queues: dict = {}
         self.__set_logger: bool = True
 
@@ -495,5 +500,5 @@ class TaskQueue:
         if self.__set_logger and use_spwan:
             kwargs["log_setting"] = get_logger_setting()
         else:
-            kwargs["log_setting"] = {}
+            kwargs["log_setting"] = None
         return kwargs

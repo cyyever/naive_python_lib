@@ -1,6 +1,6 @@
 import re
 
-from .script import Script
+from .script import Script, ExecCommandLine
 
 
 class PowerShellScript(Script):
@@ -29,7 +29,7 @@ class PowerShellScript(Script):
     def get_suffix(self) -> str:
         return "ps1"
 
-    def _get_exec_command_line(self) -> dict:
+    def _get_exec_command_line(self) -> ExecCommandLine:
         script_name = self._get_temp_script_name()
         with open(script_name, "w", encoding="utf8") as f:
             f.write(self.get_complete_content())
