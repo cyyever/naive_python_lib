@@ -1,8 +1,5 @@
 from collections.abc import Callable, Generator, Iterable, Sequence
 from itertools import batched
-from typing import TypeVar
-
-T = TypeVar("T")
 
 
 def split_list_to_chunks(my_list: list, chunk_size: int) -> Generator:
