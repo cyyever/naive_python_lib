@@ -5,8 +5,6 @@ import subprocess
 from enum import StrEnum, auto
 from shutil import which
 
-from .util import readlines
-
 
 class OSType(StrEnum):
     Windows = auto()
@@ -20,10 +18,29 @@ class OSType(StrEnum):
     Linux = auto()
 
 
+def _detect_linux_distro() -> OSType:
+    try:
+        info = platform.freedesktop_os_release()
+        ids = info.get("ID", "") + " " + info.get("ID_LIKE", "")
+        ids = ids.lower()
+        if "ubuntu" in ids or "debian" in ids:
+            return OSType.Ubuntu
+        if "arch" in ids:
+            return OSType.ArchLinux
+        if "centos" in ids:
+            return OSType.CentOS
+        if "fedora" in ids:
+            return OSType.Fedora
+        if "rhel" in ids or "redhat" in ids:
+            return OSType.RedHat
+    except OSError:
+        pass
+    return OSType.Linux
+
+
 @functools.cache
 def get_operating_system_type() -> OSType:
-    sys = platform.system().lower()
-    match sys:
+    match platform.system().lower():
         case "windows":
             return OSType.Windows
         case "freebsd":
@@ -31,76 +48,32 @@ def get_operating_system_type() -> OSType:
         case "darwin":
             return OSType.MacOS
         case "linux":
-            pf = platform.platform().lower()
-            if "ubuntu" in pf or which("apt-get") is not None:
-                return OSType.Ubuntu
-            if which("pacman") is not None:
-                return OSType.ArchLinux
-            if os.path.isfile("/etc/centos-release"):
-                return OSType.CentOS
-            if os.path.isfile("/etc/fedora-release"):
-                return OSType.Fedora
-            if which("lsb_release") is not None:
-                output = (
-                    subprocess.check_output("lsb_release -s -i", shell=True)
-                    .decode("utf-8")
-                    .strip()
-                    .lower()
-                )
-                if "ubuntu" in output:
-                    return OSType.Ubuntu
-                if "redhat" in output:
-                    return OSType.RedHat
-            return OSType.Linux
-    raise RuntimeError(f"Unknown OS: {sys}")
+            return _detect_linux_distro()
+        case sys:
+            raise RuntimeError(f"Unknown OS: {sys}")
 
 
 @functools.cache
 def get_operating_system() -> str:
-    sys = platform.system().lower()
-    if sys in ("windows", "freebsd"):
-        return sys
-    if sys == "linux":
-        pf = platform.platform().lower()
-        if "ubuntu" in pf:
-            return "ubuntu"
-        if which("pacman") is not None:
-            return "archlinux"
-        if which("apt-get") is not None:
-            return "ubuntu"
-        if os.path.isfile("/etc/centos-release"):
-            return "centos"
-        if os.path.isfile("/etc/fedora-release"):
-            return "fedora"
-        if which("lsb_release") is not None:
-            output = (
-                subprocess.check_output("lsb_release -s -i", shell=True)
-                .decode("utf-8")
-                .strip()
-                .lower()
-            )
-            if "ubuntu" in output:
-                return "ubuntu"
-    if sys == "darwin":
-        return "macos"
-    raise RuntimeError(f"Unknown OS: {sys}")
+    return get_operating_system_type().value
 
 
 @functools.cache
 def get_processor_name() -> str:
+    # platform.processor() is empty on Linux, unreliable on macOS
     if os.path.isfile("/proc/cpuinfo"):
-        return next(
-            line.lower()
-            for line in readlines("/proc/cpuinfo")
-            if "model name" in line.lower()
-        )
-    processor_name = ""
+        with open("/proc/cpuinfo", encoding="utf-8") as f:
+            for line in f:
+                if "model name" in line.lower():
+                    return line.strip().lower()
     if which("sysctl") is not None:
-        output = os.popen("sysctl hw.model").read().lower()
-        if output and "intel" in output:
-            processor_name = "intel"
-
-    if not processor_name:
-        processor_name = platform.processor().lower()
-    assert processor_name
-    return processor_name
+        try:
+            output = subprocess.check_output(
+                ["sysctl", "-n", "machdep.cpu.brand_string"],
+                text=True,
+            ).strip()
+            if output:
+                return output.lower()
+        except (subprocess.CalledProcessError, OSError):
+            pass
+    return platform.processor() or platform.machine()
