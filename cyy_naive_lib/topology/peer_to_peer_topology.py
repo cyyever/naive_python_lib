@@ -1,4 +1,5 @@
 from ..concurrency import ProcessTaskQueue
+from ..concurrency.task_queue import QueueType
 from ..function import Expected
 from .topology import Topology
 
@@ -29,7 +30,7 @@ class ProcessPeerToPeerTopology(PeerToPeerTopology):
         for worker_id in range(self.worker_num):
             self.__queues[worker_id] = task_queue_type(worker_num=0)
             for peer_id in range(self.worker_num):
-                self.__queues[worker_id].add_result_queue(f"result_{peer_id}")
+                self.__queues[worker_id].add_queue(f"result_{peer_id}", queue_type=QueueType.Queue)
 
     def get_queue(self, peer_id: int) -> ProcessTaskQueue:
         return self.__queues[peer_id]

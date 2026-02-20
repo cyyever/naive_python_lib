@@ -452,7 +452,7 @@ class TaskQueue:
             return
         while True:
             res = self.get_data(queue_name=queue_name, timeout=0.000001)
-            if res.not_ok() or res.value() is None:
+            if not res.is_ok() or res.value() is None:
                 return
 
     def get_data(

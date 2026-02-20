@@ -107,6 +107,8 @@ class SyncedDataStorage:
         if self.__data_location == DataLocation.Memory:
             if self.__data_path is None:
                 self.__fd, self.__data_path = tempfile.mkstemp()
+                os.close(self.__fd)
+                self.__fd = None
                 self.__use_tmp_file = True
             else:
                 dir_name = os.path.dirname(self.__data_path)
