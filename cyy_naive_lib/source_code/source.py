@@ -27,9 +27,14 @@ class Source:
         lock_file = os.path.join(lock_dir, self.spec.name) + ".lock"
         if os.path.isfile(lock_file):
             with open(lock_file, mode="rb") as f:
-                pid = int(f.read(100).decode("ascii"))
-            if not psutil.pid_exists(pid):
-                os.remove(lock_file)
+                try:
+                    pid = int(f.read(100).decode("ascii"))
+                    if not psutil.pid_exists(pid):
+                        f.close()
+                        os.remove(lock_file)
+                except:
+                    f.close()
+                    os.remove(lock_file)
 
         with FileLock(lock_file, timeout=3600) as lock:
             if sys.platform != "win32":
