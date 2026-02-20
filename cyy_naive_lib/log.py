@@ -3,6 +3,7 @@ import contextlib
 import logging
 import logging.handlers
 import multiprocessing
+import multiprocessing.context
 import os
 import sys
 import threading
@@ -20,7 +21,7 @@ def set_logger_level(logger: logging.Logger, level: int) -> None:
 
 
 def get_replaced_loggers() -> set[str]:
-    replaced_loggers: set | str = os.environ.pop("CYY_REPLACED_LOGGER", set())
+    replaced_loggers: set[str] | str = os.environ.pop("CYY_REPLACED_LOGGER", set())
     if isinstance(replaced_loggers, str):
         replaced_loggers = set(replaced_loggers.split(","))
     return replaced_loggers
@@ -34,7 +35,7 @@ def replace_logger(name: str) -> None:
 
 class __LoggerEnv:
     __logger_lock = threading.RLock()
-    __multiprocessing_ctx: multiprocessing.context.BaseContext = multiprocessing
+    __multiprocessing_ctx: multiprocessing.context.BaseContext = multiprocessing  # type: ignore[assignment]
     __message_queue: Queue | None = None
     proxy_logger: logging.Logger | None = None
     __filenames: set[str] = set()
@@ -56,6 +57,7 @@ class __LoggerEnv:
             cls.proxy_logger = logging.getLogger("proxy_logger")
             if cls.proxy_logger.handlers:
                 return cls.proxy_logger
+            assert cls.__message_queue is not None
             cls.proxy_logger.addHandler(
                 logging.handlers.QueueHandler(cls.__message_queue)
             )
@@ -106,13 +108,14 @@ class __LoggerEnv:
         filename = os.path.normpath(os.path.abspath(filename))
         with cls.__logger_lock:
             cls.__filenames.remove(filename)
+            assert cls.__message_queue is not None
             cls.__message_queue.put({"removed_filename": filename})
 
     @classmethod
-    def get_logger_setting(cls) -> dict:
+    def get_logger_setting(cls) -> dict[str, object]:
         if cls.__message_queue is None:
             return {}
-        setting = {
+        setting: dict[str, object] = {
             "message_queue": cls.__message_queue,
             "filenames": cls.__filenames,
             "pid": os.getpid(),
@@ -123,19 +126,19 @@ class __LoggerEnv:
         return setting
 
     @classmethod
-    def apply_logger_setting(cls, setting: dict | None = None) -> None:
+    def apply_logger_setting(cls, setting: dict[str, object] | None = None) -> None:
         if setting is not None:
             if not setting:
                 return
             if os.getpid() == setting["pid"]:
                 return
             assert cls.__message_queue is None
-            cls.__message_queue = setting["message_queue"]
+            cls.__message_queue = setting["message_queue"]  # type: ignore[assignment]
             if "logger_formatter" in setting:
-                cls.__formatter = setting["logger_formatter"]
+                cls.__formatter = setting["logger_formatter"]  # type: ignore[assignment]
             if "logger_level" in setting:
-                cls.__logger_level = setting["logger_level"]
-            cls.__filenames.update(setting["filenames"])
+                cls.__logger_level = setting["logger_level"]  # type: ignore[assignment]
+            cls.__filenames.update(setting["filenames"])  # type: ignore[arg-type]
         cls.__apply_logger_setting()
 
     @classmethod
@@ -297,27 +300,27 @@ def set_formatter(formatter: logging.Formatter) -> None:
     __LoggerEnv.set_formatter(formatter)
 
 
-def get_logger_setting() -> dict:
+def get_logger_setting() -> dict[str, object]:
     return __LoggerEnv.get_logger_setting()
 
 
-def apply_logger_setting(setting: dict) -> None:
+def apply_logger_setting(setting: dict[str, object]) -> None:
     __LoggerEnv.apply_logger_setting(setting)
 
 
-def log_info(*args, **kwargs) -> None:
+def log_info(*args: object, **kwargs: object) -> None:
     __LoggerEnv.initialize_proxy_logger().info(*args, **kwargs, stacklevel=2)
 
 
-def log_debug(*args, **kwargs) -> None:
+def log_debug(*args: object, **kwargs: object) -> None:
     __LoggerEnv.initialize_proxy_logger().debug(*args, **kwargs, stacklevel=2)
 
 
-def log_warning(*args, **kwargs) -> None:
+def log_warning(*args: object, **kwargs: object) -> None:
     __LoggerEnv.initialize_proxy_logger().warning(*args, **kwargs, stacklevel=2)
 
 
-def log_error(*args, **kwargs) -> None:
+def log_error(*args: object, **kwargs: object) -> None:
     __LoggerEnv.initialize_proxy_logger().error(*args, **kwargs, stacklevel=2)
 
 
@@ -340,7 +343,7 @@ class StreamToLogger:
             h.flush()
 
 
-def redirect_stdout_to_logger(logger_names: Iterable[str] | None = None):
+def redirect_stdout_to_logger(logger_names: Iterable[str] | None = None) -> contextlib.redirect_stdout:
     if logger_names is not None:
         for name in logger_names:
             replace_logger(name=name)

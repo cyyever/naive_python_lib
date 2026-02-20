@@ -1,7 +1,9 @@
 import copy
 import math
 import multiprocessing.context
+import multiprocessing.synchronize
 import os
+import threading
 import traceback
 from collections.abc import Callable
 from enum import StrEnum, auto
@@ -150,7 +152,7 @@ class RepeatedResult:
         self.__data = data
 
     @property
-    def data(self) -> None:
+    def data(self) -> object:
         if self.__copy_data:
             return copy.deepcopy(self.__data)
         return self.__data
@@ -290,7 +292,7 @@ class TaskQueue:
         self.__worker_fun: Callable | None = None
         self.__workers: None | dict = None
         self.__batch_policy_type = batch_policy_type
-        self.__stop_event: object | None = None
+        self.__stop_event: threading.Event | multiprocessing.synchronize.Event | None = None
         self.__queues: dict = {}
         self.__set_logger: bool = True
 
@@ -360,10 +362,10 @@ class TaskQueue:
             worker_id = max(self.__workers.keys(), default=-1) + 1
             self._start_worker(worker_id, use_thread=use_thread)
 
-    def put_data(self, data: object, queue_name: str) -> None:
+    def put_data(self, data: object | RepeatedResult, queue_name: str) -> None:
         queue, queue_type = self.__get_queue(queue_name)
-        data_list = [data]
-        if hasattr(data, "get_data_list"):
+        data_list: list = [data]
+        if isinstance(data, RepeatedResult):
             data_list = data.get_data_list()
 
         if queue_type == QueueType.Pipe:

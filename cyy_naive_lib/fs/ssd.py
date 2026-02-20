@@ -1,18 +1,66 @@
 # Forked from git@github.com:kipodd/ssd_checker.git
+import json
 import os
 import re
+import subprocess
 import sys
 from glob import glob
 from os.path import basename, dirname, expanduser, realpath
 
 
-def _fullpath(path):
+def _fullpath(path: str) -> str:
     return realpath(expanduser(path))
 
 
-def _get_parent_device_id(device_id) -> str:
-    major = os.major(device_id)
-    minor = os.minor(device_id)
+def _is_nt_ssd(path: str) -> bool:
+    try:
+        drive = os.path.splitdrive(_fullpath(path))[0]
+        if not drive:
+            return True
+        # Get the physical disk MediaType for the drive letter
+        script = (
+            f"$d = Get-Partition -DriveLetter '{drive[0]}' | Get-Disk; "
+            f"$d | Get-PhysicalDisk | Select-Object -Property MediaType | ConvertTo-Json"
+        )
+        result = subprocess.run(
+            ["powershell", "-NoProfile", "-Command", script],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if result.returncode != 0:
+            return True
+        data = json.loads(result.stdout.strip())
+        media_type = data.get("MediaType", "")
+        # "SSD" = solid state, "Unspecified" = often NVMe, "HDD" = rotational
+        return media_type != "HDD"
+    except Exception:
+        return True
+
+
+def _is_osx_ssd(path: str) -> bool:
+    return True
+
+
+def _is_posix_ssd(path: str) -> bool:
+    block = _blkdevice(path)
+    if block is None:
+        return False
+    path = f"/sys/block/{block}/queue/rotational"
+    if not os.path.isfile(path):
+        m = re.search(r"p\d+$", block)
+        if m:
+            path = f"/sys/block/{block[:m.start()]}/queue/rotational"
+    try:
+        with open(path, encoding="ascii") as fp:
+            return fp.read().strip() == "0"
+    except OSError:
+        return False
+
+
+def _get_parent_device_id(device_id: int) -> str:
+    major = os.major(device_id)  # type: ignore[attr-defined]
+    minor = os.minor(device_id)  # type: ignore[attr-defined]
 
     # For some device types, a block entry does not exist for partitions.
     # The minor device ID of the "whole disk" entry is given by the upper N
@@ -53,41 +101,14 @@ def _get_parent_device_id(device_id) -> str:
     return f"{major}:{minor}"
 
 
-def _blkdevice(path):
+def _blkdevice(path: str) -> str | None:
     device_id = _get_parent_device_id(os.stat(_fullpath(path)).st_dev)
-    block = ""
 
     for device in glob("/sys/class/block/*/dev"):
         with open(device, encoding="utf8") as f:
             if f.read().strip() == device_id:
-                block = basename(dirname(device))
-                return block
+                return basename(dirname(device))
     return None
-
-
-def _is_nt_ssd(path) -> bool:
-    return True
-
-
-def _is_osx_ssd(path) -> bool:
-    return True
-
-
-def _is_posix_ssd(path: str) -> bool:
-    block = _blkdevice(path)
-    if block is None:
-        return False
-    path = f"/sys/block/{block}/queue/rotational"
-    if not os.path.isfile(path):
-        m = re.search(r"p\d+$", block)
-        if m:
-            path = f"/sys/block/{block[:m.start()]}/queue/rotational"
-    try:
-        with open(path, encoding="ascii") as fp:
-            return fp.read().strip() == "0"
-
-    except OSError:
-        return False
 
 
 if os.name == "nt":

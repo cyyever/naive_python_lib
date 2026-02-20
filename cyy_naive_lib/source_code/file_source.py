@@ -43,7 +43,7 @@ class FileSource(Source):
                 try:
                     pbar = None
 
-                    def _bar(current, total, _width=0):
+                    def _bar(current, total, _width=0) -> None:
                         nonlocal pbar
                         if pbar is None:
                             pbar = tqdm(total=total, unit="b", unit_scale=True)

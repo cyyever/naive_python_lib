@@ -1,9 +1,9 @@
+import contextlib
+
 from .batch import batch_process
 
-try:
+with contextlib.suppress(Exception):
     from .coroutine import ProcessPoolWithCoroutine
-except Exception:
-    pass
 from .executor import BlockingSubmitExecutor
 from .process_context import ManageredProcessContext, ProcessContext
 from .process_pool import ProcessPool

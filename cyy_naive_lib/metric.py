@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, fields
 
 import numpy as np
-import pandas as pd
+import pandas as pd  # type: ignore[import-untyped]
 
 
 @dataclass(kw_only=True)

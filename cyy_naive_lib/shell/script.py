@@ -1,6 +1,6 @@
 import os
 from collections.abc import Iterable
-from typing import Never, TextIO
+from typing import TextIO
 
 from .shell import Shell
 
@@ -85,7 +85,7 @@ class Script:
             raise RuntimeError("failed to execute script")
         return output, exit_code
 
-    def _get_exec_command_line(self) -> Never:
+    def _get_exec_command_line(self) -> dict[str, object]:
         raise NotImplementedError
 
     def _wrap_content_in_strict_mode(self, env_part: str, content_part: str) -> str:

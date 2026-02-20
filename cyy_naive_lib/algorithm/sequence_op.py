@@ -53,7 +53,7 @@ def search_sublists(sublists: Sequence[Sequence]) -> Callable:
     return search_sublists_impl
 
 
-def sublist(a: Sequence[T], b: Sequence[T], start: int = 0) -> int | None:
+def sublist[T](a: Sequence[T], b: Sequence[T], start: int = 0) -> int | None:
     idx = start
     while True:
         try:

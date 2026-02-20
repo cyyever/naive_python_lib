@@ -1,5 +1,4 @@
 import re
-from typing import Self
 
 from looseversion import LooseVersion
 
@@ -56,10 +55,14 @@ class PackageSpecification:
             return res
         return res + ":" + self.branch
 
-    def __eq__(self, other: Self) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, PackageSpecification):
+            return NotImplemented
         return self.name == other.name and self.branch == other.branch
 
-    def __ne__(self, other: Self):
+    def __ne__(self, other: object) -> bool:
+        if not isinstance(other, PackageSpecification):
+            return NotImplemented
         return not self.__eq__(other)
 
     def __hash__(self) -> int:
