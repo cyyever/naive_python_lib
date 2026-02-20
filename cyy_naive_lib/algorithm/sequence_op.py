@@ -1,4 +1,5 @@
 from collections.abc import Callable, Generator, Iterable, Sequence
+from itertools import batched
 from typing import Any, TypeVar
 
 T = TypeVar("T")
@@ -8,9 +9,7 @@ def split_list_to_chunks(my_list: list, chunk_size: int) -> Generator:
     r"""
     Return a sequence of chunks
     """
-    return (
-        my_list[offs : offs + chunk_size] for offs in range(0, len(my_list), chunk_size)
-    )
+    return (list(batch) for batch in batched(my_list, chunk_size))
 
 
 def flatten_list(seq: list) -> list:

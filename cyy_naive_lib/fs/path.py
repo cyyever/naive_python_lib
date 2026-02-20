@@ -1,5 +1,5 @@
-import os
 from collections.abc import Callable, Sequence
+from pathlib import Path
 
 
 def find(
@@ -11,27 +11,27 @@ def find(
     Return files meeting the specified conditions from the given directory.
     """
     result = []
-    dir_to_search = os.path.abspath(dir_to_search)
-    for p in os.listdir(dir_to_search):
-        full_path = os.path.abspath(os.path.join(dir_to_search, p))
+    root = Path(dir_to_search).resolve()
+    for p in root.iterdir():
+        full_path = str(p.resolve())
         if filter_fun(full_path):
             result.append(full_path)
             continue
-        if recursive and os.path.isdir(full_path):
+        if recursive and p.is_dir():
             result += find(full_path, filter_fun, recursive)
     return result
 
 
 def find_directories(dir_to_search: str, dirname: str) -> list[str]:
     def filter_fun(p: str) -> bool:
-        return os.path.isdir(p) and os.path.basename(p) == dirname
+        return Path(p).is_dir() and Path(p).name == dirname
 
     return find(dir_to_search=dir_to_search, filter_fun=filter_fun)
 
 
 def list_files(dir_to_search: str, recursive: bool = True) -> list[str]:
     def filter_fun(p: str) -> bool:
-        return os.path.isfile(p)
+        return Path(p).is_file()
 
     return find(dir_to_search, filter_fun, recursive)
 
@@ -42,6 +42,6 @@ def list_files_by_suffixes(
     suffixes = [suffixes] if isinstance(suffixes, str) else list(suffixes)
 
     def filter_fun(p: str) -> bool:
-        return all(p.endswith(suffix) for suffix in suffixes)
+        return any(p.endswith(suffix) for suffix in suffixes)
 
     return find(dir_to_search, filter_fun, recursive)

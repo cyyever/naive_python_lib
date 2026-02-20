@@ -1,5 +1,6 @@
 # Forked from git@github.com:kipodd/ssd_checker.git
 import os
+import re
 import sys
 from glob import glob
 from os.path import basename, dirname, expanduser, realpath
@@ -78,10 +79,9 @@ def _is_posix_ssd(path: str) -> bool:
         return False
     path = f"/sys/block/{block}/queue/rotational"
     if not os.path.isfile(path):
-        for i in range(10):
-            if block.endswith(f"p{i}"):
-                path = f"/sys/block/{block[:-2]}/queue/rotational"
-                break
+        m = re.search(r"p\d+$", block)
+        if m:
+            path = f"/sys/block/{block[:m.start()]}/queue/rotational"
     try:
         with open(path, encoding="ascii") as fp:
             return fp.read().strip() == "0"
