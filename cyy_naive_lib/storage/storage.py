@@ -108,7 +108,9 @@ class SyncedDataStorage:
                 self.__fd, self.__data_path = tempfile.mkstemp()
                 self.__use_tmp_file = True
             else:
-                os.makedirs(os.path.dirname(self.__data_path), exist_ok=True)
+                dir_name = os.path.dirname(self.__data_path)
+                if dir_name:
+                    os.makedirs(dir_name, exist_ok=True)
             assert self.__data_path is not None
             with open(self.__data_path, "wb") as f:
                 dill.dump(self.__data, f)

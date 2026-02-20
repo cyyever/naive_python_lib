@@ -48,4 +48,4 @@ class TarballSource(FileSource):
         except Exception as e:
             if os.path.isdir(self.tarball_dir):
                 shutil.rmtree(self.tarball_dir)
-            raise e
+            raise RuntimeError(f"failed to extract {self.file_name}") from e

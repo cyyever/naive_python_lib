@@ -24,6 +24,6 @@ class Backuper:
     def __exit__(self, exc_type, exc_value, real_traceback):
         if self.__hard_link is not None:
             if real_traceback:
-                os.rename(self.__hard_link, self.file)
+                os.replace(self.__hard_link, self.file)
             else:
                 os.unlink(self.__hard_link)

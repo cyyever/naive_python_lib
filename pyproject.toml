@@ -16,8 +16,8 @@ dependencies = [
   "psutil",
   "pytest",
   "pytest_cov",
-  "requests",
-  "tqdm"
+  "tqdm",
+  "wget"
 ]
 
 [project.optional-dependencies]

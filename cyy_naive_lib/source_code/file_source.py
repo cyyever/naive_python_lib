@@ -1,7 +1,7 @@
 import os
 import shutil
 
-import requests
+import wget
 from tqdm import tqdm
 
 from cyy_naive_lib.log import log_debug
@@ -39,27 +39,24 @@ class FileSource(Source):
                 shutil.copyfile(self.url.replace("file://", ""), self._file_path)
             else:
                 log_debug("downloading %s", self.file_name)
+                tmp_path = self._file_path + ".download"
+                try:
+                    pbar = None
 
-                response = requests.get(self.url, stream=True, timeout=60)
-                with open(self._file_path, "wb") as f:
-                    total_length = response.headers.get("content-length")
-                    if total_length is None:
-                        raise RuntimeError(
-                            f"download failed for {self.file_name} content-length is None"
-                        )
-                    for chunk in tqdm(
-                        response.iter_content(chunk_size=1024 * 1024),
-                        total=float(total_length) / (1024 * 1024),
-                        unit="mb",
-                    ):
-                        if chunk:
-                            f.write(chunk)
-                    f.flush()
+                    def _bar(current, total, _width=0):
+                        nonlocal pbar
+                        if pbar is None:
+                            pbar = tqdm(total=total, unit="b", unit_scale=True)
+                        pbar.update(current - pbar.n)
 
-                if response.status_code != 200:
-                    raise RuntimeError(
-                        f"download failed for {self.file_name}, status_code:{response.status_code}"
-                    )
+                    wget.download(self.url, out=tmp_path, bar=_bar)
+                    if pbar is not None:
+                        pbar.close()
+                    os.replace(tmp_path, self._file_path)
+                except BaseException:
+                    if os.path.isfile(tmp_path):
+                        os.remove(tmp_path)
+                    raise
 
         if self.checksum == "no_checksum":
             return self._file_path
