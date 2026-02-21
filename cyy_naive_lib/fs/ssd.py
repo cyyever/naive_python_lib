@@ -26,6 +26,7 @@ def _is_nt_ssd(path: str | Path) -> bool:
             capture_output=True,
             text=True,
             timeout=10,
+            check=False,
         )
         if result.returncode != 0:
             return True

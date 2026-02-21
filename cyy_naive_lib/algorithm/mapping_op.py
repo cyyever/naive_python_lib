@@ -47,11 +47,10 @@ def change_mapping_keys(
     """
     new_d = type(d)()
     for k, v in d.items():
-        if recursive and isinstance(v, MutableMapping):
-            v = change_mapping_keys(v, f, recursive)
+        new_v = change_mapping_keys(v, f, recursive) if recursive and isinstance(v, MutableMapping) else v
         new_k = f(k)
         assert new_k not in new_d
-        new_d[new_k] = v
+        new_d[new_k] = new_v
     return new_d
 
 

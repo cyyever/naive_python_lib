@@ -11,7 +11,7 @@ from collections.abc import Iterable, Mapping
 from contextlib import redirect_stdout
 from multiprocessing import Queue
 from pathlib import Path
-from typing import TypedDict
+from typing import ClassVar, TypedDict
 
 from colorlog import ColoredFormatter
 
@@ -53,7 +53,7 @@ class __LoggerEnv:
     )
     __message_queue: Queue | None = None
     proxy_logger: logging.Logger | None = None
-    __filenames: set[str] = set()
+    __filenames: ClassVar[set[str]] = set()
     __formatter: None | logging.Formatter = None
     __logger_level: int = logging.DEBUG
 
@@ -177,60 +177,87 @@ class __LoggerEnv:
                     if cls.__message_queue is not None:
                         cls.__message_queue.put({"cyy_logger_exit": os.getpid()})
 
+    @staticmethod
+    def _set_default_formatter(
+        handler: logging.Handler, with_color: bool = True
+    ) -> None:
+        if with_color and os.getenv("EINK_SCREEN") == "1":
+            with_color = False
+        format_str: str = "%(asctime)s %(levelname)s {%(processName)s} [%(filename)s => %(lineno)d] : %(message)s"
+        if with_color:
+            formatter: logging.Formatter = ColoredFormatter(
+                "%(log_color)s" + format_str,
+                log_colors={
+                    "DEBUG": "green",
+                    "WARNING": "yellow",
+                    "ERROR": "red",
+                    "CRITICAL": "bold_red",
+                },
+                style="%",
+            )
+        else:
+            formatter = logging.Formatter(format_str, style="%")
+        handler.setFormatter(formatter)
+
+    @staticmethod
+    def _add_file_handler(
+        logger: logging.Logger,
+        filename: str,
+        formatter: logging.Formatter | None = None,
+    ) -> None:
+        file_path = Path(filename).resolve()
+        for handler in logger.handlers:
+            if (
+                isinstance(handler, logging.FileHandler)
+                and Path(handler.baseFilename).resolve() == file_path
+            ):
+                return
+        if file_path.parent != Path():
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+        handler = logging.FileHandler(file_path, mode="wt", encoding="utf8")
+        logger.addHandler(handler)
+        if formatter is not None:
+            __LoggerEnv._set_default_formatter(handler, with_color=False)
+
+    @staticmethod
+    def _handle_dict_record(
+        record: dict, logger: logging.Logger, main_pid: int
+    ) -> bool:
+        """Handle a dict control record. Returns True if worker should exit."""
+        if record.get("cyy_logger_exit") == main_pid:
+            return True
+        level = record.pop("logger_level", None)
+        if level is not None:
+            set_logger_level(logger, level)
+        formatter = record.pop("logger_formatter", None)
+        if formatter is not None:
+            for handler in logger.handlers:
+                handler.setFormatter(formatter)
+        filename = record.pop("filename", None)
+        if filename is not None:
+            fmt = logger.handlers[0].formatter if logger.handlers else None
+            __LoggerEnv._add_file_handler(logger, filename=filename, formatter=fmt)
+        removed_filename = record.pop("removed_filename", None)
+        if removed_filename is not None:
+            resolved = Path(removed_filename).resolve()
+            for handler in logger.handlers:
+                if (
+                    isinstance(handler, logging.FileHandler)
+                    and Path(handler.baseFilename).resolve() == resolved
+                ):
+                    handler.flush()
+                    logger.removeHandler(handler)
+        return False
+
     @classmethod
     def _worker(cls, qu: Queue, main_pid: int) -> None:
         logger: logging.Logger = logging.getLogger("colored_logger")
         assert not logger.handlers
-        __handler = logging.StreamHandler()
-
-        def set_default_formatter(
-            handler: logging.Handler, with_color: bool = True
-        ) -> None:
-            if with_color and os.getenv("EINK_SCREEN") == "1":
-                with_color = False
-            format_str: str = "%(asctime)s %(levelname)s {%(processName)s} [%(filename)s => %(lineno)d] : %(message)s"
-            if with_color:
-                formatter: logging.Formatter = ColoredFormatter(
-                    "%(log_color)s" + format_str,
-                    log_colors={
-                        "DEBUG": "green",
-                        "WARNING": "yellow",
-                        "ERROR": "red",
-                        "CRITICAL": "bold_red",
-                    },
-                    style="%",
-                )
-            else:
-                formatter = logging.Formatter(
-                    format_str,
-                    style="%",
-                )
-
-            handler.setFormatter(formatter)
-
-        set_default_formatter(__handler, with_color=True)
-        logger.addHandler(__handler)
+        handler = logging.StreamHandler()
+        cls._set_default_formatter(handler, with_color=True)
+        logger.addHandler(handler)
         set_logger_level(logger, logging.DEBUG)
         logger.propagate = False
-
-        def add_file_handler_impl(
-            filename: str,
-            formatter: None | logging.Formatter = None,
-        ) -> None:
-            file_path = Path(filename).resolve()
-            for handler in logger.handlers:
-                if (
-                    isinstance(handler, logging.FileHandler)
-                    and Path(handler.baseFilename).resolve() == file_path
-                ):
-                    return
-            if file_path.parent != Path():
-                file_path.parent.mkdir(parents=True, exist_ok=True)
-            handler = logging.FileHandler(file_path, mode="wt", encoding="utf8")
-            logger.addHandler(handler)
-            if formatter is not None:
-                set_default_formatter(handler, with_color=False)
-            return
 
         while True:
             try:
@@ -239,44 +266,13 @@ class __LoggerEnv:
                     return
                 match record:
                     case dict():
-                        if record.get("cyy_logger_exit", None) == main_pid:
+                        if cls._handle_dict_record(record, logger, main_pid):
                             return
-                        level = record.pop("logger_level", None)
-                        if level is not None:
-                            set_logger_level(logger, level)
-                        formatter = record.pop("logger_formatter", None)
-                        if formatter is not None:
-                            for handler in logger.handlers:
-                                handler.setFormatter(formatter)
-                        filename = record.pop("filename", None)
-                        if filename is not None:
-                            formatter = None
-                            if logger.handlers:
-                                formatter = logger.handlers[0].formatter
-                            add_file_handler_impl(
-                                filename=filename, formatter=formatter
-                            )
-                        removed_filename = record.pop("removed_filename", None)
-                        if removed_filename is not None:
-                            resolved = Path(removed_filename).resolve()
-                            for handler in logger.handlers:
-                                if (
-                                    isinstance(handler, logging.FileHandler)
-                                    and Path(handler.baseFilename).resolve() == resolved
-                                ):
-                                    handler.flush()
-                                    logger.removeHandler(handler)
                     case _:
                         logger.handle(record)
-                        for handler in logger.handlers:
-                            handler.flush()
-            except ValueError:
-                return
-            except EOFError:
-                return
-            except OSError:
-                return
-            except TypeError:
+                        for h in logger.handlers:
+                            h.flush()
+            except (ValueError, EOFError, OSError, TypeError):
                 return
 
 
@@ -327,7 +323,7 @@ def apply_logger_setting(setting: LoggerSetting | None) -> None:
 def log_info(
     msg: object,
     *args: object,
-    exc_info: logging._ExcInfoType = None,
+    exc_info: logging._ExcInfoType | None = None,
     stack_info: bool = False,
     extra: Mapping[str, object] | None = None,
 ) -> None:
@@ -339,7 +335,7 @@ def log_info(
 def log_debug(
     msg: object,
     *args: object,
-    exc_info: logging._ExcInfoType = None,
+    exc_info: logging._ExcInfoType | None = None,
     stack_info: bool = False,
     extra: Mapping[str, object] | None = None,
 ) -> None:
@@ -351,7 +347,7 @@ def log_debug(
 def log_warning(
     msg: object,
     *args: object,
-    exc_info: logging._ExcInfoType = None,
+    exc_info: logging._ExcInfoType | None = None,
     stack_info: bool = False,
     extra: Mapping[str, object] | None = None,
 ) -> None:
@@ -363,7 +359,7 @@ def log_warning(
 def log_error(
     msg: object,
     *args: object,
-    exc_info: logging._ExcInfoType = None,
+    exc_info: logging._ExcInfoType | None = None,
     stack_info: bool = False,
     extra: Mapping[str, object] | None = None,
 ) -> None:

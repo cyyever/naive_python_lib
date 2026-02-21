@@ -32,7 +32,7 @@ from .shell import (
     get_shell_script,
     get_shell_script_type,
 )
-from .source_code import *
+from .source_code import PackageSpecification
 from .storage import (
     DataStorage,
     GlobalStore,
@@ -54,6 +54,7 @@ __all__ = [
     "MSYS2Script",
     "ManageredProcessContext",
     "Mingw64Script",
+    "PackageSpecification",
     "PowerShellScript",
     "ProcessContext",
     "ProcessPool",

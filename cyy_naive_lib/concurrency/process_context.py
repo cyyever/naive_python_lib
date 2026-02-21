@@ -3,6 +3,7 @@ import multiprocessing.connection
 import multiprocessing.context
 import multiprocessing.managers
 import multiprocessing.synchronize
+from typing import ClassVar
 
 from .context import ConcurrencyContext
 
@@ -39,7 +40,7 @@ class ProcessContext(ConcurrencyContext):
 
 
 class ManageredProcessContext(ProcessContext):
-    managers: dict[object, multiprocessing.managers.SyncManager] = {}
+    managers: ClassVar[dict[object, multiprocessing.managers.SyncManager]] = {}
 
     def get_ctx(self) -> multiprocessing.context.BaseContext:
         underlying_ctx = super().get_ctx()
