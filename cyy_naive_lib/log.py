@@ -34,10 +34,10 @@ def set_logger_level(logger: logging.Logger, level: int) -> None:
 
 
 def get_replaced_loggers() -> set[str]:
-    replaced_loggers: set[str] | str = os.environ.pop("CYY_REPLACED_LOGGER", set())
-    if isinstance(replaced_loggers, str):
-        replaced_loggers = set(replaced_loggers.split(","))
-    return replaced_loggers
+    replaced_loggers: str = os.environ.get("CYY_REPLACED_LOGGER", "")
+    if not replaced_loggers:
+        return set()
+    return set(replaced_loggers.split(","))
 
 
 def replace_logger(name: str) -> None:
@@ -56,6 +56,7 @@ class __LoggerEnv:
     __filenames: ClassVar[set[str]] = set()
     __formatter: None | logging.Formatter = None
     __logger_level: int = logging.DEBUG
+    __is_queue_owner: bool = False
 
     @classmethod
     def set_multiprocessing_ctx(cls, ctx: multiprocessing.context.SpawnContext) -> None:
@@ -128,33 +129,35 @@ class __LoggerEnv:
 
     @classmethod
     def get_logger_setting(cls) -> LoggerSetting | None:
-        if cls.__message_queue is None:
-            return None
-        setting = LoggerSetting(
-            message_queue=cls.__message_queue,
-            filenames=cls.__filenames,
-            pid=os.getpid(),
-            logger_level=cls.__logger_level,
-        )
-        if cls.__formatter is not None:
-            setting["logger_formatter"] = cls.__formatter
-        return setting
+        with cls.__logger_lock:
+            if cls.__message_queue is None:
+                return None
+            setting = LoggerSetting(
+                message_queue=cls.__message_queue,
+                filenames=cls.__filenames.copy(),
+                pid=os.getpid(),
+                logger_level=cls.__logger_level,
+            )
+            if cls.__formatter is not None:
+                setting["logger_formatter"] = cls.__formatter
+            return setting
 
     @classmethod
     def apply_logger_setting(cls, setting: LoggerSetting | None = None) -> None:
-        if setting is not None:
-            if not setting:
-                return
-            if os.getpid() == setting["pid"]:
-                return
-            assert cls.__message_queue is None
-            cls.__message_queue = setting["message_queue"]
-            if "logger_formatter" in setting:
-                cls.__formatter = setting["logger_formatter"]
-            if "logger_level" in setting:
-                cls.__logger_level = setting["logger_level"]
-            cls.__filenames.update(setting["filenames"])
-        cls.__apply_logger_setting()
+        with cls.__logger_lock:
+            if setting is not None:
+                if not setting:
+                    return
+                if os.getpid() == setting["pid"]:
+                    return
+                assert cls.__message_queue is None
+                cls.__message_queue = setting["message_queue"]
+                if "logger_formatter" in setting:
+                    cls.__formatter = setting["logger_formatter"]
+                if "logger_level" in setting:
+                    cls.__logger_level = setting["logger_level"]
+                cls.__filenames.update(setting["filenames"])
+            cls.__apply_logger_setting()
 
     @classmethod
     def __initialize_logger(cls) -> None:
@@ -163,6 +166,10 @@ class __LoggerEnv:
                 return
             if cls.__message_queue is None:
                 cls.__message_queue = cls.__multiprocessing_ctx.Manager().Queue()  # type: ignore[assignment]
+                cls.__is_queue_owner = True
+
+            if not cls.__is_queue_owner:
+                return
 
             background_thd = cls.__multiprocessing_ctx.Process(
                 target=cls._worker,
@@ -199,8 +206,9 @@ class __LoggerEnv:
             formatter = logging.Formatter(format_str, style="%")
         handler.setFormatter(formatter)
 
-    @staticmethod
+    @classmethod
     def _add_file_handler(
+        cls,
         logger: logging.Logger,
         filename: str,
         formatter: logging.Formatter | None = None,
@@ -217,11 +225,11 @@ class __LoggerEnv:
         handler = logging.FileHandler(file_path, mode="wt", encoding="utf8")
         logger.addHandler(handler)
         if formatter is not None:
-            __LoggerEnv._set_default_formatter(handler, with_color=False)
+            cls._set_default_formatter(handler, with_color=False)
 
-    @staticmethod
+    @classmethod
     def _handle_dict_record(
-        record: dict, logger: logging.Logger, main_pid: int
+        cls, record: dict, logger: logging.Logger, main_pid: int
     ) -> bool:
         """Handle a dict control record. Returns True if worker should exit."""
         if record.get("cyy_logger_exit") == main_pid:
@@ -236,7 +244,7 @@ class __LoggerEnv:
         filename = record.pop("filename", None)
         if filename is not None:
             fmt = logger.handlers[0].formatter if logger.handlers else None
-            __LoggerEnv._add_file_handler(logger, filename=filename, formatter=fmt)
+            cls._add_file_handler(logger, filename=filename, formatter=fmt)
         removed_filename = record.pop("removed_filename", None)
         if removed_filename is not None:
             resolved = Path(removed_filename).resolve()
