@@ -1,7 +1,9 @@
 import copy
-import os
 import random
 import threading
+from pathlib import Path
+from types import TracebackType
+from typing import Any, Self
 
 import dill
 import numpy as np
@@ -13,17 +15,17 @@ class ReproducibleRandomEnv:
     lock = threading.RLock()
 
     def __init__(self) -> None:
-        self.__randomlib_state: tuple | None = None
-        self.__numpy_state: dict | None = None
+        self.__randomlib_state: tuple[Any, ...] | None = None
+        self.__numpy_state: dict[str, Any] | None = None
         self._enabled: bool = False
-        self.__last_seed_path: None | str = None
+        self.__last_seed_path: Path | None = None
 
     @property
-    def enabled(self):
+    def enabled(self) -> bool:
         return self._enabled
 
     @property
-    def last_seed_path(self):
+    def last_seed_path(self) -> Path | None:
         return self.__last_seed_path
 
     def enable(self) -> None:
@@ -53,45 +55,54 @@ class ReproducibleRandomEnv:
         with self.lock:
             self._enabled = False
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         self.enable()
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
         if traceback:
             return
         self.disable()
 
-    def get_state(self) -> dict:
+    def get_state(self) -> dict[str, Any]:
         return {
             "randomlib_state": self.__randomlib_state,
             "numpy_state": self.__numpy_state,
         }
 
-    def save(self, seed_dir: str) -> None:
-        seed_path = os.path.join(seed_dir, "random_seed.pk")
+    def save(self, seed_dir: str | Path) -> None:
+        seed_path = Path(seed_dir) / "random_seed.pk"
         log_warning("%s save reproducible env to %s", id(self), seed_path)
         with self.lock:
             assert self._enabled
-            os.makedirs(seed_dir, exist_ok=True)
+            seed_path.parent.mkdir(parents=True, exist_ok=True)
             self.__last_seed_path = seed_path
-            with open(seed_path, "wb") as f:
+            with seed_path.open("wb") as f:
                 return dill.dump(
                     self.get_state(),
                     f,
                 )
 
-    def load_state(self, state: dict) -> None:
+    def load_state(self, state: dict[str, Any]) -> None:
         self.__randomlib_state = state["randomlib_state"]
         self.__numpy_state = state["numpy_state"]
 
-    def load(self, path: str | None = None, seed_dir: str | None = None) -> None:
+    def load(
+        self, path: str | Path | None = None, seed_dir: str | Path | None = None
+    ) -> None:
         if path is None:
             assert seed_dir is not None
-            path = os.path.join(seed_dir, "random_seed.pk")
+            path = Path(seed_dir) / "random_seed.pk"
+        else:
+            path = Path(path)
         with self.lock:
             assert not self._enabled
-            with open(path, "rb") as f:
+            with path.open("rb") as f:
                 log_warning("%s load reproducible env from %s", id(self), path)
                 self.load_state(dill.load(f))
 

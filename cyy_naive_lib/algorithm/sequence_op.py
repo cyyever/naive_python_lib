@@ -1,19 +1,22 @@
 from collections.abc import Callable, Generator, Iterable, Sequence
 from itertools import batched
+from typing import Any
 
 
-def split_list_to_chunks(my_list: list, chunk_size: int) -> Generator:
+def split_list_to_chunks(
+    my_list: list[Any], chunk_size: int
+) -> Generator[list[Any], None, None]:
     r"""
     Return a sequence of chunks
     """
     return (list(batch) for batch in batched(my_list, chunk_size))
 
 
-def flatten_list(seq: list) -> list:
+def flatten_list(seq: list[Any]) -> list[Any]:
     r"""
     Return a list
     """
-    res = []
+    res: list[Any] = []
     for x in seq:
         if isinstance(x, list):
             res += flatten_list(x)
@@ -22,9 +25,11 @@ def flatten_list(seq: list) -> list:
     return res
 
 
-def search_sublists(sublists: Sequence[Sequence]) -> Callable:
+def search_sublists(
+    sublists: Sequence[Sequence[Any]],
+) -> Callable[[list[Any]], dict[tuple[Any, ...], list[int]]]:
     assert sublists
-    lookup_table: dict[tuple, set] = {}
+    lookup_table: dict[Any, set[tuple[Any, ...]]] = {}
     for sub_list in sublists:
         assert sub_list
         a = sub_list[0]
@@ -32,8 +37,10 @@ def search_sublists(sublists: Sequence[Sequence]) -> Callable:
             lookup_table[a] = set()
         lookup_table[a].add(tuple(sub_list))
 
-    def search_sublists_impl(lst: list) -> dict[list, int]:
-        result: dict = {}
+    def search_sublists_impl(
+        lst: list[Any],
+    ) -> dict[tuple[Any, ...], list[int]]:
+        result: dict[tuple[Any, ...], list[int]] = {}
         for idx, e in enumerate(lst):
             possible_sublists = lookup_table.get(e)
             if possible_sublists is None:
@@ -63,11 +70,11 @@ def sublist[T](a: Sequence[T], b: Sequence[T], start: int = 0) -> int | None:
     return None
 
 
-def flatten_seq(seq: Iterable) -> list:
+def flatten_seq(seq: Iterable[Any]) -> list[Any]:
     r"""
     Flatten Return a flatted sequence
     """
-    res = []
+    res: list[Any] = []
     for x in seq:
         if isinstance(x, list | tuple):
             res += flatten_seq(x)

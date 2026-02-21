@@ -1,6 +1,7 @@
 import re
+from pathlib import Path
 
-from .script import Script, ExecCommandLine
+from .script import ExecCommandLine, Script
 
 
 class PowerShellScript(Script):
@@ -8,7 +9,7 @@ class PowerShellScript(Script):
         super().__init__(content=content)
         self.use_bash_stype_env_var = True
 
-    def _wrap_content_in_strict_mode(self, env_part: str, content_part: str):
+    def _wrap_content_in_strict_mode(self, env_part: str, content_part: str) -> str:
         return (
             self.line_separator.join(
                 [
@@ -31,14 +32,13 @@ class PowerShellScript(Script):
 
     def _get_exec_command_line(self) -> ExecCommandLine:
         script_name = self._get_temp_script_name()
-        with open(script_name, "w", encoding="utf8") as f:
-            f.write(self.get_complete_content())
+        Path(script_name).write_text(self.get_complete_content(), encoding="utf8")
         return {
             "cmd": ["pwsh", "-NoProfile", "-File", script_name],
             "script_name": script_name,
         }
 
-    def _export(self, key: str, value: str):
+    def _export(self, key: str, value: str) -> str:
         if value.startswith("(") and value.endswith(")"):
             pass
         elif not value.startswith("'") and not value.startswith('"'):

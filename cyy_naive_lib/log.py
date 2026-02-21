@@ -10,6 +10,7 @@ import threading
 from collections.abc import Iterable, Mapping
 from contextlib import redirect_stdout
 from multiprocessing import Queue
+from pathlib import Path
 from typing import TypedDict
 
 from colorlog import ColoredFormatter
@@ -112,14 +113,14 @@ class __LoggerEnv:
 
     @classmethod
     def add_file_handler(cls, filename: str) -> None:
-        filename = os.path.normpath(os.path.abspath(filename))
+        filename = str(Path(filename).resolve())
         with cls.__logger_lock:
             cls.__filenames.add(filename)
             cls.__apply_logger_setting()
 
     @classmethod
     def remove_file_handler(cls, filename: str) -> None:
-        filename = os.path.normpath(os.path.abspath(filename))
+        filename = str(Path(filename).resolve())
         with cls.__logger_lock:
             cls.__filenames.remove(filename)
             assert cls.__message_queue is not None
@@ -216,15 +217,16 @@ class __LoggerEnv:
             filename: str,
             formatter: None | logging.Formatter = None,
         ) -> None:
+            file_path = Path(filename).resolve()
             for handler in logger.handlers:
-                if isinstance(handler, logging.FileHandler) and os.path.abspath(
-                    handler.baseFilename
-                ) == os.path.abspath(filename):
+                if (
+                    isinstance(handler, logging.FileHandler)
+                    and Path(handler.baseFilename).resolve() == file_path
+                ):
                     return
-            log_dir = os.path.dirname(filename)
-            if log_dir:
-                os.makedirs(log_dir, exist_ok=True)
-            handler = logging.FileHandler(filename, mode="wt", encoding="utf8")
+            if file_path.parent != Path():
+                file_path.parent.mkdir(parents=True, exist_ok=True)
+            handler = logging.FileHandler(file_path, mode="wt", encoding="utf8")
             logger.addHandler(handler)
             if formatter is not None:
                 set_default_formatter(handler, with_color=False)
@@ -256,12 +258,12 @@ class __LoggerEnv:
                             )
                         removed_filename = record.pop("removed_filename", None)
                         if removed_filename is not None:
+                            resolved = Path(removed_filename).resolve()
                             for handler in logger.handlers:
-                                if isinstance(
-                                    handler, logging.FileHandler
-                                ) and os.path.abspath(
-                                    handler.baseFilename
-                                ) == os.path.abspath(removed_filename):
+                                if (
+                                    isinstance(handler, logging.FileHandler)
+                                    and Path(handler.baseFilename).resolve() == resolved
+                                ):
                                     handler.flush()
                                     logger.removeHandler(handler)
                     case _:

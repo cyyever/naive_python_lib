@@ -4,6 +4,7 @@ import tempfile
 import time
 from collections.abc import Callable
 from enum import IntEnum, auto
+from pathlib import Path
 
 import dill
 
@@ -17,9 +18,13 @@ class DataLocation(IntEnum):
 class SyncedDataStorage:
     """封装数据存储操作"""
 
-    def __init__(self, data: object = None, data_path: str | None = None) -> None:
+    def __init__(
+        self, data: object = None, data_path: str | Path | None = None
+    ) -> None:
         self.__data: object = data
-        self.__data_path: str | None = data_path
+        self.__data_path: Path | None = (
+            Path(data_path) if data_path is not None else None
+        )
         self.__data_hash: str | None = None
         self.__data_location: DataLocation = DataLocation.NoData
         if data is not None:
@@ -32,7 +37,8 @@ class SyncedDataStorage:
     def has_data(self) -> bool:
         return self.__data_location != DataLocation.NoData
 
-    def set_data_path(self, data_path: str) -> None:
+    def set_data_path(self, data_path: str | Path) -> None:
+        data_path = Path(data_path)
         if self.__data_path == data_path:
             return
         assert self.__data_location != DataLocation.Disk
@@ -48,7 +54,7 @@ class SyncedDataStorage:
         self.__data_location = DataLocation.Memory
 
     @property
-    def data_path(self) -> str | None:
+    def data_path(self) -> Path | None:
         return self.__data_path
 
     @property
@@ -58,8 +64,8 @@ class SyncedDataStorage:
         return self.__data
 
     def __load_data(self) -> object:
-        assert self.__data_path
-        with open(self.__data_path, "rb") as f:
+        assert self.__data_path is not None
+        with self.__data_path.open("rb") as f:
             return dill.load(f)
 
     def __close_data_file(self) -> None:
@@ -70,9 +76,9 @@ class SyncedDataStorage:
 
     def __remove_data_file(self) -> None:
         if self.__data_path is not None:
-            if os.path.isfile(self.__data_path):
+            if self.__data_path.is_file():
                 self.__close_data_file()
-                os.remove(self.__data_path)
+                self.__data_path.unlink()
             self.__data_path = None
 
     def __getitem__(self, key: object) -> object:
@@ -106,46 +112,49 @@ class SyncedDataStorage:
     def save(self) -> None:
         if self.__data_location == DataLocation.Memory:
             if self.__data_path is None:
-                self.__fd, self.__data_path = tempfile.mkstemp()
+                self.__fd, tmp_path = tempfile.mkstemp()
+                self.__data_path = Path(tmp_path)
                 os.close(self.__fd)
                 self.__fd = None
                 self.__use_tmp_file = True
             else:
-                dir_name = os.path.dirname(self.__data_path)
-                if dir_name:
-                    os.makedirs(dir_name, exist_ok=True)
+                parent = self.__data_path.parent
+                if parent != Path():
+                    parent.mkdir(parents=True, exist_ok=True)
             assert self.__data_path is not None
-            with open(self.__data_path, "wb") as f:
+            with self.__data_path.open("wb") as f:
                 dill.dump(self.__data, f)
                 self.__data = None
                 self.__data_location = DataLocation.Disk
 
 
 def persistent_cache(
-    path: str | None = None, cache_time: float | None = None
+    path: str | Path | None = None, cache_time: float | None = None
 ) -> Callable:
-    def read_data(path: str) -> object:
-        if not os.path.isfile(path):
+    def read_data(p: Path) -> object:
+        if not p.is_file():
             return None
-        if cache_time is not None and time.time() > cache_time + os.path.getmtime(path):
+        if cache_time is not None and time.time() > cache_time + p.stat().st_mtime:
             return None
-        fd = os.open(path, flags=os.O_RDONLY)
+        fd = os.open(p, flags=os.O_RDONLY)
         with os.fdopen(fd, "rb") as f:
             res = dill.load(f)
         return res
 
-    def write_data(data: object, path: str) -> None:
-        if os.path.isfile(path):
-            os.remove(path)
-        fd = os.open(path, flags=os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    def write_data(data: object, p: Path) -> None:
+        if p.is_file():
+            p.unlink()
+        fd = os.open(p, flags=os.O_CREAT | os.O_EXCL | os.O_WRONLY)
         with os.fdopen(fd, "wb") as f:
             dill.dump(data, f)
 
     def wrap(fun: Callable) -> Callable:
-        def wrap2(*args, **kwargs):
-            cache_path = path
+        def wrap2(*args: object, **kwargs: object) -> object:
+            cache_path: Path | None = Path(path) if path is not None else None
             if cache_path is None:
-                cache_path = kwargs.get("cache_path")
+                raw = kwargs.get("cache_path")
+                assert raw is not None
+                cache_path = Path(raw)  # type: ignore[arg-type]
             assert cache_path is not None
             hash_sha256 = hashlib.sha256()
             if args:
@@ -156,10 +165,10 @@ def persistent_cache(
                 hash_sha256.update(dill.dumps(kwargs))
             else:
                 hash_sha256.update(dill.dumps({}))
-            if os.path.isfile(cache_path):
-                os.remove(cache_path)
-            os.makedirs(cache_path, exist_ok=True)
-            new_path = os.path.join(cache_path, f"{hash_sha256.hexdigest()}")
+            if cache_path.is_file():
+                cache_path.unlink()
+            cache_path.mkdir(parents=True, exist_ok=True)
+            new_path = cache_path / hash_sha256.hexdigest()
             data = read_data(new_path)
             if data is not None:
                 return data
@@ -172,5 +181,5 @@ def persistent_cache(
     return wrap
 
 
-def get_cached_data(path: str, data_fun: Callable) -> object:
+def get_cached_data(path: str | Path, data_fun: Callable) -> object:
     return persistent_cache(path=path)(data_fun)()

@@ -146,7 +146,7 @@ class RepeatedResult:
         self.__num = num
         self.__copy_data = copy_data
 
-    def get_data_list(self) -> list:
+    def get_data_list(self) -> list[object]:
         return [self.data for _ in range(self.__num)]
 
     def set_data(self, data: object) -> None:

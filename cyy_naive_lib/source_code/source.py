@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 from types import TracebackType
 
 import psutil
@@ -9,10 +10,10 @@ from .package_spec import PackageSpecification
 
 
 class Source:
-    def __init__(self, spec: PackageSpecification, root_dir: str) -> None:
+    def __init__(self, spec: PackageSpecification, root_dir: str | Path) -> None:
         self.spec: PackageSpecification = spec
-        self.root_dir = root_dir
-        self.__prev_dir: None | str = None
+        self.root_dir = Path(root_dir)
+        self.__prev_dir: Path | None = None
 
     def get_checksum(self) -> str:
         raise NotImplementedError
@@ -21,27 +22,23 @@ class Source:
         raise NotImplementedError
 
     def __enter__(self) -> str:
-        self.__prev_dir = os.getcwd()
-        lock_dir = os.path.join(self.root_dir, ".lock")
-        os.makedirs(lock_dir, exist_ok=True)
-        lock_file = os.path.join(lock_dir, self.spec.name) + ".lock"
-        if os.path.isfile(lock_file):
-            with open(lock_file, mode="rb") as f:
-                try:
-                    pid = int(f.read(100).decode("ascii"))
-                    if not psutil.pid_exists(pid):
-                        f.close()
-                        os.remove(lock_file)
-                except:
-                    f.close()
-                    os.remove(lock_file)
+        self.__prev_dir = Path.cwd()
+        lock_dir = self.root_dir / ".lock"
+        lock_dir.mkdir(parents=True, exist_ok=True)
+        lock_file = lock_dir / (self.spec.name + ".lock")
+        if lock_file.is_file():
+            try:
+                pid = int(lock_file.read_bytes()[:100].decode("ascii"))
+                if not psutil.pid_exists(pid):
+                    lock_file.unlink()
+            except Exception:
+                lock_file.unlink()
 
         with FileLock(lock_file, timeout=3600) as lock:
             if sys.platform != "win32":
-                with open(lock.lock_file, "w", encoding="utf8") as f:
-                    f.write(str(os.getpid()))
+                Path(lock.lock_file).write_text(str(os.getpid()), encoding="utf8")
             res = self._download()
-            if os.path.isdir(res):
+            if Path(res).is_dir():
                 os.chdir(res)
             return res
 

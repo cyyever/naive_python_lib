@@ -1,29 +1,36 @@
-import os
+from pathlib import Path
+from types import TracebackType
+from typing import Self
 
 
 class Backuper:
-    def __init__(self, file: str) -> None:
-        self.file = file
-        self.__hard_link: str | None = None
+    def __init__(self, file: str | Path) -> None:
+        self.file = Path(file)
+        self.__hard_link: Path | None = None
 
-    def __enter__(self):
-        if not os.path.isfile(self.file):
+    def __enter__(self) -> Self:
+        if not self.file.is_file():
             return self
         for i in range(100):
-            self.__hard_link = self.file + f".__hard_link{i}"
-            if not os.path.exists(self.__hard_link):
-                os.link(self.file, self.__hard_link)
-                os.unlink(self.file)
+            hard_link = self.file.with_name(self.file.name + f".__hard_link{i}")
+            if not hard_link.exists():
+                hard_link.hardlink_to(self.file)
+                self.file.unlink()
+                self.__hard_link = hard_link
                 break
-            self.__hard_link = None
         if self.__hard_link is None:
             raise RuntimeError("can't backup file")
 
         return self
 
-    def __exit__(self, exc_type, exc_value, real_traceback):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        real_traceback: TracebackType | None,
+    ) -> None:
         if self.__hard_link is not None:
             if real_traceback:
-                os.replace(self.__hard_link, self.file)
+                self.__hard_link.replace(self.file)
             else:
-                os.unlink(self.__hard_link)
+                self.__hard_link.unlink()

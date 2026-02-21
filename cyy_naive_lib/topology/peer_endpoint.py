@@ -1,3 +1,5 @@
+from collections.abc import Generator
+
 from .endpoint import Endpoint
 from .peer_to_peer_topology import PeerToPeerTopology
 
@@ -12,7 +14,7 @@ class PeerEndpoint(Endpoint):
         assert isinstance(self._topology, PeerToPeerTopology)
         return self._topology
 
-    def all_peers(self):
+    def all_peers(self) -> Generator[int, None, None]:
         return (
             worker_id
             for worker_id in range(self.topology.worker_num)

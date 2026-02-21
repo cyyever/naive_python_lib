@@ -20,11 +20,11 @@ class Expected[T]:
         self.__value: None | tuple[T] = value if value is None else (value,)
 
     @classmethod
-    def ok(cls, value: T):
+    def ok(cls, value: T) -> Self:
         return cls(ok=True, value=value)
 
     @classmethod
-    def not_ok(cls):
+    def not_ok(cls) -> Self:
         return cls(ok=False, value=None)
 
     def is_ok(self) -> bool:

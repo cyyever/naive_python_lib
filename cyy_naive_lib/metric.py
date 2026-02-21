@@ -17,7 +17,7 @@ class SamplesMetrics:
     median: float | None = None
     label: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not isinstance(self.samples, np.ndarray):
             self.samples = np.asarray(self.samples)
         assert len(self.samples.shape) == 1
@@ -39,9 +39,9 @@ class SamplesMetrics:
         if self.median is None:
             self.median = float(np.median(a=self.samples))
 
-    def to_df(self, new_label: str | None = None):
+    def to_df(self, new_label: str | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
         label = self.label if new_label is None else new_label
-        res: dict[str, list] = {}
+        res: dict[str, list[object]] = {}
         if label is not None:
             res["label"] = [label]
         for field in fields(SamplesMetrics):
@@ -50,7 +50,7 @@ class SamplesMetrics:
             res[field.name] = [getattr(self, field.name)]
         df1 = pd.DataFrame(data=res)
 
-        res2: dict[str, list | np.ndarray | None] = {
+        res2: dict[str, list[object] | np.ndarray | None] = {
             "percentile": list(range(101)),
             "percentile_value": self.percentiles,
         }
@@ -64,10 +64,10 @@ class SamplesMetrics:
 class SamplesMetricsGroup:
     elements: list[SamplesMetrics]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         assert len(self.elements) > 1
 
-    def to_df(self):
+    def to_df(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         sub_df1s = []
         sub_df2s = []
         for e in self.elements:

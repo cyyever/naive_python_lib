@@ -41,8 +41,8 @@ class ExecutorWrapper(concurrent.futures.Executor):
     def wait_results(
         self,
         timeout: float | None = None,
-        return_when=concurrent.futures.FIRST_EXCEPTION,
-    ) -> tuple[dict, int]:
+        return_when: str = concurrent.futures.FIRST_EXCEPTION,
+    ) -> tuple[dict[concurrent.futures.Future, object], int]:
         if not self.__futures:
             return {}, 0
         done_futures, not_done_futures = self._peek_results(
@@ -64,8 +64,8 @@ class ExecutorWrapper(concurrent.futures.Executor):
     def _peek_results(
         self,
         timeout: float | None = None,
-        return_when=concurrent.futures.FIRST_EXCEPTION,
-    ) -> tuple:
+        return_when: str = concurrent.futures.FIRST_EXCEPTION,
+    ) -> tuple[set[concurrent.futures.Future], set[concurrent.futures.Future]]:
         done_futures, not_done_futures = concurrent.futures.wait(
             self.__futures, timeout=timeout, return_when=return_when
         )
@@ -101,7 +101,7 @@ class BlockingSubmitExecutor(ExecutorWrapper):
     def name(self) -> str:
         return str(uuid.uuid4())
 
-    def __wait_job(self, global_store) -> None:
+    def __wait_job(self, global_store: GlobalStore) -> None:
         while global_store.has(f"{self.name}_pending"):
             self._peek_results(timeout=0.1)
         global_store.store(f"{self.name}_pending", True)
@@ -112,7 +112,7 @@ class BlockingSubmitExecutor(ExecutorWrapper):
 
     @classmethod
     def __mark_job_launched(
-        cls, blocking_submit_executor_name: str, global_store
+        cls, blocking_submit_executor_name: str, global_store: GlobalStore
     ) -> None:
         name = blocking_submit_executor_name
         global_store.remove(f"{name}_pending")

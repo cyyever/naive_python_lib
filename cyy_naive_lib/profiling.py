@@ -1,6 +1,7 @@
 import cProfile
 import pstats
 import sys
+from pathlib import Path
 from types import TracebackType
 from typing import Self, TextIO
 
@@ -35,5 +36,5 @@ class Profile:
         ps.print_stats()
         ps.print_callers()
 
-    def dump(self, path: str) -> None:
-        self.profile.dump_stats(path)
+    def dump(self, path: str | Path) -> None:
+        self.profile.dump_stats(str(path))

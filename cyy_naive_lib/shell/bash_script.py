@@ -1,4 +1,6 @@
-from .script import Script, ExecCommandLine
+from pathlib import Path
+
+from .script import ExecCommandLine, Script
 
 
 class BashScript(Script):
@@ -7,8 +9,7 @@ class BashScript(Script):
 
     def _get_exec_command_line(self) -> ExecCommandLine:
         script_name = self._get_temp_script_name()
-        with open(script_name, "w", encoding="utf8") as f:
-            f.write(self.get_complete_content())
+        Path(script_name).write_text(self.get_complete_content(), encoding="utf8")
         return {"cmd": ["bash", script_name], "script_name": script_name}
 
     def _wrap_content_in_strict_mode(self, env_part: str, content_part: str) -> str:

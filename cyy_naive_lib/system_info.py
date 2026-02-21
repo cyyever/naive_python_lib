@@ -1,8 +1,8 @@
 import functools
-import os
 import platform
 import subprocess
 from enum import StrEnum, auto
+from pathlib import Path
 from shutil import which
 
 
@@ -61,11 +61,11 @@ def get_operating_system() -> str:
 @functools.cache
 def get_processor_name() -> str:
     # platform.processor() is empty on Linux, unreliable on macOS
-    if os.path.isfile("/proc/cpuinfo"):
-        with open("/proc/cpuinfo", encoding="utf-8") as f:
-            for line in f:
-                if "model name" in line.lower():
-                    return line.strip().lower()
+    cpuinfo = Path("/proc/cpuinfo")
+    if cpuinfo.is_file():
+        for line in cpuinfo.read_text(encoding="utf-8").splitlines():
+            if "model name" in line.lower():
+                return line.strip().lower()
     if which("sysctl") is not None:
         try:
             output = subprocess.check_output(

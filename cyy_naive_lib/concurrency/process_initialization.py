@@ -10,7 +10,7 @@ def reinitialize_logger(logger_setting: LoggerSetting | None, **kwargs: object) 
     apply_logger_setting(logger_setting)
 
 
-def default_initializer(init_arg_dict) -> None:
+def default_initializer(init_arg_dict: dict[str, list]) -> None:
     # We save fun_kwargs for further processing and call the initialization function
     for initializer, init_args in zip(
         init_arg_dict["initializers"], init_arg_dict["initargs_list"], strict=False

@@ -1,5 +1,6 @@
 import time
 import traceback
+from types import TracebackType
 from typing import Self
 
 from cyy_naive_lib.log import log_debug, log_info
@@ -28,7 +29,12 @@ class TimeCounter:
         self.reset_start_time()
         return self
 
-    def __exit__(self, exc_type, exc_value, real_traceback):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        real_traceback: TracebackType | None,
+    ) -> None:
         if real_traceback:
             return
         used_ms = self.elapsed_milliseconds()

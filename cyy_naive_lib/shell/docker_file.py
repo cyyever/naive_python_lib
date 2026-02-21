@@ -1,4 +1,5 @@
 import os
+from pathlib import Path, PurePosixPath
 
 from ..fs.tempdir import TempDir
 from ..system_info import OSType, get_operating_system_type
@@ -21,11 +22,11 @@ class DockerFile:
 
     def build(
         self,
-        src_dir_pair: tuple | None = None,
-        additional_docker_commands: list | None = None,
-        docker_ignored_files: list | None = None,
-        exec_kwargs: dict | None = None,
-    ):
+        src_dir_pair: tuple[str, str] | None = None,
+        additional_docker_commands: list[str] | None = None,
+        docker_ignored_files: list[str] | None = None,
+        exec_kwargs: dict[str, object] | None = None,
+    ) -> tuple[str, int]:
         with TempDir():
             host_src_dir, docker_src_dir = None, None
             if src_dir_pair is not None:
@@ -35,11 +36,12 @@ class DockerFile:
                 docker_src_dir = "/"
 
             script_name = "docker.sh"
-            with open(script_name, "w", encoding="utf8") as f:
-                f.write(self.script.get_complete_content())
-            script_path = os.path.join(docker_src_dir, script_name)
+            Path(script_name).write_text(
+                self.script.get_complete_content(), encoding="utf8"
+            )
+            script_path = str(PurePosixPath(docker_src_dir) / script_name)
 
-            with open("Dockerfile", "w", encoding="utf8") as f:
+            with Path("Dockerfile").open("w", encoding="utf8") as f:
                 for line in self.content:
                     print(line, file=f)
 
@@ -52,7 +54,7 @@ class DockerFile:
                     for cmd in additional_docker_commands:
                         print(cmd, file=f)
 
-            with open(".dockerignore", "w", encoding="utf8") as f:
+            with Path(".dockerignore").open("w", encoding="utf8") as f:
                 print(".git", file=f)
                 print("Dockerfile", file=f)
                 if docker_ignored_files is not None:

@@ -1,5 +1,5 @@
-import os
 import shutil
+from pathlib import Path
 
 import wget
 from tqdm import tqdm
@@ -16,9 +16,9 @@ class FileSource(Source):
         self,
         spec: PackageSpecification,
         url: str,
-        root_dir: str,
+        root_dir: str | Path,
         checksum: str,
-        file_name: None | str = None,
+        file_name: str | None = None,
     ) -> None:
         super().__init__(spec=spec, root_dir=root_dir)
         self.url: str = url
@@ -26,7 +26,7 @@ class FileSource(Source):
             file_name if file_name is not None else self.url.split("/")[-1]
         )
         self.checksum = checksum
-        self._file_path = os.path.join(root_dir, self.file_name)
+        self._file_path = self.root_dir / self.file_name
 
     def get_checksum(self) -> str:
         if self.checksum == "no_checksum":
@@ -34,32 +34,34 @@ class FileSource(Source):
         return self.checksum
 
     def _download(self) -> str:
-        if not os.path.isfile(self._file_path):
+        if not self._file_path.is_file():
             if self.url.startswith("file://"):
                 shutil.copyfile(self.url.replace("file://", ""), self._file_path)
             else:
                 log_debug("downloading %s", self.file_name)
-                tmp_path = self._file_path + ".download"
+                tmp_path = self._file_path.with_suffix(
+                    self._file_path.suffix + ".download"
+                )
                 try:
                     pbar = None
 
-                    def _bar(current, total, _width=0) -> None:
+                    def _bar(current: int, total: int, _width: int = 0) -> None:
                         nonlocal pbar
                         if pbar is None:
                             pbar = tqdm(total=total, unit="b", unit_scale=True)
                         pbar.update(current - pbar.n)
 
-                    wget.download(self.url, out=tmp_path, bar=_bar)
+                    wget.download(self.url, out=str(tmp_path), bar=_bar)
                     if pbar is not None:
                         pbar.close()
-                    os.replace(tmp_path, self._file_path)
+                    tmp_path.replace(self._file_path)
                 except BaseException:
-                    if os.path.isfile(tmp_path):
-                        os.remove(tmp_path)
+                    if tmp_path.is_file():
+                        tmp_path.unlink()
                     raise
 
         if self.checksum == "no_checksum":
-            return self._file_path
+            return str(self._file_path)
         verify_checksum = False
         for checksum_prefix in ["sha256"]:
             if self.checksum.startswith(checksum_prefix + ":"):
@@ -67,7 +69,7 @@ class FileSource(Source):
                     file_hash(self._file_path, checksum_prefix)
                     != self.checksum[len(checksum_prefix) + 1 :]
                 ):
-                    os.remove(self._file_path)
+                    self._file_path.unlink()
                     raise RuntimeError(
                         f"wrong checksum for {self.file_name}, so we delete {self._file_path}"
                     )
@@ -75,4 +77,4 @@ class FileSource(Source):
                 break
         if not verify_checksum:
             raise RuntimeError(f"unknown checksum format for {self.file_name}")
-        return self._file_path
+        return str(self._file_path)

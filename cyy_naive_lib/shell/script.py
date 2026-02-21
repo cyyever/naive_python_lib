@@ -1,5 +1,5 @@
-import os
 from collections.abc import Iterable
+from pathlib import Path
 from typing import TextIO, TypedDict
 
 from .shell import Shell
@@ -12,10 +12,10 @@ class ExecCommandLine(TypedDict):
 
 class Script:
     def __init__(self, content: str | Iterable[str] | None = None) -> None:
-        self.content: list = []
+        self.content: list[str] = []
         if content is not None:
             self.append_content(content)
-        self.env: list = []
+        self.env: list[tuple[str, str]] = []
         self.strict_mode: bool = True
         self.line_separator: str = self._get_line_separator()
 
@@ -40,7 +40,7 @@ class Script:
     def _convert_path(self, path: str) -> str:
         return path
 
-    def prepend_content(self, content: str | Iterable) -> None:
+    def prepend_content(self, content: str | Iterable[str]) -> None:
         if isinstance(content, str):
             self.content = content.splitlines() + self.content
         else:
@@ -59,9 +59,9 @@ class Script:
 
     def _get_temp_script_name(self) -> str:
         for idx in range(10000):
-            path = f"script{idx}.{self.get_suffix()}"
-            if not os.path.isfile(path):
-                return path
+            path = Path(f"script{idx}.{self.get_suffix()}")
+            if not path.is_file():
+                return str(path)
         raise RuntimeError("Can't create script name")
 
     def get_complete_content(self) -> str:
@@ -76,7 +76,7 @@ class Script:
         self,
         throw: bool = True,
         extra_output_files: None | list[TextIO] = None,
-        **exec_kwargs,
+        **exec_kwargs: object,
     ) -> tuple[str, int]:
         res = self._get_exec_command_line()
         output, exit_code = Shell.exec(
@@ -84,8 +84,9 @@ class Script:
             extra_output_files=extra_output_files,
             **exec_kwargs,
         )
-        if os.path.isfile(res["script_name"]):
-            os.remove(res["script_name"])
+        script_path = Path(res["script_name"])
+        if script_path.is_file():
+            script_path.unlink()
         if throw and exit_code != 0:
             raise RuntimeError("failed to execute script")
         return output, exit_code

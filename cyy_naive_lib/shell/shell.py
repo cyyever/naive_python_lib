@@ -1,5 +1,6 @@
 import subprocess
 import sys
+from io import BufferedReader
 from threading import Thread
 from time import sleep
 from typing import TextIO
@@ -9,15 +10,15 @@ class Shell:
     @classmethod
     def exec(
         cls,
-        command_line: list,
+        command_line: list[str],
         print_out: bool = True,
         extra_output_files: list[TextIO] | None = None,
-        **process_kwargs,
-    ) -> tuple:
+        **process_kwargs: object,
+    ) -> tuple[str, int]:
         r"""
         Execute a command line
         """
-        output_files: list = []
+        output_files: list[TextIO] = []
         if extra_output_files is not None:
             output_files = extra_output_files
         output_lines: list[str] = []
@@ -27,7 +28,7 @@ class Shell:
             stderr=subprocess.PIPE,
             **process_kwargs,
         ) as proc:
-            threads: list = [
+            threads: list[Thread] = [
                 Thread(
                     target=Shell.__output_text_line,
                     args=(
@@ -66,7 +67,7 @@ class Shell:
             return "\n".join(output_lines), exit_code
 
     @staticmethod
-    def __decode_output(line) -> str:
+    def __decode_output(line: bytes) -> str:
         try:
             return line.decode("gb2312")
         # pylint: disable=broad-exception-caught
@@ -74,7 +75,13 @@ class Shell:
             return line.decode("utf-8", errors="ignore")
 
     @staticmethod
-    def __output_text_line(input_file, output_files: list, output_lines: list) -> None:
+    def __output_text_line(
+        input_file: BufferedReader | None,
+        output_files: list[TextIO],
+        output_lines: list[str] | None,
+    ) -> None:
+        if input_file is None:
+            return
         for line in iter(input_file.readline, b""):
             decoded_line = Shell.__decode_output(line)
             if output_lines is not None:
