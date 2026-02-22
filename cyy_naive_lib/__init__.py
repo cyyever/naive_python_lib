@@ -20,7 +20,7 @@ from .concurrency import (
     ThreadTaskQueue,
     batch_process,
 )
-from .fs import TempDir, get_temp_dir, list_files, list_files_by_suffixes
+from .fs import TempDir
 from .function import Decorator, Expected
 from .reproducible_random_env import ReproducibleRandomEnv
 from .shell import (
@@ -75,9 +75,6 @@ __all__ = [
     "get_mapping_values_by_key_order",
     "get_shell_script",
     "get_shell_script_type",
-    "get_temp_dir",
-    "list_files",
-    "list_files_by_suffixes",
     "load_json",
     "mapping_to_list",
     "persistent_cache",

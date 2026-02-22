@@ -1,16 +1,8 @@
 from cyy_naive_lib.algorithm.sequence_op import (
     flatten_list,
     search_sublists,
-    split_list_to_chunks,
     sublist,
 )
-
-
-def test_split_list_to_chunks() -> None:
-    res = list(split_list_to_chunks(list(range(5)), 2))
-    assert len(res) == 3
-    assert res[0] == [0, 1]
-    assert res[2] == [4]
 
 
 def test_flatten_sequence() -> None:

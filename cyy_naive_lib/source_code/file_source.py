@@ -1,3 +1,4 @@
+import hashlib
 import shutil
 from pathlib import Path
 
@@ -6,7 +7,6 @@ from tqdm import tqdm
 
 from cyy_naive_lib.log import log_debug
 
-from ..algorithm.hash import file_hash
 from .package_spec import PackageSpecification
 from .source import Source
 
@@ -65,8 +65,10 @@ class FileSource(Source):
         verify_checksum = False
         for checksum_prefix in ["sha256"]:
             if self.checksum.startswith(checksum_prefix + ":"):
+                with self._file_path.open("rb") as f:
+                    digest = hashlib.file_digest(f, checksum_prefix).hexdigest()
                 if (
-                    file_hash(self._file_path, checksum_prefix)
+                    digest
                     != self.checksum[len(checksum_prefix) + 1 :]
                 ):
                     self._file_path.unlink()
