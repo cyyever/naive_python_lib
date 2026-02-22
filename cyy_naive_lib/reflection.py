@@ -20,7 +20,7 @@ def get_descendant_attrs(
     filter_fun: Callable[..., bool],
     recursive: bool,
     data_only: bool = True,
-) -> Generator[tuple[str, Any], None, None]:
+) -> Generator[tuple[str, Any]]:
     for name, attr in inspect.getmembers(obj):
         if not name.startswith("__") and not name.endswith("__"):
             if data_only and not inspect.isdatadescriptor(attr):

@@ -1,4 +1,4 @@
-from multiprocessing.managers import DictProxy, SyncManager
+from multiprocessing.managers import AcquirerProxy, DictProxy, SyncManager
 from multiprocessing.synchronize import RLock, Semaphore
 
 
@@ -23,8 +23,8 @@ class GlobalStore:
             )
         self.objects = GlobalStore._objects
         default_lock = self.get("default_lock")
-        assert isinstance(default_lock, RLock)
-        self.default_lock: RLock = default_lock
+        assert isinstance(default_lock, (RLock, AcquirerProxy))
+        self.default_lock = default_lock
 
     def store_lock(self, name: str) -> None:
         assert self.global_manager is not None

@@ -13,7 +13,7 @@ from .generic import recursive_mutable_op
 
 def get_mapping_items_by_key_order(
     d: Mapping[Any, Any],
-) -> Generator[tuple[Any, Any], None, None]:
+) -> Generator[tuple[Any, Any]]:
     r"""
     Return a generator giving the items by key order.
     """
@@ -29,7 +29,7 @@ def mapping_to_list(d: Mapping[str, Any]) -> list[dict[str, Any]]:
 
 def get_mapping_values_by_key_order(
     d: Mapping[Any, Any],
-) -> Generator[Any, None, None]:
+) -> Generator[Any]:
     r"""
     Return a generator giving the values by key order.
     """

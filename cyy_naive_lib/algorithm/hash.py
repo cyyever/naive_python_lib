@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 import hashlib
 from collections.abc import Callable
 from pathlib import Path

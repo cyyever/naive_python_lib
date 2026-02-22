@@ -24,7 +24,7 @@ from cyy_naive_lib.log import (
 
 
 @contextlib.contextmanager
-def _saved_env(key: str) -> Generator[None, None, None]:
+def _saved_env(key: str) -> Generator[None]:
     """Save and restore an environment variable."""
     old = os.environ.pop(key, None)
     try:
