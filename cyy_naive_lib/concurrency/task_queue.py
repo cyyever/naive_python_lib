@@ -278,7 +278,7 @@ class BatchWorker(Worker):
         tasks, end_process = self.__collect_tasks(task_queue=task_queue)
         if tasks:
             self.__batch_process(
-                tasks=tasks, task_queue=task_queue, worker_id=worker_id
+                tasks=tasks, task_queue=task_queue, worker_id=worker_id, **kwargs
             )
         return end_process
 

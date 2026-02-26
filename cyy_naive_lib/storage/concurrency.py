@@ -1,4 +1,4 @@
-from multiprocessing.managers import AcquirerProxy, DictProxy, SyncManager
+from multiprocessing.managers import AcquirerProxy, DictProxy, ListProxy, SyncManager
 from multiprocessing.synchronize import RLock, Semaphore
 
 
@@ -43,10 +43,10 @@ class GlobalStore:
                 result = self.get_with_default(name)
                 if result is None:
                     free_semaphores = self.get("free_semaphores")
-                    assert isinstance(free_semaphores, list)
+                    assert isinstance(free_semaphores, (list, ListProxy))
                     free_semaphore = free_semaphores.pop()
                     result = self.objects.setdefault(name, free_semaphore)
-        assert isinstance(result, Semaphore)
+        assert isinstance(result, (Semaphore, AcquirerProxy))
         return result
 
     def get_with_default(self, name: str, default: object = None) -> object:
