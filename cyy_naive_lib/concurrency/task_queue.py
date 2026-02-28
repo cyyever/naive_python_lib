@@ -13,12 +13,12 @@ from typing import Self
 import psutil
 
 from cyy_naive_lib.log import (
-    LoggerSetting,
     apply_logger_setting,
     get_logger_setting,
     log_debug,
     log_error,
 )
+
 from cyy_naive_lib.time_counter import TimeCounter
 
 from ..function import Expected
@@ -163,13 +163,13 @@ class Worker:
     def __call__(
         self,
         *,
-        log_setting: LoggerSetting | None,
         task_queue: "TaskQueue",
         ppid: int,
         worker_id: int,
+        log_setting=None,
         **kwargs: object,
     ) -> None:
-        if log_setting:
+        if log_setting is not None:
             apply_logger_setting(log_setting)
         while not task_queue.stopped:
             try:
@@ -492,13 +492,11 @@ class TaskQueue:
         return not queue.empty()
 
     def _get_task_kwargs(self, worker_id: int, use_spwan: bool) -> dict:
-        kwargs = {
+        kwargs: dict = {
             "task_queue": self,
             "worker_id": worker_id,
             "ppid": os.getpid(),
         }
         if self.__set_logger and use_spwan:
             kwargs["log_setting"] = get_logger_setting()
-        else:
-            kwargs["log_setting"] = None
         return kwargs

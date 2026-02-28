@@ -2,14 +2,11 @@ import concurrent.futures
 import functools
 from collections.abc import Callable
 
-from cyy_naive_lib.log import get_logger_setting
-
 from .executor import ExecutorWrapper
 from .process_context import ProcessContext
 from .process_initialization import (
-    default_initializer,
     get_process_data,
-    reinitialize_logger,
+    make_initializer,
 )
 
 
@@ -18,26 +15,21 @@ class ExtendedProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
         self,
         initializer: None | Callable = None,
         initargs: dict | None = None,
-        use_logger: bool = True,
         **kwargs,
     ) -> None:
         real_initarg: dict = {}
         real_initarg["initializers"] = [initializer]
         real_initarg["initargs_list"] = [{} if initargs is None else initargs]
         pass_process_data = "process_data" in real_initarg["initargs_list"][0]
-        if use_logger:
-            real_initarg["initializers"].insert(0, reinitialize_logger)
-            real_initarg["initargs_list"].insert(
-                0, {"logger_setting": get_logger_setting()}
-            )
         if "mp_context" not in kwargs:
             kwargs["mp_context"] = ProcessContext().get_ctx()
         if "max_tasks_per_child" not in kwargs:
             kwargs["max_tasks_per_child"] = 1
 
+        init_func, wrap_initargs = make_initializer()
         super().__init__(
-            initializer=default_initializer,
-            initargs=(real_initarg,),
+            initializer=init_func,
+            initargs=wrap_initargs(real_initarg),
             **kwargs,
         )
         self.__pass_process_data = pass_process_data

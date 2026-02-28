@@ -1,16 +1,18 @@
 import threading
 
-from cyy_naive_lib.log import LoggerSetting, apply_logger_setting
+from cyy_naive_lib.log import apply_logger_setting, get_logger_setting
 
 __local_data: threading.local = threading.local()
 __local_data.data = {}
 
 
-def reinitialize_logger(logger_setting: LoggerSetting | None, **kwargs: object) -> None:
-    apply_logger_setting(logger_setting)
+def _run_initializer(
+    init_arg_dict: dict[str, list], logger_setting=None
+) -> None:
+    # Transparently re-initialize logger in child process
+    if logger_setting is not None:
+        apply_logger_setting(logger_setting)
 
-
-def default_initializer(init_arg_dict: dict[str, list]) -> None:
     # We save fun_kwargs for further processing and call the initialization function
     for initializer, init_args in zip(
         init_arg_dict["initializers"], init_arg_dict["initargs_list"], strict=False
@@ -20,6 +22,20 @@ def default_initializer(init_arg_dict: dict[str, list]) -> None:
         if initializer is None:
             continue
         initializer(**init_args)
+
+
+def make_initializer() -> tuple:
+    """Create an initializer that transparently propagates logger settings.
+
+    Returns (initializer_func, make_initargs_func) where make_initargs_func
+    wraps init_arg_dict with the captured logger setting.
+    """
+    logger_setting = get_logger_setting()
+
+    def wrap_initargs(init_arg_dict: dict) -> tuple:
+        return (init_arg_dict, logger_setting)
+
+    return _run_initializer, wrap_initargs
 
 
 def get_process_data() -> dict:

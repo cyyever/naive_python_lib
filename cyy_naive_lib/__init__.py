@@ -11,7 +11,6 @@ from .concurrency import (
     ManageredProcessContext,
     ProcessContext,
     ProcessPool,
-    ProcessPoolWithCoroutine,
     ProcessTaskQueue,
     RetryableBatchPolicy,
     TaskQueue,
@@ -20,6 +19,11 @@ from .concurrency import (
     ThreadTaskQueue,
     batch_process,
 )
+
+try:
+    from .concurrency import ProcessPoolWithCoroutine
+except ImportError:
+    pass
 from .fs import TempDir
 from .function import Decorator, Expected
 from .reproducible_random_env import ReproducibleRandomEnv

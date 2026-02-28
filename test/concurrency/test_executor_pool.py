@@ -1,7 +1,14 @@
 import multiprocessing
 import threading
 
-from cyy_naive_lib.concurrency import ProcessPool, ProcessPoolWithCoroutine, ThreadPool
+import pytest
+
+from cyy_naive_lib.concurrency import ProcessPool, ThreadPool
+
+try:
+    from cyy_naive_lib.concurrency import ProcessPoolWithCoroutine
+except ImportError:
+    ProcessPoolWithCoroutine = None
 from cyy_naive_lib.log import log_warning
 
 
@@ -25,6 +32,7 @@ def test_process_pool() -> None:
     pool.shutdown()
 
 
+@pytest.mark.skipif(ProcessPoolWithCoroutine is None, reason="gevent not installed")
 def test_process_with_coroutine() -> None:
     pool = ProcessPoolWithCoroutine()
     pool.submit_batch([thd_fun, thd_fun], kwargs_list=[])
