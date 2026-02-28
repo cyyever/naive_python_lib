@@ -18,10 +18,10 @@ class Source:
     def get_checksum(self) -> str:
         raise NotImplementedError
 
-    def _download(self) -> str:
+    def _download(self) -> Path | None:
         raise NotImplementedError
 
-    def __enter__(self) -> str:
+    def __enter__(self) -> Path | None:
         self.__prev_dir = Path.cwd()
         lock_dir = self.root_dir / ".lock"
         lock_dir.mkdir(parents=True, exist_ok=True)
@@ -38,7 +38,7 @@ class Source:
             if sys.platform != "win32":
                 Path(lock.lock_file).write_text(str(os.getpid()), encoding="utf8")
             res = self._download()
-            if Path(res).is_dir():
+            if res is not None and res.is_dir():
                 os.chdir(res)
             return res
 

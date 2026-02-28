@@ -33,7 +33,7 @@ class FileSource(Source):
             return self.file_name
         return self.checksum
 
-    def _download(self) -> str:
+    def _download(self) -> Path:
         if not self._file_path.is_file():
             if self.url.startswith("file://"):
                 shutil.copyfile(self.url.replace("file://", ""), self._file_path)
@@ -61,7 +61,7 @@ class FileSource(Source):
                     raise
 
         if self.checksum == "no_checksum":
-            return str(self._file_path)
+            return self._file_path
         verify_checksum = False
         for checksum_prefix in ["sha256"]:
             if self.checksum.startswith(checksum_prefix + ":"):
@@ -79,4 +79,4 @@ class FileSource(Source):
                 break
         if not verify_checksum:
             raise RuntimeError(f"unknown checksum format for {self.file_name}")
-        return str(self._file_path)
+        return self._file_path

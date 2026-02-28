@@ -25,11 +25,11 @@ class TarballSource(FileSource):
             else Path(str(self._file_path).replace(self.suffix, ""))
         )
 
-    def _download(self) -> str:
+    def _download(self) -> Path:
         super()._download()
         return self.__extract()
 
-    def __extract(self) -> str:
+    def __extract(self) -> Path:
         if self.tarball_dir.is_dir():
             shutil.rmtree(self.tarball_dir)
         self.tarball_dir.mkdir(parents=True)
@@ -44,7 +44,7 @@ class TarballSource(FileSource):
                 else:
                     exec_cmd("tar -xf " + str(self._file_path))
                 exec_cmd("mv * " + str(self.tarball_dir))
-                return str(self.tarball_dir)
+                return self.tarball_dir
         except Exception as e:
             if self.tarball_dir.is_dir():
                 shutil.rmtree(self.tarball_dir)
