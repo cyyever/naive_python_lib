@@ -63,7 +63,7 @@ def _make_log_func(level: str):
     def log_func(
         msg: object,
         *args: object,
-        exc_info: logging._ExcInfoType | None = None,
+        exc_info: bool | tuple | BaseException | None = None,
         stack_info: bool = False,
         extra: Mapping[str, object] | None = None,
     ) -> None:

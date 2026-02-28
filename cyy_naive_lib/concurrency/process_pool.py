@@ -24,7 +24,10 @@ class ExtendedProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
         if "mp_context" not in kwargs:
             kwargs["mp_context"] = ProcessContext().get_ctx()
         if "max_tasks_per_child" not in kwargs:
-            kwargs["max_tasks_per_child"] = 1
+            mp_ctx = kwargs.get("mp_context")
+            start_method = getattr(mp_ctx, "get_start_method", lambda: None)()
+            if start_method != "fork":
+                kwargs["max_tasks_per_child"] = 1
 
         init_func, wrap_initargs = make_initializer()
         super().__init__(

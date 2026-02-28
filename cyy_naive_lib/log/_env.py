@@ -7,7 +7,7 @@ import multiprocessing.managers
 import os
 import sys
 import threading
-from multiprocessing import Queue
+from multiprocessing.queues import Queue
 from pathlib import Path
 from typing import ClassVar
 
