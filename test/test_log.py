@@ -12,6 +12,8 @@ from cyy_naive_lib.log import (
     log_info,
     log_warning,
     remove_file_handler,
+    replace_logger,
+    set_formatter,
     set_level,
 )
 
@@ -51,3 +53,34 @@ def test_file_handler_and_multiprocess() -> None:
         assert "parent_error" in content
         for i in range(10):
             assert f"child_msg_{i}" in content, f"Missing child_msg_{i}"
+
+
+def test_set_formatter() -> None:
+    """Verify custom formatter is applied."""
+    with TempDir():
+        fmt = logging.Formatter("CUSTOM %(message)s")
+        set_formatter(fmt)
+        add_file_handler("fmt_test.log")
+        log_info("formatted_msg")
+        time.sleep(1)
+        remove_file_handler("fmt_test.log")
+
+        content = Path("fmt_test.log").read_text(encoding="utf8")
+        assert "CUSTOM formatted_msg" in content
+
+
+def test_replace_logger() -> None:
+    """Verify replace_logger routes a named logger through the proxy."""
+    with TempDir():
+        add_file_handler("replace_test.log")
+        set_level(logging.INFO)
+
+        third_party = logging.getLogger("third_party_lib")
+        replace_logger("third_party_lib")
+        third_party.info("routed_msg")
+
+        time.sleep(1)
+        remove_file_handler("replace_test.log")
+
+        content = Path("replace_test.log").read_text(encoding="utf8")
+        assert "routed_msg" in content

@@ -36,13 +36,14 @@ class TarballSource(FileSource):
         log_debug("extracting %s", self.file_name)
         try:
             with TempDir():
-                if self.suffix == ".zip":
-                    with zipfile.ZipFile(self._file_path, "r") as myzip:
-                        myzip.extractall()
-                elif self.suffix == ".7z":
-                    exec_cmd("7z x " + str(self._file_path))
-                else:
-                    exec_cmd("tar -xf " + str(self._file_path))
+                match self.suffix:
+                    case ".zip":
+                        with zipfile.ZipFile(self._file_path, "r") as myzip:
+                            myzip.extractall()
+                    case ".7z":
+                        exec_cmd("7z x " + str(self._file_path))
+                    case _:
+                        exec_cmd("tar -xf " + str(self._file_path))
                 exec_cmd("mv * " + str(self.tarball_dir))
                 return self.tarball_dir
         except Exception as e:

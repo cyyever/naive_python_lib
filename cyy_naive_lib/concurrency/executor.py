@@ -127,6 +127,7 @@ class BlockingSubmitExecutor(ExecutorWrapper):
     def submit(  # type: ignore[override]
         self, fn: Callable, /, *args: object, **kwargs: object
     ) -> concurrent.futures.Future:
+        assert self.__global_store is not None, "call set_global_store() before submit()"
         global_store = self.__global_store
         self.__wait_job(global_store)
         return super().submit(

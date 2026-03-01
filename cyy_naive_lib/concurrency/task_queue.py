@@ -3,6 +3,7 @@ import math
 import multiprocessing.context
 import multiprocessing.synchronize
 import os
+import queue
 import threading
 import traceback
 from collections.abc import Callable
@@ -57,14 +58,9 @@ class BatchPolicy:
         assert initial_batch_size >= 1, initial_batch_size
         batch_size = initial_batch_size
         assert batch_size in self._mean_processing_times
-        # if (
-        #     batch_size > 1
-        #     and self._mean_processing_times[batch_size]
-        #     > self._mean_processing_times[batch_size - 1]
-        # ):
-        #     batch_size -= 1
         while (
             batch_size + 1 not in self._mean_processing_times
+            or self._mean_processing_times[batch_size] == 0
             or math.fabs(
                 self._mean_processing_times[batch_size + 1]
                 - self._mean_processing_times[batch_size]
@@ -221,7 +217,7 @@ class BatchWorker(Worker):
             batch = tasks[:batch_size]
             results: list | None = None
             try:
-                log_error("use batch size %s", batch_size)
+                log_debug("use batch size %s", batch_size)
                 self.batch_policy.set_current_batch_size(batch_size=batch_size)
                 with self.batch_policy:
                     results = task_queue.worker_fun(
@@ -386,7 +382,7 @@ class TaskQueue:
         creator = self.mp_ctx.create_worker
         if use_thread:
             creator = self.mp_ctx.create_thread
-        use_spwan = (
+        use_spawn = (
             use_thread
             or self.mp_ctx.in_thread()
             or (
@@ -397,7 +393,7 @@ class TaskQueue:
             )
         )
 
-        if self.__set_logger and use_spwan:
+        if self.__set_logger and use_spawn:
             target = propagate_to_process(target)
         self.__workers[worker_id] = creator(
             name=f"worker {worker_id}",
@@ -423,6 +419,10 @@ class TaskQueue:
         if wait_task:
             self.join()
         self.__workers = {}
+        for q, q_type in self.__queues.values():
+            if q_type == QueueType.Pipe:
+                q[0].close()
+                q[1].close()
         self.__queues = {}
 
     def force_stop(self) -> None:
@@ -449,7 +449,7 @@ class TaskQueue:
             return
         while True:
             res = self.get_data(queue_name=queue_name, timeout=0.000001)
-            if not res.is_ok() or res.value() is None:
+            if not res.is_ok():
                 return
 
     def get_data(
@@ -474,13 +474,8 @@ class TaskQueue:
                 return Expected.not_ok()
             res = result_queue.get(timeout=timeout)
             return Expected.ok(value=res)
-        except Exception as e:
-            if (
-                "empty" in e.__class__.__name__.lower()
-                or "eof" in e.__class__.__name__.lower()
-            ):
-                return Expected.not_ok()
-            raise e
+        except (queue.Empty, EOFError, BrokenPipeError):
+            return Expected.not_ok()
 
     def has_data(self, queue_name: str = "__result") -> bool:
         queue, queue_type = self.__get_queue(queue_name)
