@@ -2,7 +2,6 @@ import multiprocessing
 import threading
 
 import pytest
-
 from cyy_naive_lib.concurrency import ProcessPool, ThreadPool
 
 try:

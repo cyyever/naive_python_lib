@@ -67,10 +67,7 @@ class FileSource(Source):
             if self.checksum.startswith(checksum_prefix + ":"):
                 with self._file_path.open("rb") as f:
                     digest = hashlib.file_digest(f, checksum_prefix).hexdigest()
-                if (
-                    digest
-                    != self.checksum[len(checksum_prefix) + 1 :]
-                ):
+                if digest != self.checksum[len(checksum_prefix) + 1 :]:
                     self._file_path.unlink()
                     raise RuntimeError(
                         f"wrong checksum for {self.file_name}, so we delete {self._file_path}"

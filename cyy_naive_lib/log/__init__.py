@@ -76,7 +76,12 @@ def _make_log_func(level: str):
         extra: Mapping[str, object] | None = None,
     ) -> None:
         getattr(_LoggerEnv.initialize_proxy_logger(), method_name)(
-            msg, *args, exc_info=exc_info, stack_info=stack_info, extra=extra, stacklevel=2
+            msg,
+            *args,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            extra=extra,
+            stacklevel=2,
         )
 
     log_func.__name__ = log_func.__qualname__ = f"log_{level}"
@@ -128,11 +133,11 @@ __all__ = [
     "get_proxy_logger",
     "get_replaced_loggers",
     "initialize_proxy_logger",
-    "propagate_to_process",
     "log_debug",
     "log_error",
     "log_info",
     "log_warning",
+    "propagate_to_process",
     "redirect_stdout_to_logger",
     "remove_file_handler",
     "replace_default_logger",

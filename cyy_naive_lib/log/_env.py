@@ -27,9 +27,7 @@ class _LoggerQueueListener(logging.handlers.QueueListener):
 
     def handle(self, record: logging.LogRecord) -> None:
         if isinstance(record, _RemoveHandler):
-            self.handlers = tuple(
-                h for h in self.handlers if h is not record.handler
-            )
+            self.handlers = tuple(h for h in self.handlers if h is not record.handler)
             record.handler.flush()
             record.handler.close()
             record.event.set()
@@ -137,10 +135,9 @@ class _LoggerEnv:
             if cls._listener is None:
                 return
             for h in cls._listener.handlers:
-                if (
-                    isinstance(h, logging.FileHandler)
-                    and Path(h.baseFilename).resolve() == Path(filename)
-                ):
+                if isinstance(h, logging.FileHandler) and Path(
+                    h.baseFilename
+                ).resolve() == Path(filename):
                     return
             file_path = Path(filename)
             if file_path.parent != Path():

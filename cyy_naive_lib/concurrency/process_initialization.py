@@ -19,10 +19,10 @@ def _run_initializer(init_arg_dict: dict[str, list]) -> None:
 
 
 def make_initializer() -> tuple:
-    """Create an initializer that transparently propagates logger settings.
+    """Create an initializer that transparently propagates logger to child processes.
 
     Returns (initializer_func, make_initargs_func) where make_initargs_func
-    wraps init_arg_dict with the captured logger setting.
+    wraps init_arg_dict for the initializer.
     """
     wrapped = propagate_to_process(_run_initializer)
 

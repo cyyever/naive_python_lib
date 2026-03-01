@@ -17,7 +17,6 @@ from cyy_naive_lib.log import (
     log_error,
     propagate_to_process,
 )
-
 from cyy_naive_lib.time_counter import TimeCounter
 
 from ..function import Expected
