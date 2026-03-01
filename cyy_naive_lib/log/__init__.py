@@ -2,11 +2,11 @@
 
 import logging
 import sys
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from contextlib import redirect_stdout
+from typing import Any
 
 from ._env import _LoggerEnv
-from ._types import LoggerSetting, set_logger_level
 
 
 def get_proxy_logger() -> logging.Logger:
@@ -15,6 +15,26 @@ def get_proxy_logger() -> logging.Logger:
 
 def initialize_proxy_logger() -> None:
     _LoggerEnv.initialize_proxy_logger()
+
+
+class _LoggerPropagator:
+    """Picklable wrapper that propagates logger settings to a child process."""
+
+    def __init__(self, fn: Callable, setting: Any) -> None:
+        self._fn = fn
+        self._setting = setting
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        _LoggerEnv.initialize_proxy_logger(self._setting)
+        return self._fn(*args, **kwargs)
+
+
+def propagate_to_process[T](fn: T) -> T:
+    """Wrap a callable so logger settings are auto-propagated in child processes."""
+    setting = _LoggerEnv.get_logger_setting()
+    if setting is None:
+        return fn
+    return _LoggerPropagator(fn, setting)  # type: ignore[return-value]
 
 
 def replace_logger(name: str) -> None:
@@ -33,10 +53,6 @@ def add_file_handler(filename: str) -> None:
     _LoggerEnv.add_file_handler(filename)
 
 
-def add_file(filename: str) -> None:
-    _LoggerEnv.add_file_handler(filename)
-
-
 def remove_file_handler(filename: str) -> None:
     _LoggerEnv.remove_file_handler(filename)
 
@@ -47,14 +63,6 @@ def set_level(level: int) -> None:
 
 def set_formatter(formatter: logging.Formatter) -> None:
     _LoggerEnv.set_formatter(formatter)
-
-
-def get_logger_setting() -> LoggerSetting | None:
-    return _LoggerEnv.get_logger_setting()
-
-
-def apply_logger_setting(setting: LoggerSetting | None) -> None:
-    _LoggerEnv.apply_logger_setting(setting)
 
 
 def _make_log_func(level: str):
@@ -115,15 +123,12 @@ def redirect_stdout_to_logger(
 
 
 __all__ = [
-    "LoggerSetting",
     "StreamToLogger",
-    "add_file",
     "add_file_handler",
-    "apply_logger_setting",
-    "get_logger_setting",
     "get_proxy_logger",
     "get_replaced_loggers",
     "initialize_proxy_logger",
+    "propagate_to_process",
     "log_debug",
     "log_error",
     "log_info",
@@ -134,5 +139,4 @@ __all__ = [
     "replace_logger",
     "set_formatter",
     "set_level",
-    "set_logger_level",
 ]

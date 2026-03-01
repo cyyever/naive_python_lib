@@ -1,18 +1,40 @@
 import atexit
-import contextlib
 import logging
 import logging.handlers
 import multiprocessing
-import multiprocessing.managers
+import multiprocessing.queues
 import os
 import sys
 import threading
-from multiprocessing.queues import Queue
 from pathlib import Path
 from typing import ClassVar
 
+from colorlog import ColoredFormatter
+
 from ._types import LoggerSetting, set_logger_level
-from ._worker import worker
+
+
+class _RemoveHandler:
+    """Control message to remove a file handler with queue ordering guarantee."""
+
+    def __init__(self, handler: logging.FileHandler, event: threading.Event) -> None:
+        self.handler = handler
+        self.event = event
+
+
+class _LoggerQueueListener(logging.handlers.QueueListener):
+    """QueueListener that handles _RemoveHandler control messages."""
+
+    def handle(self, record: logging.LogRecord) -> None:
+        if isinstance(record, _RemoveHandler):
+            self.handlers = tuple(
+                h for h in self.handlers if h is not record.handler
+            )
+            record.handler.flush()
+            record.handler.close()
+            record.event.set()
+            return
+        super().handle(record)
 
 
 class _ResilientQueueHandler(logging.handlers.QueueHandler):
@@ -28,27 +50,42 @@ class _ResilientQueueHandler(logging.handlers.QueueHandler):
                 pass
 
 
+def _create_default_formatter(*, with_color: bool = True) -> logging.Formatter:
+    if with_color and os.getenv("EINK_SCREEN") == "1":
+        with_color = False
+    format_str = "%(asctime)s %(levelname)s {%(processName)s} [%(filename)s => %(lineno)d] : %(message)s"
+    if with_color:
+        return ColoredFormatter(
+            "%(log_color)s" + format_str,
+            log_colors={
+                "DEBUG": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "bold_red",
+            },
+            style="%",
+        )
+    return logging.Formatter(format_str, style="%")
+
+
 class _LoggerEnv:
     _lock = threading.RLock()
-    _manager: multiprocessing.managers.SyncManager | None = None
-    _queue: Queue | None = None
-    _worker_process: multiprocessing.process.BaseProcess | None = None
+    _queue: multiprocessing.queues.Queue | None = None
+    _listener: _LoggerQueueListener | None = None
     _proxy_logger: logging.Logger | None = None
     _filenames: ClassVar[set[str]] = set()
     _replaced_loggers: ClassVar[set[str]] = set()
     _formatter: logging.Formatter | None = None
-    _level: int = logging.DEBUG
+    _level: int = logging.INFO
     _is_owner: bool = False
 
     @classmethod
-    def _put(cls, msg: dict) -> None:
-        """Send a control message to the worker. Only the queue owner may call this."""
-        if cls._queue is not None and cls._is_owner:
-            cls._queue.put(msg)
-
-    @classmethod
-    def initialize_proxy_logger(cls) -> logging.Logger:
+    def initialize_proxy_logger(
+        cls, setting: LoggerSetting | None = None
+    ) -> logging.Logger:
         with cls._lock:
+            if setting is not None:
+                cls._apply_logger_setting(setting)
             if cls._proxy_logger is not None:
                 return cls._proxy_logger
             cls._initialize()
@@ -58,8 +95,6 @@ class _LoggerEnv:
             assert cls._queue is not None
             cls._proxy_logger.addHandler(_ResilientQueueHandler(cls._queue))
             cls._proxy_logger.propagate = False
-            if cls._is_owner:
-                cls._send_all_settings()
             set_logger_level(cls._proxy_logger, cls._level)
             for name in cls._replaced_loggers:
                 replaced = logging.getLogger(name=name)
@@ -70,26 +105,19 @@ class _LoggerEnv:
             return cls._proxy_logger
 
     @classmethod
-    def _send_all_settings(cls) -> None:
-        if cls._queue is None:
-            return
-        cls._queue.put({"logger_level": cls._level})
-        if cls._formatter is not None:
-            cls._queue.put({"logger_formatter": cls._formatter})
-        for f in cls._filenames:
-            cls._queue.put({"filename": f})
-
-    @classmethod
     def set_formatter(cls, formatter: logging.Formatter) -> None:
         with cls._lock:
             cls._formatter = formatter
-            cls._put({"logger_formatter": formatter})
+            if cls._listener is not None:
+                for handler in cls._listener.handlers:
+                    handler.setFormatter(formatter)
 
     @classmethod
     def set_level(cls, level: int) -> None:
         with cls._lock:
             cls._level = level
-            cls._put({"logger_level": level})
+            if cls._proxy_logger is not None:
+                set_logger_level(cls._proxy_logger, level)
 
     @classmethod
     def replace_logger(cls, name: str) -> None:
@@ -106,17 +134,43 @@ class _LoggerEnv:
         filename = str(Path(filename).resolve())
         with cls._lock:
             cls._filenames.add(filename)
-            cls._put({"filename": filename})
+            if cls._listener is None:
+                return
+            for h in cls._listener.handlers:
+                if (
+                    isinstance(h, logging.FileHandler)
+                    and Path(h.baseFilename).resolve() == Path(filename)
+                ):
+                    return
+            file_path = Path(filename)
+            if file_path.parent != Path():
+                file_path.parent.mkdir(parents=True, exist_ok=True)
+            handler = logging.FileHandler(file_path, mode="wt", encoding="utf8")
+            if cls._formatter is not None:
+                handler.setFormatter(cls._formatter)
+            else:
+                handler.setFormatter(_create_default_formatter(with_color=False))
+            cls._listener.handlers = (*cls._listener.handlers, handler)
 
     @classmethod
     def remove_file_handler(cls, filename: str) -> None:
         filename = str(Path(filename).resolve())
+        done: threading.Event | None = None
         with cls._lock:
             cls._filenames.discard(filename)
-            assert cls._queue is not None and cls._manager is not None
-            done = cls._manager.Event()
-            cls._queue.put({"removed_filename": filename, "done_event": done})
-        done.wait(timeout=10)
+            if cls._listener is None or cls._queue is None:
+                return
+            resolved = Path(filename)
+            for h in cls._listener.handlers:
+                if (
+                    isinstance(h, logging.FileHandler)
+                    and Path(h.baseFilename).resolve() == resolved
+                ):
+                    done = threading.Event()
+                    cls._queue.put(_RemoveHandler(h, done))
+                    break
+        if done is not None:
+            done.wait(timeout=10)
 
     @classmethod
     def get_logger_setting(cls) -> LoggerSetting | None:
@@ -125,7 +179,6 @@ class _LoggerEnv:
                 return None
             setting = LoggerSetting(
                 message_queue=cls._queue,
-                filenames=cls._filenames.copy(),
                 replaced_loggers=cls._replaced_loggers.copy(),
                 pid=os.getpid(),
                 logger_level=cls._level,
@@ -135,19 +188,20 @@ class _LoggerEnv:
             return setting
 
     @classmethod
-    def apply_logger_setting(cls, setting: LoggerSetting | None = None) -> None:
-        """Apply logger settings from a parent process (spawn or fork)."""
-        with cls._lock:
-            if not setting or os.getpid() == setting["pid"]:
-                return
-            if cls._queue is None:
-                cls._queue = setting["message_queue"]
-            if "logger_formatter" in setting:
-                cls._formatter = setting["logger_formatter"]
-            if "logger_level" in setting:
-                cls._level = setting["logger_level"]
-            cls._filenames.update(setting["filenames"])
-            cls._replaced_loggers.update(setting["replaced_loggers"])
+    def _apply_logger_setting(cls, setting: LoggerSetting) -> None:
+        """Apply logger settings from a parent process (spawn or fork).
+
+        Must be called while cls._lock is held.
+        """
+        if os.getpid() == setting["pid"]:
+            return
+        if cls._queue is None:
+            cls._queue = setting["message_queue"]
+        if "logger_formatter" in setting:
+            cls._formatter = setting["logger_formatter"]
+        if "logger_level" in setting:
+            cls._level = setting["logger_level"]
+        cls._replaced_loggers.update(setting["replaced_loggers"])
 
     @classmethod
     def _initialize(cls) -> None:
@@ -155,43 +209,19 @@ class _LoggerEnv:
             if cls._proxy_logger is not None:
                 return
             if cls._queue is None:
-                prev_dir = Path.cwd()
-                try:
-                    os.chdir(Path.home())
-                except OSError:
-                    prev_dir = None
-                try:
-                    cls._manager = multiprocessing.get_context("spawn").Manager()
-                    cls._queue = cls._manager.Queue()  # type: ignore[assignment]
-                    cls._is_owner = True
-                finally:
-                    if prev_dir is not None:
-                        with contextlib.suppress(OSError):
-                            os.chdir(prev_dir)
+                cls._queue = multiprocessing.get_context("spawn").Queue()
+                cls._is_owner = True
 
             if not cls._is_owner:
                 return
 
-            cls._worker_process = multiprocessing.get_context("spawn").Process(
-                target=worker,
-                args=(cls._queue, os.getpid()),
-                daemon=False,
-            )
-            cls._worker_process.start()
+            stream_handler = logging.StreamHandler()
+            stream_handler.setFormatter(_create_default_formatter(with_color=True))
+
+            cls._listener = _LoggerQueueListener(cls._queue, stream_handler)
+            cls._listener.start()
 
             @atexit.register
             def shutdown() -> None:
-                try:
-                    if cls._queue is not None:
-                        cls._queue.put({"cyy_logger_exit": os.getpid()})
-                    if cls._worker_process is not None:
-                        cls._worker_process.join(timeout=10)
-                        if cls._worker_process.is_alive():
-                            cls._worker_process.terminate()
-                except Exception:
-                    pass
-                try:
-                    if cls._manager is not None:
-                        cls._manager.shutdown()
-                except Exception:
-                    pass
+                if cls._listener is not None:
+                    cls._listener.stop()

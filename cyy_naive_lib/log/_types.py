@@ -5,7 +5,6 @@ from typing import NotRequired, TypedDict
 
 class LoggerSetting(TypedDict):
     message_queue: Queue
-    filenames: set[str]
     replaced_loggers: set[str]
     pid: int
     logger_level: int

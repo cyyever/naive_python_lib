@@ -13,10 +13,9 @@ from typing import Self
 import psutil
 
 from cyy_naive_lib.log import (
-    apply_logger_setting,
-    get_logger_setting,
     log_debug,
     log_error,
+    propagate_to_process,
 )
 
 from cyy_naive_lib.time_counter import TimeCounter
@@ -166,11 +165,8 @@ class Worker:
         task_queue: "TaskQueue",
         ppid: int,
         worker_id: int,
-        log_setting=None,
         **kwargs: object,
     ) -> None:
-        if log_setting is not None:
-            apply_logger_setting(log_setting)
         while not task_queue.stopped:
             try:
                 if self.process(task_queue, worker_id=worker_id, **kwargs):
@@ -402,11 +398,13 @@ class TaskQueue:
             )
         )
 
+        if self.__set_logger and use_spwan:
+            target = propagate_to_process(target)
         self.__workers[worker_id] = creator(
             name=f"worker {worker_id}",
             target=target,
             args=(),
-            kwargs=self._get_task_kwargs(worker_id, use_spwan=use_spwan),
+            kwargs=self._get_task_kwargs(worker_id),
         )
         self.__workers[worker_id].start()
 
@@ -491,12 +489,9 @@ class TaskQueue:
             return queue[1].poll()
         return not queue.empty()
 
-    def _get_task_kwargs(self, worker_id: int, use_spwan: bool) -> dict:
-        kwargs: dict = {
+    def _get_task_kwargs(self, worker_id: int) -> dict:
+        return {
             "task_queue": self,
             "worker_id": worker_id,
             "ppid": os.getpid(),
         }
-        if self.__set_logger and use_spwan:
-            kwargs["log_setting"] = get_logger_setting()
-        return kwargs
